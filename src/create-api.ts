@@ -1,17 +1,16 @@
-import { call, takeEvery } from 'redux-saga/effects';
-import createAction from './create-action';
-import { ActionWithPayload } from './types';
+import { call, takeEvery } from "redux-saga/effects";
+import { createAction, ActionWithPayload } from "robodux";
 
 export type Middleware<Ctx = any> = (ctx: Ctx, next: Next) => any;
 export type Next = () => any;
 
 function compose<Ctx = any>(middleware: Middleware<Ctx>[]) {
   if (!Array.isArray(middleware)) {
-    throw new TypeError('Middleware stack must be an array!');
+    throw new TypeError("Middleware stack must be an array!");
   }
   for (const fn of middleware) {
-    if (typeof fn !== 'function') {
-      throw new TypeError('Middleware must be composed of functions!');
+    if (typeof fn !== "function") {
+      throw new TypeError("Middleware must be composed of functions!");
     }
   }
 
@@ -22,7 +21,7 @@ function compose<Ctx = any>(middleware: Middleware<Ctx>[]) {
 
     function* dispatch(i: number): any {
       if (i <= index) {
-        throw new Error('next() called multiple times');
+        throw new Error("next() called multiple times");
       }
       index = i;
       let fn: any = middleware[i];
@@ -33,7 +32,7 @@ function compose<Ctx = any>(middleware: Middleware<Ctx>[]) {
   };
 }
 
-export const API_ACTION_PREFIX = '@@robodux/api';
+export const API_ACTION_PREFIX = "@@saga-query/api";
 export function createApi<
   Ctx = any,
   A extends { middleware?: Middleware<Ctx>[] } = {
