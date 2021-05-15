@@ -1,10 +1,10 @@
-import test from "ava";
-import { createStore, combineReducers, applyMiddleware } from "redux";
-import createSagaMiddleware from "redux-saga";
-import { put } from "redux-saga/effects";
-import { createTable, Action, MapEntity, createReducerMap } from "robodux";
+import test from 'ava';
+import { createStore, combineReducers, applyMiddleware } from 'redux';
+import createSagaMiddleware from 'redux-saga';
+import { put } from 'redux-saga/effects';
+import { createTable, Action, MapEntity, createReducerMap } from 'robodux';
 
-import { Middleware, Next, createApi } from "./create-api";
+import { Middleware, Next, createApi } from './create-api';
 
 interface RoboCtx<D = any> {
   request: FetchApiOpts;
@@ -49,8 +49,8 @@ const deserializeTicket = (u: TicketResponse): Ticket => {
   };
 };
 
-const users = createTable<User>({ name: "USER" });
-const tickets = createTable<Ticket>({ name: "TICKET" });
+const users = createTable<User>({ name: 'USER' });
+const tickets = createTable<Ticket>({ name: 'TICKET' });
 const reducers = createReducerMap(users, tickets);
 
 interface FetchApiOpts {
@@ -59,19 +59,19 @@ interface FetchApiOpts {
   middleware?: Middleware<RoboCtx>[];
 }
 
-const mockUser = { id: "1", name: "test", email_address: "test@test.com" };
-const mockTicket = { id: "2", name: "test-ticket" };
+const mockUser = { id: '1', name: 'test', email_address: 'test@test.com' };
+const mockTicket = { id: '2', name: 'test-ticket' };
 
 function* onFetchApi(ctx: RoboCtx, next: Next) {
   const { url } = ctx.request;
   let json = {};
-  if (url === "/users") {
+  if (url === '/users') {
     json = {
       users: [mockUser],
     };
   }
 
-  if (url === "/tickets") {
+  if (url === '/tickets') {
     json = {
       tickets: [mockTicket],
     };
@@ -101,7 +101,7 @@ function* processUsers(ctx: RoboCtx<{ users?: UserResponse[] }>, next: Next) {
 
 function* processTickets(
   ctx: RoboCtx<{ tickets?: UserResponse[] }>,
-  next: Next
+  next: Next,
 ) {
   if (!ctx.response.tickets) {
     yield next();
@@ -112,7 +112,7 @@ function* processTickets(
       acc[u.id] = deserializeTicket(u);
       return acc;
     },
-    {}
+    {},
   );
   ctx.actions.push(tickets.actions.add(curTickets));
   yield next();
@@ -134,8 +134,8 @@ function setupStore(saga: any) {
   return store;
 }
 
-test("createApi: when create a query fetch pipeline - execute all middleware and save to redux", (t) => {
-  const api = createApi<RoboCtx, FetchApiOpts>("app");
+test('createApi: when create a query fetch pipeline - execute all middleware and save to redux', (t) => {
+  const api = createApi<RoboCtx, FetchApiOpts>('app');
   api.use(onFetchApi);
   api.use(setupActionState);
   api.use(processUsers);
@@ -151,9 +151,9 @@ test("createApi: when create a query fetch pipeline - execute all middleware and
   });
 });
 
-test("createApi: when providing a generator the to api.create function - should call that generator before all other middleware", (t) => {
+test('createApi: when providing a generator the to api.create function - should call that generator before all other middleware', (t) => {
   t.plan(2);
-  const api = createApi<RoboCtx, FetchApiOpts>("app");
+  const api = createApi<RoboCtx, FetchApiOpts>('app');
   api.use(onFetchApi);
   api.use(setupActionState);
   api.use(processUsers);
@@ -163,7 +163,7 @@ test("createApi: when providing a generator the to api.create function - should 
   const fetchTickets = () =>
     api.create({ url: `/ticket-wrong-url` }, function* (ctx, next) {
       // before middleware has been triggered
-      ctx.request.url = "/tickets";
+      ctx.request.url = '/tickets';
 
       // triggers all middleware
       yield next();
