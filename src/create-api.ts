@@ -56,7 +56,7 @@ export function createApi<
 
   return {
     action,
-    saga,
+    saga: () => saga,
     use: (fn: Middleware<Ctx>) => {
       middleware.push(fn);
     },
