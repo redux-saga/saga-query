@@ -161,7 +161,7 @@ test('createApi: when create a query fetch pipeline - execute all middleware and
 
 test('createApi: when providing a generator the to api.create function - should call that generator before all other middleware', (t) => {
   t.plan(2);
-  const api = createApi<RoboCtx>('app', { url: '' });
+  const api = createApi<RoboCtx>('app');
   api.use(convertNameToUrl);
   api.use(onFetchApi);
   api.use(setupActionState);

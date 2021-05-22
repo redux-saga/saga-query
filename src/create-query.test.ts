@@ -59,6 +59,9 @@ test('createQuery', (t) => {
       saga: latest,
     },
     function* processUser(ctx: QueryCtx<User, { id: string }>, next) {
+      ctx.request = {
+        method: 'POST',
+      };
       yield next();
       const curUser = ctx.response;
       const curUsers = { [curUser.id]: curUser };

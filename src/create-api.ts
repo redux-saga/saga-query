@@ -42,7 +42,7 @@ export interface CreateActionPayload<P = any> {
 }
 
 export const API_ACTION_PREFIX = '@@saga-query/api';
-export function createApi<Ctx = any>(name: string, initCtx: Partial<Ctx> = {}) {
+export function createApi<Ctx = any>(name: string) {
   const middleware: Middleware<Ctx>[] = [];
   const sagas: { [key: string]: any } = {};
   const createType = (post: string) => `${API_ACTION_PREFIX}/${name}${post}`;
@@ -51,7 +51,6 @@ export function createApi<Ctx = any>(name: string, initCtx: Partial<Ctx> = {}) {
     action: ActionWithPayload<any>,
   ) {
     const ctx: any = {
-      ...initCtx,
       payload: action.payload,
     };
     const fn = compose(curMiddleware as any);
