@@ -4,10 +4,11 @@ import createSagaMiddleware from 'redux-saga';
 import { put } from 'redux-saga/effects';
 import { createTable, Action, MapEntity, createReducerMap } from 'robodux';
 
-import { Middleware, Next, createApi } from './create-api';
+import { Middleware, Next, createApi, CreateActionPayload } from './create-api';
 
-interface RoboCtx<D = any> {
-  request: FetchApiOpts;
+interface RoboCtx<D = any, P = any> {
+  payload: CreateActionPayload<P>;
+  url: string;
   response: D;
   actions: Action[];
 }
@@ -56,14 +57,20 @@ const reducers = createReducerMap(users, tickets);
 interface FetchApiOpts {
   url: RequestInfo;
   options?: RequestInit;
-  middleware?: Middleware<RoboCtx>[];
 }
 
 const mockUser = { id: '1', name: 'test', email_address: 'test@test.com' };
 const mockTicket = { id: '2', name: 'test-ticket' };
 
+function* convertNameToUrl(ctx: RoboCtx, next: Next) {
+  if (!ctx.url) {
+    ctx.url = ctx.payload.name;
+  }
+  yield next();
+}
+
 function* onFetchApi(ctx: RoboCtx, next: Next) {
-  const { url } = ctx.request;
+  const url = ctx.url;
   let json = {};
   if (url === '/users') {
     json = {
@@ -135,15 +142,16 @@ function setupStore(saga: any) {
 }
 
 test('createApi: when create a query fetch pipeline - execute all middleware and save to redux', (t) => {
-  const api = createApi<RoboCtx, FetchApiOpts>('app');
+  const api = createApi<RoboCtx>('app');
+  api.use(convertNameToUrl);
   api.use(onFetchApi);
   api.use(setupActionState);
   api.use(processUsers);
   api.use(processTickets);
   api.use(saveToRedux);
-  const fetchUsers = () => api.create({ url: `/users` });
+  const fetchUsers = api.create(`/users`);
 
-  const store = setupStore(api.saga);
+  const store = setupStore(api.saga());
   store.dispatch(fetchUsers());
   t.deepEqual(store.getState(), {
     [users.name]: { [mockUser.id]: deserializeUser(mockUser) },
@@ -153,31 +161,31 @@ test('createApi: when create a query fetch pipeline - execute all middleware and
 
 test('createApi: when providing a generator the to api.create function - should call that generator before all other middleware', (t) => {
   t.plan(2);
-  const api = createApi<RoboCtx, FetchApiOpts>('app');
+  const api = createApi<RoboCtx>('app', { url: '' });
+  api.use(convertNameToUrl);
   api.use(onFetchApi);
   api.use(setupActionState);
   api.use(processUsers);
   api.use(processTickets);
   api.use(saveToRedux);
-  const fetchUsers = () => api.create({ url: `/users` });
-  const fetchTickets = () =>
-    api.create({ url: `/ticket-wrong-url` }, function* (ctx, next) {
-      // before middleware has been triggered
-      ctx.request.url = '/tickets';
+  const fetchUsers = api.create(`/users`);
+  const fetchTickets = api.create(`/ticket-wrong-url`, function* (ctx, next) {
+    // before middleware has been triggered
+    ctx.url = '/tickets';
 
-      // triggers all middleware
-      yield next();
+    // triggers all middleware
+    yield next();
 
-      // after middleware has been triggered
-      t.deepEqual(ctx.actions, [
-        tickets.actions.add({
-          [mockTicket.id]: deserializeTicket(mockTicket),
-        }),
-      ]);
-      yield put(fetchUsers());
-    });
+    // after middleware has been triggered
+    t.deepEqual(ctx.actions, [
+      tickets.actions.add({
+        [mockTicket.id]: deserializeTicket(mockTicket),
+      }),
+    ]);
+    yield put(fetchUsers());
+  });
 
-  const store = setupStore(api.saga);
+  const store = setupStore(api.saga());
   store.dispatch(fetchTickets());
   t.deepEqual(store.getState(), {
     [users.name]: { [mockUser.id]: deserializeUser(mockUser) },

@@ -3,6 +3,7 @@ import createSagaMiddleware from 'redux-saga';
 import { takeLatest, put } from 'redux-saga/effects';
 import { createReducerMap, MapEntity } from 'robodux';
 import { createStore, combineReducers, applyMiddleware } from 'redux';
+import { Next } from './create-api';
 import { createQuery, QueryCtx } from './create-query';
 
 interface User {
@@ -12,6 +13,7 @@ interface User {
 }
 
 const mockUser: User = { id: '1', name: 'test', email: 'test@test.com' };
+const mockUser2: User = { id: '2', name: 'two', email: 'two@test.com' };
 
 function setupStore(saga: any, reducers: any) {
   const sagaMiddleware = createSagaMiddleware();
@@ -21,49 +23,57 @@ function setupStore(saga: any, reducers: any) {
   return store;
 }
 
-function* latest(action: string, saga: any) {
-  yield takeLatest(`${action}`, saga);
+function* latest(action: string, saga: any, ...args: any[]) {
+  yield takeLatest(`${action}`, saga, ...args);
 }
 
 test('createQuery', (t) => {
   const query = createQuery<User>('users', function* fetchApi(opts) {
-    // fake fetch
-    const json = {
-      users: [mockUser],
-    };
-    return json;
+    if (opts.url === '/users') {
+      const json = {
+        users: [mockUser],
+      };
+      return json;
+    } else if (`${opts.url}`.startsWith('/users/')) {
+      const json = mockUser2;
+      return json;
+    }
   });
 
-  const fetchUsers = () =>
-    query.create(
-      { url: '/users' },
-      function* processUsers(ctx: QueryCtx<{ users: User[] }>, next) {
-        yield next();
-        const { users } = ctx.response;
-        const curUsers = users.reduce<MapEntity<User>>((acc, u) => {
-          acc[u.id] = u;
-          return acc;
-        }, {});
-        yield put(query.actions.add(curUsers));
-      },
-    );
+  const fetchUsers = query.create(
+    `/users`,
+    function* processUsers(ctx: QueryCtx<{ users: User[] }>, next) {
+      yield next();
+      const { users } = ctx.response;
+      const curUsers = users.reduce<MapEntity<User>>((acc, u) => {
+        acc[u.id] = u;
+        return acc;
+      }, {});
+      yield put(query.actions.add(curUsers));
+    },
+  );
 
-  const fetchUser = (id: string) =>
-    query.create(
-      {
-        url: `/users/${id}`,
-        saga: latest,
-      },
-      function* processUser(ctx: QueryCtx<User>, next) {
-        yield next();
-        const user = ctx.response;
-        const curUsers = { [user.id]: user };
-        yield put(query.actions.add(curUsers));
-      },
-    );
+  const fetchUser = query.create<{ id: string }>(
+    `/users/:id`,
+    {
+      saga: latest,
+    },
+    function* processUser(ctx: QueryCtx<User, { id: string }>, next) {
+      yield next();
+      const curUser = ctx.response;
+      const curUsers = { [curUser.id]: curUser };
+      yield put(query.actions.add(curUsers));
+    },
+  );
 
   const reducers = createReducerMap(query);
-  const store = setupStore(query.saga, reducers);
+  const store = setupStore(query.saga(), reducers);
   store.dispatch(fetchUsers());
-  store.dispatch(fetchUser('1'));
+  t.deepEqual(store.getState(), {
+    users: { [mockUser.id]: mockUser },
+  });
+  store.dispatch(fetchUser({ id: '2' }));
+  t.deepEqual(store.getState(), {
+    users: { [mockUser.id]: mockUser, [mockUser2.id]: mockUser2 },
+  });
 });
