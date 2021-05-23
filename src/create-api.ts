@@ -5,7 +5,7 @@ import sagaCreator from 'redux-saga-creator';
 export type Middleware<Ctx = any> = (ctx: Ctx, next: Next) => any;
 export type Next = () => any;
 
-function compose<Ctx = any>(middleware: Middleware<Ctx>[]) {
+export function compose<Ctx = any>(middleware: Middleware<Ctx>[]) {
   if (!Array.isArray(middleware)) {
     throw new TypeError('Middleware stack must be an array!');
   }

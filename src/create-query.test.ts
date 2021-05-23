@@ -1,10 +1,10 @@
 import test from 'ava';
 import createSagaMiddleware from 'redux-saga';
 import { takeLatest, put } from 'redux-saga/effects';
-import { createReducerMap, MapEntity } from 'robodux';
+import { createReducerMap, MapEntity, createTable } from 'robodux';
 import { createStore, combineReducers, applyMiddleware } from 'redux';
-import { Next } from './create-api';
-import { createQuery, QueryCtx } from './create-query';
+import { Next, createApi } from './create-api';
+import { QueryCtx, urlParser, createFetchApi } from './create-query';
 
 interface User {
   id: string;
@@ -28,17 +28,21 @@ function* latest(action: string, saga: any, ...args: any[]) {
 }
 
 test('createQuery', (t) => {
-  const query = createQuery<User>('users', function* fetchApi(opts) {
-    if (opts.url === '/users') {
-      const json = {
-        users: [mockUser],
-      };
-      return json;
-    } else if (`${opts.url}`.startsWith('/users/')) {
+  const name = 'users';
+  const cache = createTable<User>({ name });
+  const query = createApi<QueryCtx>(name);
+  const fetchApi = createFetchApi((opts) => {
+    if (`${opts.url}`.startsWith('/users/')) {
       const json = mockUser2;
       return json;
     }
+    const json = {
+      users: [mockUser],
+    };
+    return json;
   });
+  query.use(urlParser);
+  query.use(fetchApi);
 
   const fetchUsers = query.create(
     `/users`,
@@ -49,7 +53,7 @@ test('createQuery', (t) => {
         acc[u.id] = u;
         return acc;
       }, {});
-      yield put(query.actions.add(curUsers));
+      yield put(cache.actions.add(curUsers));
     },
   );
 
@@ -65,11 +69,11 @@ test('createQuery', (t) => {
       yield next();
       const curUser = ctx.response;
       const curUsers = { [curUser.id]: curUser };
-      yield put(query.actions.add(curUsers));
+      yield put(cache.actions.add(curUsers));
     },
   );
 
-  const reducers = createReducerMap(query);
+  const reducers = createReducerMap(cache);
   const store = setupStore(query.saga(), reducers);
   store.dispatch(fetchUsers());
   t.deepEqual(store.getState(), {
