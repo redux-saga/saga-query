@@ -40,7 +40,7 @@ function* latest(action: string, saga: any, ...args: any[]) {
 test('query - basic', (t) => {
   const name = 'users';
   const cache = createTable<User>({ name });
-  const query = createApi<FetchCtx>(name);
+  const query = createApi<FetchCtx>();
   const fetchApi = createFetchApi((opts) => {
     if (`${opts.url}`.startsWith('/users/')) {
       const json = mockUser2;
@@ -98,10 +98,10 @@ test('query - basic', (t) => {
 });
 
 test('query - with loader', (t) => {
+  const users = createTable<User>({ name: 'users' });
   const loaders = createLoaderTable({ name: 'loaders' });
-  const name = 'users';
-  const users = createTable<User>({ name });
-  const query = createApi<FetchCtx>(name);
+
+  const api = createApi<FetchCtx>();
   const fetchApi = createFetchApi((opts) => ({
     status: 200,
     ok: true,
@@ -109,11 +109,11 @@ test('query - with loader', (t) => {
       users: [mockUser],
     },
   }));
-  query.use(urlParser);
-  query.use(fetchApi);
-  query.use(createLoadingTracker(loaders));
+  api.use(urlParser);
+  api.use(fetchApi);
+  api.use(createLoadingTracker(loaders));
 
-  const fetchUsers = query.create(
+  const fetchUsers = api.create(
     `/users`,
     function* processUsers(ctx: FetchCtx<{ users: User[] }>, next) {
       yield next();
@@ -128,7 +128,7 @@ test('query - with loader', (t) => {
   );
 
   const reducers = createReducerMap(loaders, users);
-  const store = setupStore(query.saga(), reducers);
+  const store = setupStore(api.saga(), reducers);
 
   store.dispatch(fetchUsers());
   t.like(store.getState(), {

@@ -1,4 +1,4 @@
-import { call, put } from 'redux-saga/effects';
+import { call, put, select } from 'redux-saga/effects';
 import { Action, createTable, MapEntity, ActionWithPayload } from 'robodux';
 
 import { Next, CreateActionPayload } from './create-api';
@@ -20,23 +20,20 @@ export interface ApiFetchSuccess<Data = any> {
   data: Data;
 }
 
-interface ApiFetchError {
+interface ApiFetchError<E = { status: string; message: string }> {
   status: number;
   ok: false;
-  data: {
-    status: string;
-    message: string;
-  };
+  data: E;
 }
 
-export type ApiFetchResponse<Data = any> =
+export type ApiFetchResponse<Data = any, E = any> =
   | ApiFetchSuccess<Data>
-  | ApiFetchError;
+  | ApiFetchError<E>;
 
-export interface FetchCtx<D = any, P = any> {
+export interface FetchCtx<D = any, E = any, P = any> {
   payload: CreateActionPayload<P>;
   request: FetchApiOpts;
-  response: ApiFetchResponse<D>;
+  response: ApiFetchResponse<D, E>;
 }
 
 export function* urlParser(ctx: FetchCtx, next: Next) {
@@ -84,5 +81,47 @@ export function createLoadingTracker(
       return;
     }
     yield put(loaders.actions.success({ id }));
+  };
+}
+
+export function createApiFetch<S = any>(
+  selectUrl: (s?: S) => string,
+  selectToken: (s?: S) => string,
+) {
+  return function* apiFetch<Data = any>(
+    uri: string,
+    opts: ApiOpts = {},
+  ): Generator<any, ApiFetchResponse<Data>, any> {
+    const apiUrl = yield select(selectUrl);
+    const auth = typeof opts.auth === 'undefined' ? true : opts.auth;
+    const options = { ...opts };
+    delete options.auth;
+
+    const url = `${apiUrl}/api${uri}`;
+    const headers: { [key: string]: string } = {
+      'Content-Type': 'application/json',
+    };
+
+    if (auth) {
+      const token = yield select(selectToken);
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+    }
+
+    options.headers = headers;
+
+    const res: Response = yield call(fetch, url, options);
+
+    if (res.status === 204) {
+      return {
+        status: res.status,
+        ok: res.ok,
+        data: {},
+      } as ApiFetchSuccess<Data>;
+    }
+    const data = yield call([res, 'json']);
+
+    return { status: res.status, ok: res.ok, data };
   };
 }
