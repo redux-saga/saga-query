@@ -22,12 +22,12 @@ quickly build data loading within your redux application.
 ## Why?
 
 Libraries like `react-query`, `rtk-query`, and `apollo-client` are making it
-easier than every to fetch data and cache data from an API server.  All of them
+easier than ever to fetch data and cache data from an API server.  All of them
 have their unique attributes and I encourage everyone to check them out if they
 haven't.
 
 I find that the async flow control of `redux-saga` is one of the most robust
-and powerful declaractive side-effect system I have come across.  Treating
+and powerful declaractive side-effect systems I have used.  Treating
 side-effects as data makes testing dead simple and provides a powerful effect
 handling system to accomodate any use-case.  Features like polling, data
 loading states, cancellation, racing, parallelization, optimistic updates,
@@ -38,13 +38,15 @@ rivals the readability and maintainability of redux/redux-saga.
 All three libraries above are reinventing async flow control and hiding them
 from the end-developer.  For the happy path, this works beautifully.  Why learn
 how to make optimistic ui work when a library can do it for you?  Why learn how
-to efficiently cache API data when a library can do it for you?  If you never
-need to think about how data is cached and queried in the front-end, then those
-libraries will probably be sufficient for your needs.
+to efficiently cache API data when a library can do it for you?  However, what
+happens when the queries you're performing against your cache are too slow?
+What happens when `useMemo` isn't good enough?  If you've never needed to 
+performance tune selector queries in the front-end, then this library might 
+not be for you.  
 
-However, if you need to control how data is cached in the front-end, or you
-need more granular control over the flow of your business logic, then
-`saga-query` might suit your needs.
+This library is intended for large scale, complex flow control applications 
+that need full control over the data cache layer while setting good standards
+for using redux and a flexible middleware to handle all business logic.
 
 ## `saga-query` is *not*
 
