@@ -14,6 +14,8 @@ quickly build data loading within your redux application.
 
 ## Features
 
+- A familiar middleware system that all node.js developers are familiar with
+  (e.g. express, koa)
 - Write middleware to handle fetching, synchronizing, and caching API requests
 - Unleash the power of redux-saga to handle any async flow control use-cases
 - Pre-built middleware to cut out boilerplate for interacting with redux and
@@ -22,7 +24,7 @@ quickly build data loading within your redux application.
 ## Why?
 
 Libraries like `react-query`, `rtk-query`, and `apollo-client` are making it
-easier than ever to fetch data and cache data from an API server.  All of them
+easier than ever to fetch and cache data from an API server.  All of them
 have their unique attributes and I encourage everyone to check them out if they
 haven't.
 
@@ -52,7 +54,6 @@ for using redux and a flexible middleware to handle all business logic.
 
 - A DSL wrapped around data fetching and caching logic
 - Going to accommodate all use-cases
-- Going to solve all your problems
 - Going to erradicate all boilerplate
 
 ## Show me the way
@@ -127,6 +128,16 @@ const App = () => {
   );
 }
 ```
+
+## A note on `robodux`
+
+The docs heavily use [robodux](https://github.com/neurosnap/robodux) and is 
+recommended for usage with `saga-query`.  It will make caching data simple and 
+straight-forward.
+
+I also wrote a
+[redux-saga style-guide](https://erock.io/2020/01/01/redux-saga-style-guide.html) that
+is also heavily encouraged.
 
 ## Break it down for me
 
