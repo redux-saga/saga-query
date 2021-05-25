@@ -376,6 +376,8 @@ const App = () => {
 ```
 
 ### Optimistic UI
+
+```tsx
 import { put, select } from 'redux-saga/effects';
 
 const updateUser = api.create<Partial<User> & { id: string }>(
@@ -407,3 +409,4 @@ const updateUser = api.create<Partial<User> & { id: string }>(
     yield put(users.actions.add({ [nextUser.id]: nextUser })); 
   },
 )
+```
