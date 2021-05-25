@@ -451,7 +451,7 @@ const updateUser = api.create<Partial<User> & { id: string }>(
     };
 
     // save the current user record in a variable
-    const prevUser = yield select(selectUserById(state, { id: user.id }));
+    const prevUser = yield select(selectUserById, { id: user.id }));
     // optimistically update user
     yield put(users.actions.patch({ [user.id]: user }));
 
