@@ -56,10 +56,15 @@ need more granular control over the flow of your business logic, then
 ## Show me the way
 
 ```tsx
+// api.ts
 import { put, call } from 'redux-saga/effects';
-import { createTable, createLoaderTable, createReducerMap } from 'robodux';
-import { createApi, fetchBody, urlParser, FetchCtx } from
-'saga-query';
+import { createTable, createReducerMap } from 'robodux';
+import { 
+  createApi, 
+  fetchBody, 
+  urlParser, 
+  FetchCtx 
+} from 'saga-query';
 
 interface User {
   id: string;
@@ -67,10 +72,12 @@ interface User {
 }
 
 const users = createTable<User>({ name: 'users' });
+const selectors = users.getSelectors((s) => s[users.name]);
+export const { selectTableAsList: selectUsersAsList } = selectors;
+
 const api = createApi<FetchCtx>();
 api.use(fetchBody);
 api.use(urlParser);
-
 api.use(function* onFetch(ctx, next) {
   const { url, ...options } = ctx.request;
   const resp = yield call(fetch, url, options);
@@ -97,17 +104,39 @@ const fetchUsers = api.create(
 
 const reducers = createReducerMap(users);
 const store = setupStore(reducers, api.saga());
+```
 
-store.dispatch(fetchUsers());
+```tsx
+// app.tsx
+import React from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { fetchUsers, selectUsersAsList } from './api';
+
+const App = () => {
+  const dispatch = useDispatch();
+  const users = useSelector(selectUsersAsList);
+
+  useEffect(() => {
+    dispatch(fetchUsers());
+  }, []);
+
+  return (
+    <div>{users.map((user) => <div key={user.id}>{user.email}</div>)}</div>
+  );
+}
 ```
 
 ## Break it down for me
 
 ```tsx
 import { put, call } from 'redux-saga/effects';
-import { createTable, createLoaderTable, createReducerMap } from 'robodux';
-import { createApi, fetchBody, urlParser, FetchCtx } from
-'saga-query';
+import { createTable, createReducerMap } from 'robodux';
+import { 
+  createApi, 
+  fetchBody, 
+  urlParser, 
+  FetchCtx 
+} from 'saga-query';
 
 // create a reducer that acts like a SQL database table
 // the keys are the id and the value is the record
@@ -174,11 +203,9 @@ const fetchUsers = api.create(
   },
 );
 
-const createUser = query.create<{ id: string, email: string }>(
-  // Here we see the power of `urlParser`. It will replace any slug `:x` with
-  // the corresponding value found inside the payload that gets dispatched by
-  // this action.
-  `/users/:id [POST]`,
+// BONUS: POST request to create a user
+const createUser = query.create<{ email: string }>(
+  `/users [POST]`,
   function* createUser(ctx: FetchCtx<User>, next) {
     ctx.request = {
       method: 'POST',
@@ -200,7 +227,7 @@ const reducers = createReducerMap(users);
 const store = setupStore(reducers, api.saga());
 
 store.dispatch(fetchUsers());
-store.dispatch(fetchUser({ id: '1', email: 'change.me@saga.com' }));
+store.dispatch(createUser({ email: 'change.me@saga.com' }));
 ```
 
 ## Recipes
