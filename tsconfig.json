@@ -3,6 +3,7 @@
     "target": "es5",
     "module": "commonjs",
     "moduleResolution": "node",
+    "outDir": "./dist",
     "declaration": true,
     "downlevelIteration": true,
     "strict": true,

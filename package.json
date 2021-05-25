@@ -7,10 +7,14 @@
   "author": "Eric Bower <me@erock.io>",
   "license": "MIT",
   "private": false,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "scripts": {
     "test": "ava",
     "prepare": "husky install",
-    "format": "prettier --write **/*.ts"
+    "format": "prettier --write **/*.ts",
+    "build": "tsc",
+    "prepublish": "yarn build"
   },
   "devDependencies": {
     "@types/node": "^15.3.0",
