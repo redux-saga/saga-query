@@ -42,13 +42,29 @@ export function fetchBody(ctx: FetchCtx, next: Next) {
 }
 
 export function* urlParser(ctx: FetchCtx, next: Next) {
+  const httpMethods = [
+    'get',
+    'head',
+    'post',
+    'put',
+    'delete',
+    'connect',
+    'options',
+    'trace',
+    'patch',
+  ];
+  const pattern = new RegExp(`\s*\[(${httpMethods.join('|')})\]\s*`, 'gi');
+
   const { options = {} } = ctx.payload;
   if (!ctx.request.url) {
-    const url = Object.keys(options).reduce((acc, key) => {
+    let url = Object.keys(options).reduce((acc, key) => {
       return acc.replace(`:${key}`, options[key]);
     }, ctx.payload.name);
+
+    url = url.replace(pattern, '');
     ctx.request.url = url;
   }
+
   yield next();
 }
 

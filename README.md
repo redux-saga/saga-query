@@ -3,6 +3,15 @@
 Data fetching and caching using redux-saga.  Use our saga middleware system to
 quickly build data loading within your redux application. 
 
+## ToC
+
+- [Simple fetch](#show-me-the-way)
+- [Manipulating the request](#manipulating-the-request)
+- [Loading state](#loading-state)
+- [Take latest](#take-latest)
+- [Polling](#polling)
+- [Optimistic UI](#optimistic-ui)
+
 ## Features
 
 - Write middleware to handle fetching, synchronizing, and caching API requests
@@ -37,13 +46,14 @@ However, if you need to control how data is cached in the front-end, or you
 need more granular control over the flow of your business logic, then
 `saga-query` might suit your needs.
 
-## We are not
+## `saga-query` is *not*
 
-- A DSL wrapped around data loading logic
-- Magical
+- A DSL wrapped around data fetching and caching logic
 - Going to accommodate all use-cases
+- Going to solve all your problems
+- Going to erradicate all boilerplate
 
-## Show me
+## Show me the way
 
 ```tsx
 import { put, call } from 'redux-saga/effects';
@@ -164,12 +174,12 @@ const fetchUsers = api.create(
   },
 );
 
-const fetchUser = query.create<{ id: string, email: string }>(
+const createUser = query.create<{ id: string, email: string }>(
   // Here we see the power of `urlParser`. It will replace any slug `:x` with
   // the corresponding value found inside the payload that gets dispatched by
   // this action.
-  `/users/:id`,
-  function* processUser(ctx: FetchCtx<User>, next) {
+  `/users/:id [POST]`,
+  function* createUser(ctx: FetchCtx<User>, next) {
     ctx.request = {
       method: 'POST',
       body: JSON.stringify({ email: ctx.params.email }),
@@ -180,7 +190,7 @@ const fetchUser = query.create<{ id: string, email: string }>(
     const curUser = ctx.response.data;
     const curUsers = { [curUser.id]: curUser };
 
-    yield put(cache.actions.add(curUsers));
+    yield put(users.actions.add(curUsers));
   },
 );
 
@@ -194,6 +204,30 @@ store.dispatch(fetchUser({ id: '1', email: 'change.me@saga.com' }));
 ```
 
 ## Recipes
+
+### Manipulating the request
+
+```tsx
+const createUser = query.create<{ id: string, email: string }>(
+  `/users [POST]`,
+  function* onCreateUser(ctx: FetchCtx<User>, next) {
+    // here we manipulate the request before it gets sent to our middleware
+    ctx.request = {
+      method: 'POST',
+      body: JSON.stringify({ email: ctx.options.email }),
+    };
+    yield next();
+    if (!ctx.response.ok) return;
+
+    const curUser = ctx.response.data;
+    const curUsers = { [curUser.id]: curUser };
+
+    yield put(users.actions.add(curUsers));
+  },
+);
+
+store.dispatch(createUser({ id: '1', }));
+```
 
 ### Loading state
 
@@ -381,7 +415,7 @@ const App = () => {
 import { put, select } from 'redux-saga/effects';
 
 const updateUser = api.create<Partial<User> & { id: string }>(
-  `/users/:id`, 
+  `/users/:id [PATCH]`, 
   function* onUpdateUser(ctx: FetchCtx<User>, next) {
     const user = ctx.options.email;
     ctx.request = {
