@@ -115,10 +115,13 @@ export function createApi<Ctx = any>() {
       yield tt(`${action}`, onApi, curMiddleware);
     }
     sagas[`${action}`] = curSaga;
-    return (options?: any) => action({ name: createName, options });
+    const actionFn = (options?: any) => action({ name: createName, options });
+    actionFn.toString = () => createName;
+    return actionFn;
   }
 
   return {
+    name,
     saga: () => sagaCreator(sagas),
     use: (fn: Middleware<Ctx>) => {
       middleware.push(fn);
