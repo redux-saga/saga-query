@@ -12,8 +12,8 @@ import { Next, createApi } from './create-api';
 import {
   FetchCtx,
   urlParser,
-  createFetchApi,
   createLoadingTracker,
+  fetchBody,
 } from './create-query';
 
 interface User {
@@ -41,18 +41,22 @@ test('query - basic', (t) => {
   const name = 'users';
   const cache = createTable<User>({ name });
   const query = createApi<FetchCtx>();
-  const fetchApi = createFetchApi((opts) => {
-    if (`${opts.url}`.startsWith('/users/')) {
+
+  query.use(fetchBody);
+  query.use(urlParser);
+  query.use(function* fetchApi(ctx, next) {
+    if (`${ctx.request.url}`.startsWith('/users/')) {
       const json = mockUser2;
-      return { status: 200, ok: true, data: json };
+      ctx.response = { status: 200, ok: true, data: json };
+      yield next();
+      return;
     }
     const json = {
       users: [mockUser],
     };
-    return { status: 200, ok: true, data: json };
+    ctx.response = { status: 200, ok: true, data: json };
+    yield next();
   });
-  query.use(urlParser);
-  query.use(fetchApi);
 
   const fetchUsers = query.create(
     `/users`,
@@ -102,15 +106,18 @@ test('query - with loader', (t) => {
   const loaders = createLoaderTable({ name: 'loaders' });
 
   const api = createApi<FetchCtx>();
-  const fetchApi = createFetchApi((opts) => ({
-    status: 200,
-    ok: true,
-    data: {
-      users: [mockUser],
-    },
-  }));
+  api.use(fetchBody);
   api.use(urlParser);
-  api.use(fetchApi);
+  api.use(function* fetchApi(ctx, next) {
+    ctx.response = {
+      status: 200,
+      ok: true,
+      data: {
+        users: [mockUser],
+      },
+    };
+    yield next();
+  });
   api.use(createLoadingTracker(loaders));
 
   const fetchUsers = api.create(
