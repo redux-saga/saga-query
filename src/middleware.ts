@@ -1,6 +1,7 @@
-import { put, takeLatest } from 'redux-saga/effects';
+import { put, takeLatest, race, delay, take } from 'redux-saga/effects';
 
 import { Next, CreateActionPayload } from './create-api';
+import { ActionWithPayload } from './types';
 
 interface FetchApiOpts extends RequestInit {
   url?: RequestInfo;
@@ -101,4 +102,40 @@ export function createLoadingTracker<Ctx extends FetchCtx = FetchCtx>(
 
 export function* latest(action: string, saga: any, ...args: any[]) {
   yield takeLatest(`${action}`, saga, ...args);
+}
+
+export interface UndoCtx extends FetchCtx {
+  undo: {
+    apply: ActionWithPayload<any>;
+    revert: ActionWithPayload<any>;
+  };
+}
+
+export const undo = () => ({
+  type: 'undo',
+});
+export function* undoMiddleware(
+  ctx: UndoCtx,
+  next: Next,
+): Generator<any, any, any> {
+  if (!ctx.undo) yield next();
+  const { apply, revert } = ctx.undo;
+
+  // first optimistically set the message to archived
+  yield put(apply);
+
+  // race between a timer and the undo action
+  const winner = yield race({
+    timer: delay(5 * 1000),
+    undo: take(`${undo}`),
+  });
+
+  // if the undo action was dispatched within the timer window, revert
+  // archived
+  if (winner.undo) {
+    yield put(revert);
+    return;
+  }
+
+  yield next();
 }

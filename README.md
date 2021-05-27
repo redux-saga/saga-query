@@ -60,6 +60,16 @@ for using redux and a flexible middleware to handle all business logic.
 - Going to accommodate all use-cases
 - Going to erradicate all boilerplate
 
+## A note on `robodux`
+
+The docs heavily use [robodux](https://github.com/neurosnap/robodux) and is 
+recommended for usage with `saga-query`.  It will make caching data simple and 
+straight-forward.
+
+I also wrote a
+[redux-saga style-guide](https://erock.io/2020/01/01/redux-saga-style-guide.html) that
+is also heavily encouraged.
+
 ## Show me the way
 
 ```tsx
@@ -132,16 +142,6 @@ const App = () => {
   );
 }
 ```
-
-## A note on `robodux`
-
-The docs heavily use [robodux](https://github.com/neurosnap/robodux) and is 
-recommended for usage with `saga-query`.  It will make caching data simple and 
-straight-forward.
-
-I also wrote a
-[redux-saga style-guide](https://erock.io/2020/01/01/redux-saga-style-guide.html) that
-is also heavily encouraged.
 
 ## Break it down for me
 
@@ -226,12 +226,12 @@ const createUser = query.post<{ email: string }>(
   function* createUser(ctx: FetchCtx<User>, next) {
     ctx.request = {
       method: 'POST',
-      body: JSON.stringify({ email: ctx.params.email }),
+      body: JSON.stringify({ email: ctx.payload.options.email }),
     };
     yield next();
     if (!ctx.response.ok) return;
 
-    const curUser = ctx.response.data;
+    const curUser = ctx.responspayload.options;
     const curUsers = { [curUser.id]: curUser };
 
     yield put(users.actions.add(curUsers));
@@ -311,7 +311,7 @@ const action = api.create(`/error`, function* (ctx, next) {
   try {
     yield next();
   } catch (err) {
-    t.pass();
+    console.log('error!');
   }
 });
 
@@ -444,7 +444,7 @@ While (A) request is still in flight, (B) request would be cancelled.
 ```tsx
 import { takeLatest } from 'redux-saga/effects';
 
-// this is for demonstration purposes, you can all import it using
+// this is for demonstration purposes, you can import it using
 // import { latest } from 'saga-query';
 function* latest(action: string, saga: any, ...args: any[]) {
   yield takeLatest(`${action}`, saga, ...args);
@@ -522,16 +522,16 @@ import { put, select } from 'redux-saga/effects';
 const updateUser = api.patch<Partial<User> & { id: string }>(
   `/users/:id`, 
   function* onUpdateUser(ctx: FetchCtx<User>, next) {
-    const user = ctx.payload.options.email;
+    const { id, email } = ctx.payload.options;
     ctx.request = {
       method: 'PATCH',
-      body: JSON.stringify(user),
+      body: JSON.stringify(email),
     };
 
     // save the current user record in a variable
-    const prevUser = yield select(selectUserById, { id: user.id }));
+    const prevUser = yield select(selectUserById, { id }));
     // optimistically update user
-    yield put(users.actions.patch({ [user.id]: user }));
+    yield put(users.actions.patch({ [user.id]: { email } }));
 
     // activate PATCH request
     yield next();
@@ -550,54 +550,74 @@ const updateUser = api.patch<Partial<User> & { id: string }>(
 )
 ```
 
+It would be relatively simple to build an optimistic ui middleware:
+
+```tsx
+interface OptimisticCtx extends FetchCtx {
+  optimistic: {
+    apply: ActionWithPayload<MapEntity<Partial<User>>>,
+    revert: ActionWithPayload<MapEntity<User>>,
+  }
+}
+
+const api = createQuery<OptimisticCtx>();
+api.use(function* optimistic(ctx, next) {
+  if (!ctx.optimistic) yield next();
+  const { apply, revert } = ctx.optimistic;
+  // optimistically update user
+  yield put(apply);
+
+  yield next();
+
+  if (!ctx.response.ok) {
+    yield put(revert);
+  }
+});
+
+api.patch(function* (ctx, next) {
+  const { id, email } = ctx.payload.options;
+  const prevUser = yield select(selectUserById, { id }));
+
+  ctx.optimistic = {
+    apply: users.actions.patch({ [id]: { email } }),
+    revert: users.actions.add({ [id]: prevUser }),
+  };
+
+  ctx.request = {
+    method: 'PATCH',
+    body: JSON.stringify({ email }),
+  };
+
+  yield next();
+});
+```
+
 ### Undo
 
-Here is a simple implementation of an undo feature
+We built a middleware for anyone to use:
 
 ```tsx
 import { delay, put, race } from 'redux-saga/effects';
 import { createAction } from 'robodux';
-import { createQuery, fetchBody, urlParser } from 'saga-query';
+import { 
+  createQuery, 
+  fetchBody, 
+  urlParser, 
+  undoMiddleware, 
+  undo,
+  UndoCtx,
+} from 'saga-query';
 
 interface Message {
   id: string;
   archived: boolean;
 }
 
-interface UndoCtx extends FetchCtx {
-  undo: { 
-    apply: ActionWithPayload; 
-    revert: ActionWithPayload;
-  };
-}
-
 const messages = createTable<Message>({ name: 'messages' });
 const api = createQuery<UndoCtx>();
 api.use(fetchBody);
 api.use(urlParser);
-
-const undo = createAction('undo');
-api.use(function* onUndo(ctx, next) {
-  const { apply, revert } = ctx.undo;
-
-  // first optimistically set the message to archived
-  yield put(apply);
-
-  // race between a timer and the undo action
-  const winner = yield race({
-    timer: delay(5 * 1000),
-    undo: take(`${undo}`),
-  });
-
-  // if the undo action was dispatched within the timer window, revert
-  // archived
-  if (winner.undo) {
-    yield put(revert);
-    return;
-  }
-
-  yield next();
-});
+api.use(undoMiddleware);
 
 const archiveMessage = api.patch<{ id: string; }>(
   `message/:id`,
