@@ -1,20 +1,10 @@
 import test from 'ava';
 import createSagaMiddleware from 'redux-saga';
-import { takeLatest, put } from 'redux-saga/effects';
-import {
-  createReducerMap,
-  MapEntity,
-  createTable,
-  createLoaderTable,
-} from 'robodux';
+import { put } from 'redux-saga/effects';
+import { createReducerMap, MapEntity, createTable } from 'robodux';
 import { createStore, combineReducers, applyMiddleware } from 'redux';
-import { Next, createApi } from './create-api';
-import {
-  FetchCtx,
-  urlParser,
-  createLoadingTracker,
-  fetchBody,
-} from './create-query';
+import { FetchCtx, urlParser, fetchBody } from './middleware';
+import { createQuery } from './create-query';
 
 interface User {
   id: string;
@@ -33,34 +23,34 @@ function setupStore(saga: any, reducers: any) {
   return store;
 }
 
-function* latest(action: string, saga: any, ...args: any[]) {
-  yield takeLatest(`${action}`, saga, ...args);
-}
-
-test('query - basic', (t) => {
+test('createQuery - POST', (t) => {
+  t.plan(1);
   const name = 'users';
   const cache = createTable<User>({ name });
-  const query = createApi<FetchCtx>();
+  const query = createQuery<FetchCtx>();
 
   query.use(fetchBody);
   query.use(urlParser);
   query.use(function* fetchApi(ctx, next) {
-    if (`${ctx.request.url}`.startsWith('/users/')) {
-      const json = mockUser2;
-      ctx.response = { status: 200, ok: true, data: json };
-      yield next();
-      return;
-    }
-    const json = {
+    t.deepEqual(ctx.request, {
+      url: '/users',
+      method: 'POST',
+      body: JSON.stringify({ email: mockUser.email }),
+    });
+    const data = {
       users: [mockUser],
     };
-    ctx.response = { status: 200, ok: true, data: json };
+    ctx.response = { status: 200, ok: true, data };
     yield next();
   });
 
-  const fetchUsers = query.create(
+  const createUser = query.post<{ email: string }>(
     `/users`,
     function* processUsers(ctx: FetchCtx<{ users: User[] }>, next) {
+      ctx.request = {
+        method: 'POST',
+        body: JSON.stringify({ email: ctx.payload.options.email }),
+      };
       yield next();
       if (!ctx.response.ok) return;
       const { users } = ctx.response.data;
@@ -72,80 +62,7 @@ test('query - basic', (t) => {
     },
   );
 
-  const fetchUser = query.create<{ id: string }>(
-    `/users/:id`,
-    {
-      saga: latest,
-    },
-    function* processUser(ctx: FetchCtx<User>, next) {
-      ctx.request = {
-        method: 'POST',
-      };
-      yield next();
-      if (!ctx.response.ok) return;
-      const curUser = ctx.response.data;
-      const curUsers = { [curUser.id]: curUser };
-      yield put(cache.actions.add(curUsers));
-    },
-  );
-
   const reducers = createReducerMap(cache);
   const store = setupStore(query.saga(), reducers);
-  store.dispatch(fetchUsers());
-  t.deepEqual(store.getState(), {
-    users: { [mockUser.id]: mockUser },
-  });
-  store.dispatch(fetchUser({ id: '2' }));
-  t.deepEqual(store.getState(), {
-    users: { [mockUser.id]: mockUser, [mockUser2.id]: mockUser2 },
-  });
-});
-
-test('query - with loader', (t) => {
-  const users = createTable<User>({ name: 'users' });
-  const loaders = createLoaderTable({ name: 'loaders' });
-
-  const api = createApi<FetchCtx>();
-  api.use(fetchBody);
-  api.use(urlParser);
-  api.use(function* fetchApi(ctx, next) {
-    ctx.response = {
-      status: 200,
-      ok: true,
-      data: {
-        users: [mockUser],
-      },
-    };
-    yield next();
-  });
-  api.use(createLoadingTracker(loaders));
-
-  const fetchUsers = api.create(
-    `/users`,
-    function* processUsers(ctx: FetchCtx<{ users: User[] }>, next) {
-      yield next();
-      if (!ctx.response.ok) return;
-      const { data } = ctx.response;
-      const curUsers = data.users.reduce<MapEntity<User>>((acc, u) => {
-        acc[u.id] = u;
-        return acc;
-      }, {});
-      yield put(users.actions.add(curUsers));
-    },
-  );
-
-  const reducers = createReducerMap(loaders, users);
-  const store = setupStore(api.saga(), reducers);
-
-  store.dispatch(fetchUsers());
-  t.like(store.getState(), {
-    [users.name]: { [mockUser.id]: mockUser },
-    [loaders.name]: {
-      '/users': {
-        error: false,
-        loading: false,
-        success: true,
-      },
-    },
-  });
+  store.dispatch(createUser({ email: mockUser.email }));
 });

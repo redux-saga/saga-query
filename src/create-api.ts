@@ -41,8 +41,25 @@ export interface CreateActionPayload<P = any> {
   options: P;
 }
 
+export interface SagaApi<Ctx = any> {
+  saga: () => (...options: any[]) => Generator<any, any, any>;
+  use: (fn: Middleware<Ctx>) => void;
+  create(name: string): () => Action;
+  create<P>(name: string): (p: P) => ActionWithPayload<P>;
+  create(name: string, req: { saga?: any }): () => Action;
+  create<P>(name: string, req: { saga?: any }): (p: P) => ActionWithPayload<P>;
+  create(name: string, fn: Middleware<Ctx>): () => Action;
+  create<P>(name: string, fn: Middleware<Ctx>): (p: P) => ActionWithPayload<P>;
+  create(name: string, req: { saga?: any }, fn: Middleware<Ctx>): () => Action;
+  create<P>(
+    name: string,
+    req: { saga?: any },
+    fn: Middleware<Ctx>,
+  ): (p: P) => ActionWithPayload<P>;
+}
+
 export const API_ACTION_PREFIX = '@@saga-query/api';
-export function createApi<Ctx = any>() {
+export function createApi<Ctx = any>(): SagaApi<Ctx> {
   const middleware: Middleware<Ctx>[] = [];
   const sagas: { [key: string]: any } = {};
   const createType = (post: string) => `${API_ACTION_PREFIX}/${post}`;
@@ -56,32 +73,6 @@ export function createApi<Ctx = any>() {
     const fn = compose(curMiddleware as any);
     yield call(fn, ctx);
   }
-
-  function create(name: string): () => Action;
-  function create<P>(name: string): (p: P) => ActionWithPayload<P>;
-
-  function create(name: string, req: { saga?: any }): () => Action;
-  function create<P>(
-    name: string,
-    req: { saga?: any },
-  ): (p: P) => ActionWithPayload<P>;
-
-  function create(name: string, fn: Middleware<Ctx>): () => Action;
-  function create<P>(
-    name: string,
-    fn: Middleware<Ctx>,
-  ): (p: P) => ActionWithPayload<P>;
-
-  function create(
-    name: string,
-    req: { saga?: any },
-    fn: Middleware<Ctx>,
-  ): () => Action;
-  function create<P>(
-    name: string,
-    req: { saga?: any },
-    fn: Middleware<Ctx>,
-  ): (p: P) => ActionWithPayload<P>;
 
   function create(createName: string, ...args: any[]) {
     const action = createAction<any>(createType(createName));
@@ -121,7 +112,6 @@ export function createApi<Ctx = any>() {
   }
 
   return {
-    name,
     saga: () => sagaCreator(sagas),
     use: (fn: Middleware<Ctx>) => {
       middleware.push(fn);

@@ -1,96 +1,152 @@
-import { call, put, select, takeLatest } from 'redux-saga/effects';
-import { Action, createTable, MapEntity, ActionWithPayload } from 'robodux';
+import { Action, ActionWithPayload } from 'robodux';
+import { FetchCtx } from './middleware';
+import { SagaApi, Middleware, createApi } from './create-api';
 
-import { Next, CreateActionPayload } from './create-api';
-import { LoadingMapPayload } from 'robodux/dist';
+export interface SagaQueryApi<Ctx extends FetchCtx = FetchCtx>
+  extends SagaApi<Ctx> {
+  get(name: string): () => Action;
+  get<P>(name: string): (p: P) => ActionWithPayload<P>;
+  get(name: string, req: { saga?: any }): () => Action;
+  get<P>(name: string, req: { saga?: any }): (p: P) => ActionWithPayload<P>;
+  get(name: string, fn: Middleware<Ctx>): () => Action;
+  get<P>(name: string, fn: Middleware<Ctx>): (p: P) => ActionWithPayload<P>;
+  get(name: string, req: { saga?: any }, fn: Middleware<Ctx>): () => Action;
+  get<P>(
+    name: string,
+    req: { saga?: any },
+    fn: Middleware<Ctx>,
+  ): (p: P) => ActionWithPayload<P>;
 
-interface FetchApiOpts extends RequestInit {
-  url?: RequestInfo;
+  post(name: string): () => Action;
+  post<P>(name: string): (p: P) => ActionWithPayload<P>;
+  post(name: string, req: { saga?: any }): () => Action;
+  post<P>(name: string, req: { saga?: any }): (p: P) => ActionWithPayload<P>;
+  post(name: string, fn: Middleware<Ctx>): () => Action;
+  post<P>(name: string, fn: Middleware<Ctx>): (p: P) => ActionWithPayload<P>;
+  post(name: string, req: { saga?: any }, fn: Middleware<Ctx>): () => Action;
+  post<P>(
+    name: string,
+    req: { saga?: any },
+    fn: Middleware<Ctx>,
+  ): (p: P) => ActionWithPayload<P>;
+
+  put(name: string): () => Action;
+  put<P>(name: string): (p: P) => ActionWithPayload<P>;
+  put(name: string, req: { saga?: any }): () => Action;
+  put<P>(name: string, req: { saga?: any }): (p: P) => ActionWithPayload<P>;
+  put(name: string, fn: Middleware<Ctx>): () => Action;
+  put<P>(name: string, fn: Middleware<Ctx>): (p: P) => ActionWithPayload<P>;
+  put(name: string, req: { saga?: any }, fn: Middleware<Ctx>): () => Action;
+  put<P>(
+    name: string,
+    req: { saga?: any },
+    fn: Middleware<Ctx>,
+  ): (p: P) => ActionWithPayload<P>;
+
+  patch(name: string): () => Action;
+  patch<P>(name: string): (p: P) => ActionWithPayload<P>;
+  patch(name: string, req: { saga?: any }): () => Action;
+  patch<P>(name: string, req: { saga?: any }): (p: P) => ActionWithPayload<P>;
+  patch(name: string, fn: Middleware<Ctx>): () => Action;
+  patch<P>(name: string, fn: Middleware<Ctx>): (p: P) => ActionWithPayload<P>;
+  patch(name: string, req: { saga?: any }, fn: Middleware<Ctx>): () => Action;
+  patch<P>(
+    name: string,
+    req: { saga?: any },
+    fn: Middleware<Ctx>,
+  ): (p: P) => ActionWithPayload<P>;
+
+  delete(name: string): () => Action;
+  delete<P>(name: string): (p: P) => ActionWithPayload<P>;
+  delete(name: string, req: { saga?: any }): () => Action;
+  delete<P>(name: string, req: { saga?: any }): (p: P) => ActionWithPayload<P>;
+  delete(name: string, fn: Middleware<Ctx>): () => Action;
+  delete<P>(name: string, fn: Middleware<Ctx>): (p: P) => ActionWithPayload<P>;
+  delete(name: string, req: { saga?: any }, fn: Middleware<Ctx>): () => Action;
+  delete<P>(
+    name: string,
+    req: { saga?: any },
+    fn: Middleware<Ctx>,
+  ): (p: P) => ActionWithPayload<P>;
+
+  options(name: string): () => Action;
+  options<P>(name: string): (p: P) => ActionWithPayload<P>;
+  options(name: string, req: { saga?: any }): () => Action;
+  options<P>(name: string, req: { saga?: any }): (p: P) => ActionWithPayload<P>;
+  options(name: string, fn: Middleware<Ctx>): () => Action;
+  options<P>(name: string, fn: Middleware<Ctx>): (p: P) => ActionWithPayload<P>;
+  options(name: string, req: { saga?: any }, fn: Middleware<Ctx>): () => Action;
+  options<P>(
+    name: string,
+    req: { saga?: any },
+    fn: Middleware<Ctx>,
+  ): (p: P) => ActionWithPayload<P>;
+
+  head(name: string): () => Action;
+  head<P>(name: string): (p: P) => ActionWithPayload<P>;
+  head(name: string, req: { saga?: any }): () => Action;
+  head<P>(name: string, req: { saga?: any }): (p: P) => ActionWithPayload<P>;
+  head(name: string, fn: Middleware<Ctx>): () => Action;
+  head<P>(name: string, fn: Middleware<Ctx>): (p: P) => ActionWithPayload<P>;
+  head(name: string, req: { saga?: any }, fn: Middleware<Ctx>): () => Action;
+  head<P>(
+    name: string,
+    req: { saga?: any },
+    fn: Middleware<Ctx>,
+  ): (p: P) => ActionWithPayload<P>;
+
+  connect(name: string): () => Action;
+  connect<P>(name: string): (p: P) => ActionWithPayload<P>;
+  connect(name: string, req: { saga?: any }): () => Action;
+  connect<P>(name: string, req: { saga?: any }): (p: P) => ActionWithPayload<P>;
+  connect(name: string, fn: Middleware<Ctx>): () => Action;
+  connect<P>(name: string, fn: Middleware<Ctx>): (p: P) => ActionWithPayload<P>;
+  connect(name: string, req: { saga?: any }, fn: Middleware<Ctx>): () => Action;
+  connect<P>(
+    name: string,
+    req: { saga?: any },
+    fn: Middleware<Ctx>,
+  ): (p: P) => ActionWithPayload<P>;
+
+  trace(name: string): () => Action;
+  trace<P>(name: string): (p: P) => ActionWithPayload<P>;
+  trace(name: string, req: { saga?: any }): () => Action;
+  trace<P>(name: string, req: { saga?: any }): (p: P) => ActionWithPayload<P>;
+  trace(name: string, fn: Middleware<Ctx>): () => Action;
+  trace<P>(name: string, fn: Middleware<Ctx>): (p: P) => ActionWithPayload<P>;
+  trace(name: string, req: { saga?: any }, fn: Middleware<Ctx>): () => Action;
+  trace<P>(
+    name: string,
+    req: { saga?: any },
+    fn: Middleware<Ctx>,
+  ): (p: P) => ActionWithPayload<P>;
 }
 
-interface FetchOptions {
-  auth?: boolean;
-}
-
-type ApiOpts = RequestInit & FetchOptions;
-
-export interface ApiFetchSuccess<Data = any> {
-  status: number;
-  ok: true;
-  data: Data;
-}
-
-interface ApiFetchError<E = any> {
-  status: number;
-  ok: false;
-  data: E;
-}
-
-export type ApiFetchResponse<Data = any, E = any> =
-  | ApiFetchSuccess<Data>
-  | ApiFetchError<E>;
-
-export interface FetchCtx<D = any, E = any, P = any> {
-  payload: CreateActionPayload<P>;
-  request: FetchApiOpts;
-  response: ApiFetchResponse<D, E>;
-}
-
-export function fetchBody(ctx: FetchCtx, next: Next) {
-  ctx.request = { url: '' };
-  ctx.response = { status: -1, ok: false, data: {} };
-}
-
-export function* urlParser(ctx: FetchCtx, next: Next) {
-  const httpMethods = [
-    'get',
-    'head',
-    'post',
-    'put',
-    'delete',
-    'connect',
-    'options',
-    'trace',
-    'patch',
-  ];
-  const pattern = new RegExp(`\s*\[(${httpMethods.join('|')})\]\s*`, 'gi');
-
-  const { options = {} } = ctx.payload;
-  if (!ctx.request.url) {
-    let url = Object.keys(options).reduce((acc, key) => {
-      return acc.replace(`:${key}`, options[key]);
-    }, ctx.payload.name);
-
-    url = url.replace(pattern, '');
-    ctx.request.url = url;
-  }
-
-  yield next();
-}
-
-export function createLoadingTracker(
-  loaders: {
-    actions: {
-      loading: (l: LoadingMapPayload<string>) => any;
-      error: (l: LoadingMapPayload<string>) => any;
-      success: (l: LoadingMapPayload<string>) => any;
-    };
-  },
-  successFn: (ctx: FetchCtx) => boolean = (ctx) => ctx.response.ok,
-  errorFn: (ctx: FetchCtx) => string = (ctx) => ctx.response.data.message,
-) {
-  return function* trackLoading(ctx: FetchCtx, next: Next) {
-    const id = ctx.payload.name;
-    yield put(loaders.actions.loading({ id }));
-    yield next();
-    if (!successFn(ctx)) {
-      yield put(loaders.actions.error({ id, message: errorFn(ctx) }));
-      return;
-    }
-    yield put(loaders.actions.success({ id }));
+export function createQuery<Ctx extends FetchCtx = FetchCtx>(
+  baseApi?: SagaApi<Ctx>,
+): SagaQueryApi<Ctx> {
+  const api = baseApi || createApi<Ctx>();
+  return {
+    use: api.use,
+    saga: api.saga,
+    create: api.create,
+    get: (name: string, ...args: any[]) =>
+      (api.create as any)(`${name} [GET]`, ...args),
+    post: (name: string, ...args: any[]) =>
+      (api.create as any)(`${name} [POST]`, ...args),
+    put: (name: string, ...args: any[]) =>
+      (api.create as any)(`${name} [PUT]`, ...args),
+    patch: (name: string, ...args: any[]) =>
+      (api.create as any)(`${name} [PATCH]`, ...args),
+    delete: (name: string, ...args: any[]) =>
+      (api.create as any)(`${name} [PATCH]`, ...args),
+    options: (name: string, ...args: any[]) =>
+      (api.create as any)(`${name} [OPTIONS]`, ...args),
+    head: (name: string, ...args: any[]) =>
+      (api.create as any)(`${name} [HEAD]`, ...args),
+    connect: (name: string, ...args: any[]) =>
+      (api.create as any)(`${name} [CONNECT]`, ...args),
+    trace: (name: string, ...args: any[]) =>
+      (api.create as any)(`${name} [TRACE]`, ...args),
   };
-}
-
-export function* latest(action: string, saga: any, ...args: any[]) {
-  yield takeLatest(`${action}`, saga, ...args);
 }
