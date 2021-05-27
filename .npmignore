@@ -1,0 +1,7 @@
+prettier.config.js
+tsconfig.json
+yarn.lock
+yarn-error.log
+.husky/
+*.test.ts
+*.test.js
