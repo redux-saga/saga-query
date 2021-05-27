@@ -1,14 +1,6 @@
-import { call, put, select, takeLatest } from 'redux-saga/effects';
-import { Action, createTable, MapEntity, ActionWithPayload } from 'robodux';
+import { put, takeLatest } from 'redux-saga/effects';
 
-import {
-  Next,
-  CreateActionPayload,
-  Middleware,
-  SagaApi,
-  createApi,
-} from './create-api';
-import { LoadingMapPayload } from 'robodux/dist';
+import { Next, CreateActionPayload } from './create-api';
 
 interface FetchApiOpts extends RequestInit {
   url?: RequestInfo;
@@ -87,9 +79,9 @@ export function* urlParser<Ctx extends FetchCtx = FetchCtx>(
 export function createLoadingTracker<Ctx extends FetchCtx = FetchCtx>(
   loaders: {
     actions: {
-      loading: (l: LoadingMapPayload<string>) => any;
-      error: (l: LoadingMapPayload<string>) => any;
-      success: (l: LoadingMapPayload<string>) => any;
+      loading: (l: { id: string }) => any;
+      error: (l: { id: string; message: string }) => any;
+      success: (l: { id: string }) => any;
     };
   },
   successFn: (ctx: Ctx) => boolean = (ctx) => ctx.response.ok,

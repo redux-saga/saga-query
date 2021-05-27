@@ -1,4 +1,4 @@
-import { Action, ActionWithPayload } from 'robodux';
+import { Action, ActionWithPayload } from './types';
 import { FetchCtx } from './middleware';
 import { SagaApi, Middleware, createApi } from './create-api';
 

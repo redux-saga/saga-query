@@ -1,6 +1,7 @@
 import { call, takeEvery } from 'redux-saga/effects';
-import { createAction, Action, ActionWithPayload } from 'robodux';
 import sagaCreator from 'redux-saga-creator';
+
+import { Action, ActionWithPayload } from './types';
 
 export type Middleware<Ctx = any> = (ctx: Ctx, next: Next) => any;
 export type Next = () => any;
@@ -75,7 +76,11 @@ export function createApi<Ctx = any>(): SagaApi<Ctx> {
   }
 
   function create(createName: string, ...args: any[]) {
-    const action = createAction<any>(createType(createName));
+    const type = createType(createName);
+    const action = (payload?: any) => {
+      return { type, payload };
+    };
+    action.toString = () => `${type}`;
     let req = null;
     let fn = null;
     if (args.length === 2) {
