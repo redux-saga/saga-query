@@ -59,8 +59,16 @@ export interface SagaApi<Ctx = any> {
   ): (p: P) => ActionWithPayload<P>;
 }
 
+export const defaultOnError = (err: Error) => {
+  throw err;
+};
+
 export const API_ACTION_PREFIX = '@@saga-query/api';
-export function createApi<Ctx = any>(): SagaApi<Ctx> {
+export function createApi<Ctx = any>({
+  onError = defaultOnError,
+}: {
+  onError?: (err: Error) => any;
+} = {}): SagaApi<Ctx> {
   const middleware: Middleware<Ctx>[] = [];
   const sagas: { [key: string]: any } = {};
   const createType = (post: string) => `${API_ACTION_PREFIX}/${post}`;
@@ -117,7 +125,7 @@ export function createApi<Ctx = any>(): SagaApi<Ctx> {
   }
 
   return {
-    saga: () => sagaCreator(sagas),
+    saga: () => sagaCreator(sagas, onError),
     use: (fn: Middleware<Ctx>) => {
       middleware.push(fn);
     },

@@ -7,6 +7,7 @@ quickly build data loading within your redux application.
 
 - [Simple fetch](#show-me-the-way)
 - [Manipulating the request](#manipulating-the-request)
+- [Error handling](#error-handling)
 - [Loading state](#loading-state)
 - [Take latest](#take-latest)
 - [Polling](#polling)
@@ -21,7 +22,7 @@ quickly build data loading within your redux application.
 - Pre-built middleware to cut out boilerplate for interacting with redux and
   redux-saga
 - Simple recipes to handle complex use-cases like cancellation, polling,
-  optimistic updates, loading states, offline support
+  optimistic updates, loading states, undo 
 
 ## Why?
 
@@ -34,8 +35,8 @@ I find that the async flow control of `redux-saga` is one of the most robust
 and powerful declaractive side-effect systems I have used.  Treating
 side-effects as data makes testing dead simple and provides a powerful effect
 handling system to accomodate any use-case.  Features like polling, data
-loading states, cancellation, racing, parallelization, optimistic updates,
-offline support, undo/redo are at your disposal when using `redux-saga`.  Other
+loading states, cancellation, racing, parallelization, optimistic updates, 
+and undo are at your disposal when using `redux-saga`.  Other
 libraries and paradigms can also accomplish the same tasks, but I think nothing
 rivals the readability and maintainability of redux/redux-saga.
 
@@ -257,7 +258,7 @@ const createUser = query.post<{ id: string, email: string }>(
     // here we manipulate the request before it gets sent to our middleware
     ctx.request = {
       method: 'POST',
-      body: JSON.stringify({ email: ctx.options.email }),
+      body: JSON.stringify({ email: ctx.payload.options.email }),
     };
     yield next();
     if (!ctx.response.ok) return;
@@ -270,6 +271,67 @@ const createUser = query.post<{ id: string, email: string }>(
 );
 
 store.dispatch(createUser({ id: '1', }));
+```
+
+### Error handling
+
+Error handling can be accomplished in a bunch of places in the middleware
+pipeline.
+
+Catch all middleware before itself:
+
+```tsx
+const api = createQuery();
+api.use(function* upstream(ctx, next) {
+  try {
+    yield next();
+  } catch (err) {
+    console.log('error!');
+  }
+});
+
+api.use(function* fail() {
+  throw new Error('some error');
+});
+
+const action = api.create(`/error`);
+const store = setupStore(api.saga());
+store.dispatch(action());
+```
+
+Catch middleware inside the action handler:
+
+```tsx
+const api = createQuery();
+api.use(function* fail() {
+  throw new Error('some error');
+});
+
+const action = api.create(`/error`, function* (ctx, next) {
+  try {
+    yield next();
+  } catch (err) {
+    t.pass();
+  }
+});
+
+const store = setupStore(api.saga());
+store.dispatch(action());
+```
+
+Global error handler:
+
+```tsx
+const api = createQuery({
+  onError: (err: Error) => { console.log('error!'); },
+});
+api.use(function* upstream(ctx, next) {
+  throw new Error('failure');
+});
+
+const action = api.create(`/error`);
+const store = setupStore(api.saga());
+store.dispatch(action());
 ```
 
 ### Loading state
@@ -460,7 +522,7 @@ import { put, select } from 'redux-saga/effects';
 const updateUser = api.patch<Partial<User> & { id: string }>(
   `/users/:id`, 
   function* onUpdateUser(ctx: FetchCtx<User>, next) {
-    const user = ctx.options.email;
+    const user = ctx.payload.options.email;
     ctx.request = {
       method: 'PATCH',
       body: JSON.stringify(user),
@@ -488,10 +550,78 @@ const updateUser = api.patch<Partial<User> & { id: string }>(
 )
 ```
 
-### Offline support
+### Undo
 
-TODO
+Here is a simple implementation of an undo feature
 
-### Undo/redo
+```tsx
+import { delay, put, race } from 'redux-saga/effects';
+import { createAction } from 'robodux';
+import { createQuery, fetchBody, urlParser } from 'saga-query';
 
-TODO 
+interface Message {
+  id: string;
+  archived: boolean;
+}
+
+interface UndoCtx extends FetchCtx {
+  undo: { 
+    apply: ActionWithPayload; 
+    revert: ActionWithPayload;
+  };
+}
+
+const messages = createTable<Message>({ name: 'messages' });
+const api = createQuery<UndoCtx>();
+api.use(fetchBody);
+api.use(urlParser);
+
+const undo = createAction('undo');
+api.use(function* onUndo(ctx, next) {
+  const { apply, revert } = ctx.undo;
+
+  // first optimistically set the message to archived
+  yield put(apply);
+
+  // race between a timer and the undo action
+  const winner = yield race({
+    timer: delay(5 * 1000),
+    undo: take(`${undo}`),
+  });
+
+  // if the undo action was dispatched within the timer window, revert
+  // archived
+  if (winner.undo) {
+    yield put(revert);
+    return;
+  }
+
+  yield next();
+});
+
+const archiveMessage = api.patch<{ id: string; }>(
+  `message/:id`,
+  function* onArchive(ctx, next) {
+    ctx.undo = {
+      apply: messages.actions.patch({ 1: { archived: true } }),
+      revert: messages.actions.patch({ 1: { archived: false } }),
+    };
+
+    // prepare the request
+    ctx.request = {
+      method: 'PATCH',
+      body: JSON.stringify({ archived: true }),
+    };
+
+    // make the API request
+    yield next();
+  }
+)
+
+const reducers = createReducerMap(messages);
+const store = setupStore(api.saga(), reducers);
+
+store.dispatch(archiveMessage({ id: '1' }));
+// wait 2 seconds
+store.dispatch(undo());
+```

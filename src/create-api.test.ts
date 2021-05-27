@@ -192,3 +192,54 @@ test('createApi: when providing a generator the to api.create function - should 
     [tickets.name]: { [mockTicket.id]: deserializeTicket(mockTicket) },
   });
 });
+
+test('error handling', (t) => {
+  t.plan(1);
+  const api = createApi<RoboCtx>();
+  api.use(function* upstream(ctx, next) {
+    try {
+      yield next();
+    } catch (err) {
+      t.pass();
+    }
+  });
+  api.use(function* fail() {
+    throw new Error('some error');
+  });
+
+  const action = api.create(`/error`);
+  const store = setupStore(api.saga());
+  store.dispatch(action());
+});
+
+test('error handling inside create', (t) => {
+  t.plan(1);
+  const api = createApi<RoboCtx>();
+  api.use(function* fail() {
+    throw new Error('some error');
+  });
+
+  const action = api.create(`/error`, function* (ctx, next) {
+    try {
+      yield next();
+    } catch (err) {
+      t.pass();
+    }
+  });
+  const store = setupStore(api.saga());
+  store.dispatch(action());
+});
+
+test('error handling - error handler', (t) => {
+  t.plan(1);
+  const api = createApi<RoboCtx>({
+    onError: (err: Error) => t.assert(err.message === 'failure'),
+  });
+  api.use(function* upstream(ctx, next) {
+    throw new Error('failure');
+  });
+
+  const action = api.create(`/error`);
+  const store = setupStore(api.saga());
+  store.dispatch(action());
+});
