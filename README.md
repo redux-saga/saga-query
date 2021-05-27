@@ -14,12 +14,14 @@ quickly build data loading within your redux application.
 
 ## Features
 
-- A familiar middleware system that all node.js developers are familiar with
+- A familiar middleware system that node.js developers are familiar with
   (e.g. express, koa)
 - Write middleware to handle fetching, synchronizing, and caching API requests
 - Unleash the power of redux-saga to handle any async flow control use-cases
 - Pre-built middleware to cut out boilerplate for interacting with redux and
   redux-saga
+- Simple recipes to handle complex use-cases like cancellation, polling,
+  optimistic updates, loading states, offline support
 
 ## Why?
 
@@ -38,13 +40,14 @@ libraries and paradigms can also accomplish the same tasks, but I think nothing
 rivals the readability and maintainability of redux/redux-saga.
 
 All three libraries above are reinventing async flow control and hiding them
-from the end-developer.  For the happy path, this works beautifully.  Why learn
-how to make optimistic ui work when a library can do it for you?  Why learn how
-to efficiently cache API data when a library can do it for you?  However, what
-happens when the queries you're performing against your cache are too slow?
-What happens when `useMemo` isn't good enough?  If you've never needed to 
-performance tune selector queries in the front-end, then this library might 
-not be for you.  
+from the end-developer.  For the happy path, this works beautifully.  Why learn 
+how to cache API data when a library can do it for you?  However, what happens 
+when the queries you're performing against your cache are too slow? What happens 
+when `useMemo` isn't good enough?  What happens when you're fighting against a
+library that doesn't neatly fit into the status quo?  If you've never needed 
+to performance tune selector queries on the front-end, then this library might 
+not be for you.  If you just need to make some API requests with loading states
+and not much else, then those other libraries are probably a better for you.
 
 This library is intended for large scale, complex flow control applications 
 that need full control over the data cache layer while setting good standards
@@ -63,7 +66,7 @@ for using redux and a flexible middleware to handle all business logic.
 import { put, call } from 'redux-saga/effects';
 import { createTable, createReducerMap } from 'robodux';
 import { 
-  createApi, 
+  createQuery, 
   fetchBody, 
   urlParser, 
   FetchCtx 
@@ -78,7 +81,7 @@ const users = createTable<User>({ name: 'users' });
 const selectors = users.getSelectors((s) => s[users.name]);
 export const { selectTableAsList: selectUsersAsList } = selectors;
 
-const api = createApi<FetchCtx>();
+const api = createQuery<FetchCtx>();
 api.use(fetchBody);
 api.use(urlParser);
 api.use(function* onFetch(ctx, next) {
@@ -90,7 +93,7 @@ api.use(function* onFetch(ctx, next) {
   yield next();
 });
 
-const fetchUsers = api.create(
+const fetchUsers = api.get(
   `/users`,
   function* processUsers(ctx: FetchCtx<{ users: User[] }>, next) {
     yield next();
@@ -145,7 +148,7 @@ is also heavily encouraged.
 import { put, call } from 'redux-saga/effects';
 import { createTable, createReducerMap } from 'robodux';
 import { 
-  createApi, 
+  createQuery, 
   fetchBody, 
   urlParser, 
   FetchCtx 
@@ -156,7 +159,7 @@ import {
 const users = createTable<User>({ name: 'users' });
 
 // something awesome happens in here
-const api = createApi<FetchCtx>();
+const api = createQuery<FetchCtx>();
 
 // fetchBody sets up the ctx object with `ctx.request` and `ctx.response` used
 // specifically for the recommended ctx `FetchCtx`.
@@ -188,7 +191,7 @@ api.use(function* onFetch(ctx, next) {
 // first parameter is the name of the action type.  When using `urlParser` it
 // will also be the URL inside `ctx.request.url` of which you can do what you
 // want with it.
-const fetchUsers = api.create(
+const fetchUsers = api.get(
   `/users`,
   // This middleware is special: it gets prepended to the list of middleware.
   // This has the unique benefit of being in full control of when the other
@@ -217,8 +220,8 @@ const fetchUsers = api.create(
 );
 
 // BONUS: POST request to create a user
-const createUser = query.create<{ email: string }>(
-  `/users [POST]`,
+const createUser = query.post<{ email: string }>(
+  `/users`,
   function* createUser(ctx: FetchCtx<User>, next) {
     ctx.request = {
       method: 'POST',
@@ -248,8 +251,8 @@ store.dispatch(createUser({ email: 'change.me@saga.com' }));
 ### Manipulating the request
 
 ```tsx
-const createUser = query.create<{ id: string, email: string }>(
-  `/users [POST]`,
+const createUser = query.post<{ id: string, email: string }>(
+  `/users`,
   function* onCreateUser(ctx: FetchCtx<User>, next) {
     // here we manipulate the request before it gets sent to our middleware
     ctx.request = {
@@ -281,7 +284,7 @@ import {
   defaultLoadingItem,
 } from 'robodux';
 import { 
-  createApi, 
+  createQuery, 
   fetchBody, 
   urlParser, 
   FetchCtx, 
@@ -303,7 +306,7 @@ export const {
   selectTableAsList: selectUsersAsList 
 } = users.getSelectors((s) => s[users.name]);
 
-export const api = createApi<FetchCtx>();
+export const api = createQuery<FetchCtx>();
 api.use(fetchBody);
 api.use(urlParser);
 api.use(createLoadingTracker(loaders));
@@ -317,7 +320,7 @@ api.use(function* onFetch(ctx, next) {
   yield next();
 });
 
-const fetchUsers = api.create(
+const fetchUsers = api.get(
   `/users`,
   function* processUsers(ctx: FetchCtx<{ users: User[] }>, next) {
     yield next();
@@ -385,7 +388,7 @@ function* latest(action: string, saga: any, ...args: any[]) {
   yield takeLatest(`${action}`, saga, ...args);
 }
 
-const fetchUsers = api.create(
+const fetchUsers = api.get(
   `/users`,
   { saga: latest },
   function* processUsers(ctx, next) {
@@ -454,8 +457,8 @@ const App = () => {
 ```tsx
 import { put, select } from 'redux-saga/effects';
 
-const updateUser = api.create<Partial<User> & { id: string }>(
-  `/users/:id [PATCH]`, 
+const updateUser = api.patch<Partial<User> & { id: string }>(
+  `/users/:id`, 
   function* onUpdateUser(ctx: FetchCtx<User>, next) {
     const user = ctx.options.email;
     ctx.request = {
@@ -484,3 +487,11 @@ const updateUser = api.create<Partial<User> & { id: string }>(
   },
 )
 ```
+
+### Offline support
+
+TODO
+
+### Undo/redo
+
+TODO 
