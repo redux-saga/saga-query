@@ -12,6 +12,7 @@ quickly build data loading within your redux application.
 - [Take latest](#take-latest)
 - [Polling](#polling)
 - [Optimistic UI](#optimistic-ui)
+- [Undo](#undo)
 
 ## Features
 
@@ -72,7 +73,7 @@ is also heavily encouraged.
 
 ## Show me the way
 
-```tsx
+```ts
 // api.ts
 import { put, call } from 'redux-saga/effects';
 import { createTable, createReducerMap } from 'robodux';
@@ -145,7 +146,7 @@ const App = () => {
 
 ## Break it down for me
 
-```tsx
+```ts
 import { put, call } from 'redux-saga/effects';
 import { createTable, createReducerMap } from 'robodux';
 import { 
@@ -251,7 +252,7 @@ store.dispatch(createUser({ email: 'change.me@saga.com' }));
 
 ### Manipulating the request
 
-```tsx
+```ts
 const createUser = query.post<{ id: string, email: string }>(
   `/users`,
   function* onCreateUser(ctx: FetchCtx<User>, next) {
@@ -280,7 +281,7 @@ pipeline.
 
 Catch all middleware before itself:
 
-```tsx
+```ts
 const api = createQuery();
 api.use(function* upstream(ctx, next) {
   try {
@@ -301,7 +302,7 @@ store.dispatch(action());
 
 Catch middleware inside the action handler:
 
-```tsx
+```ts
 const api = createQuery();
 api.use(function* fail() {
   throw new Error('some error');
@@ -321,7 +322,7 @@ store.dispatch(action());
 
 Global error handler:
 
-```tsx
+```ts
 const api = createQuery({
   onError: (err: Error) => { console.log('error!'); },
 });
@@ -336,7 +337,7 @@ store.dispatch(action());
 
 ### Loading state
 
-```tsx
+```ts
 // api.ts
 import { put, call } from 'redux-saga/effects';
 import { 
@@ -441,7 +442,7 @@ If two requests are made:
 
 While (A) request is still in flight, (B) request would be cancelled.
 
-```tsx
+```ts
 import { takeLatest } from 'redux-saga/effects';
 
 // this is for demonstration purposes, you can import it using
@@ -462,7 +463,7 @@ const fetchUsers = api.get(
 
 ### Polling
 
-```tsx
+```ts
 import { take, call, delay, race } from 'redux-saga/effects';
 
 function* poll(action: string, saga: any, ...args: any[]) {
@@ -516,7 +517,7 @@ const App = () => {
 
 ### Optimistic UI
 
-```tsx
+```ts
 import { put, select } from 'redux-saga/effects';
 
 const updateUser = api.patch<Partial<User> & { id: string }>(
@@ -596,7 +597,7 @@ api.patch(function* (ctx, next) {
 
 We built a middleware for anyone to use:
 
-```tsx
+```ts
 import { delay, put, race } from 'redux-saga/effects';
 import { createAction } from 'robodux';
 import { 
