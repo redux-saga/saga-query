@@ -1,13 +1,12 @@
 {
   "name": "saga-query",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Data synchronization using redux-sagas",
-  "main": "index.js",
+  "main": "./dist/index.js",
   "repository": "https://github.com/neurosnap/saga-query.git",
   "author": "Eric Bower <me@erock.io>",
   "license": "MIT",
   "private": false,
-  "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
     "test": "ava",
