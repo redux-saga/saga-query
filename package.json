@@ -1,6 +1,6 @@
 {
   "name": "saga-query",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Data synchronization using redux-sagas",
   "main": "./dist/index.js",
   "repository": "https://github.com/neurosnap/saga-query.git",
