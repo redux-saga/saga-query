@@ -34,7 +34,7 @@ export function compose<Ctx = any>(middleware: Middleware<Ctx>[]) {
   };
 }
 
-const isFn = (fn?: any) => fn && {}.toString.call(fn) === '[object Function]';
+const isFn = (fn?: any) => fn && typeof fn === 'function';
 const isObject = (obj?: any) => typeof obj === 'object' && obj !== null;
 
 export interface CreateActionPayload<P = any> {

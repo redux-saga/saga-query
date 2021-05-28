@@ -3,15 +3,9 @@ import { put, takeLatest, race, delay, take } from 'redux-saga/effects';
 import { Next, CreateActionPayload } from './create-api';
 import { ActionWithPayload } from './types';
 
-interface FetchApiOpts extends RequestInit {
+export interface FetchApiOpts extends RequestInit {
   url?: RequestInfo;
 }
-
-interface FetchOptions {
-  auth?: boolean;
-}
-
-type ApiOpts = RequestInit & FetchOptions;
 
 export interface ApiFetchSuccess<Data = any> {
   status: number;
@@ -19,7 +13,7 @@ export interface ApiFetchSuccess<Data = any> {
   data: Data;
 }
 
-interface ApiFetchError<E = any> {
+export interface ApiFetchError<E = any> {
   status: number;
   ok: false;
   data: E;
