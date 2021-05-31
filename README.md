@@ -19,11 +19,12 @@ quickly build data loading within your redux application.
 - A familiar middleware system that node.js developers are familiar with
   (e.g. express, koa)
 - Write middleware to handle fetching, synchronizing, and caching API requests
+  on the front-end
 - Unleash the power of redux-saga to handle any async flow control use-cases
 - Pre-built middleware to cut out boilerplate for interacting with redux and
   redux-saga
 - Simple recipes to handle complex use-cases like cancellation, polling,
-  optimistic updates, loading states, undo 
+  optimistic updates, loading states, undo
 
 ## Why?
 
@@ -79,7 +80,7 @@ import { put, call } from 'redux-saga/effects';
 import { createTable, createReducerMap } from 'robodux';
 import { 
   createQuery, 
-  fetchBody, 
+  queryCtx, 
   urlParser, 
   FetchCtx 
 } from 'saga-query';
@@ -94,7 +95,7 @@ const selectors = users.getSelectors((s) => s[users.name]);
 export const { selectTableAsList: selectUsersAsList } = selectors;
 
 const api = createQuery<FetchCtx>();
-api.use(fetchBody);
+api.use(queryCtx);
 api.use(urlParser);
 api.use(function* onFetch(ctx, next) {
   const { url, ...options } = ctx.request;
@@ -144,15 +145,27 @@ const App = () => {
 }
 ```
 
-## Break it down for me
+## How does it work?
+
+`createQuery` will build a set of actions and sagas for each `create` or http
+method used (e.g. `get`, `post`, `put`).  Let's call them endpoints.  Each
+endpoint gets their own action and linked saga.  When you call `api.saga()` it
+loops through all the endpoints and creates a root saga that is fault tolerant
+(one saga won't crash all the other sagas).  The default for each saga is to
+use `takeEvery` from `redux-saga` but as you'll see in other recipes, this can
+be easily overriden.
+
+## Break it down from me
 
 ```ts
 import { put, call } from 'redux-saga/effects';
 import { createTable, createReducerMap } from 'robodux';
 import { 
   createQuery, 
-  fetchBody, 
+  queryCtx, 
   urlParser, 
+  // FetchCtx is an interface that's built around using window.fetch
+  // You don't have to use it if you don't want to.
   FetchCtx 
 } from 'saga-query';
 
@@ -161,11 +174,14 @@ import {
 const users = createTable<User>({ name: 'users' });
 
 // something awesome happens in here
+// The default generic value here is `QueryCtx` which includes a `payload`,
+// `request`, and `response`.
+// The generic passed to `createQuery` must extend `QueryCtx` to be accepted.
 const api = createQuery<FetchCtx>();
 
-// fetchBody sets up the ctx object with `ctx.request` and `ctx.response` used
-// specifically for the recommended ctx `FetchCtx`.
-api.use(fetchBody);
+// queryCtx sets up the ctx object with `ctx.request` and `ctx.response`
+// required for `createQuery` to function properly.
+api.use(queryCtx);
 
 // urlParser is a middleware that will take the name of `api.create(name)` and
 // replace it with the values passed into the action
@@ -174,7 +190,7 @@ api.use(urlParser);
 // this is where you defined your core fetching logic
 api.use(function* onFetch(ctx, next) {
   // ctx.request is the object used to make a fetch request when using
-  // `fetchBody` and `urlParser`
+  // `queryCtx` and `urlParser`
   const { url, ...options } = ctx.request;
   const resp = yield call(fetch, url, options);
   const data = yield call([resp, 'json']);
@@ -206,7 +222,8 @@ const fetchUsers = api.get(
     // anything after the above line happens *after* the middleware gets called and
     // and a fetch has been made.
 
-    // using FetchCtx 
+    // using FetchCtx `ctx.response` is a discriminated union based on the
+    // boolean `ctx.response.ok`.
     if (!ctx.response.ok) return;
 
     // data = { users: User[] };
@@ -225,8 +242,11 @@ const fetchUsers = api.get(
 const createUser = query.post<{ email: string }>(
   `/users`,
   function* createUser(ctx: FetchCtx<User>, next) {
+    // since this middleware is the first one that gets called after the action
+    // is dispatched, we can set the `ctx.request` to whatever want.  The
+    // middleware we setup for `createQuery` will then use the `ctx` to fill in
+    // the other details like `url` and `method`
     ctx.request = {
-      method: 'POST',
       body: JSON.stringify({ email: ctx.payload.options.email }),
     };
     yield next();
@@ -258,7 +278,6 @@ const createUser = query.post<{ id: string, email: string }>(
   function* onCreateUser(ctx: FetchCtx<User>, next) {
     // here we manipulate the request before it gets sent to our middleware
     ctx.request = {
-      method: 'POST',
       body: JSON.stringify({ email: ctx.payload.options.email }),
     };
     yield next();
@@ -273,6 +292,15 @@ const createUser = query.post<{ id: string, email: string }>(
 
 store.dispatch(createUser({ id: '1', }));
 ```
+
+Have some `request` data that you want to set when creating the endpoint?
+
+```ts
+const fetchUsers = query.get('/users', query.request({ credentials: 'include' }))
+```
+
+`query.request()` accepts the request for the `Ctx` that the end-developer
+provides.
 
 ### Error handling
 
@@ -348,10 +376,10 @@ import {
 } from 'robodux';
 import { 
   createQuery, 
-  fetchBody, 
+  queryCtx, 
   urlParser, 
   FetchCtx, 
-  createLoadingTracker,
+  loadingTracker,
 } from 'saga-query';
 
 interface User {
@@ -370,9 +398,9 @@ export const {
 } = users.getSelectors((s) => s[users.name]);
 
 export const api = createQuery<FetchCtx>();
-api.use(fetchBody);
+api.use(queryCtx);
 api.use(urlParser);
-api.use(createLoadingTracker(loaders));
+api.use(loadingTracker(loaders));
 
 api.use(function* onFetch(ctx, next) {
   const { url, ...options } = ctx.request;
@@ -525,7 +553,6 @@ const updateUser = api.patch<Partial<User> & { id: string }>(
   function* onUpdateUser(ctx: FetchCtx<User>, next) {
     const { id, email } = ctx.payload.options;
     ctx.request = {
-      method: 'PATCH',
       body: JSON.stringify(email),
     };
 
@@ -602,9 +629,9 @@ import { delay, put, race } from 'redux-saga/effects';
 import { createAction } from 'robodux';
 import { 
   createQuery, 
-  fetchBody, 
+  queryCtx, 
   urlParser, 
-  undoMiddleware, 
+  undoer, 
   undo,
   UndoCtx,
 } from 'saga-query';
@@ -616,9 +643,9 @@ interface Message {
 
 const messages = createTable<Message>({ name: 'messages' });
 const api = createQuery<UndoCtx>();
-api.use(fetchBody);
+api.use(queryCtx);
 api.use(urlParser);
-api.use(undoMiddleware);
+api.use(undoer);
 
 const archiveMessage = api.patch<{ id: string; }>(
   `message/:id`,
@@ -630,7 +657,6 @@ const archiveMessage = api.patch<{ id: string; }>(
 
     // prepare the request
     ctx.request = {
-      method: 'PATCH',
       body: JSON.stringify({ archived: true }),
     };
 
