@@ -15,6 +15,7 @@ quickly build data loading within your redux application.
 - [Optimistic UI](#optimistic-ui)
 - [Undo](#undo)
 - [redux-toolkit](#redux-toolkit)
+- [window.fetch middleware](#fetch-middleware)
 
 ## Features
 
@@ -826,4 +827,35 @@ const reducers = createReducerMap(users);
 const store = setupStore(query.saga(), reducers);
 
 store.dispatch(fetchUsers());
+```
+
+### Fetch middleware
+
+**Active development!**
+
+Using the above example, we can build middleware for `window.fetch` that
+handles most of what's required for basic fetching JSON.
+
+```ts
+import { 
+  createQuery, 
+  FetchCtx, 
+  fetchJsonify, 
+  queryCtx, 
+  urlParser,
+  compose,
+} from 'saga-query';
+
+const query = createQuery<FetchCtx>();
+// this composes three middleware together
+const fetchJson = compose([queryCtx, urlParser, fetchJsonify]);
+query.use(fetchJson);
+
+const fetchUsers = query.get(
+  '/users', 
+  function* (ctx: FetchCtx<{ users: User[] }>, next) {
+    yield next();
+    if (!ctx.response.ok) return;
+    // ...
+  });
 ```
