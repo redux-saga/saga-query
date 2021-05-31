@@ -13,6 +13,7 @@ quickly build data loading within your redux application.
 - [Polling](#polling)
 - [Optimistic UI](#optimistic-ui)
 - [Undo](#undo)
+- [redux-toolkit](#redux-toolkit)
 
 ## Features
 
@@ -25,10 +26,15 @@ quickly build data loading within your redux application.
   redux-saga
 - Simple recipes to handle complex use-cases like cancellation, polling,
   optimistic updates, loading states, undo
+- Progressively add it to your codebase: all we do is add reducers to your
+  state and bootup some sagas
+- Use it with any other redux libraries
 
 ## Why?
 
-Libraries like `react-query`, `rtk-query`, and `apollo-client` are making it
+Libraries like [react-query](https://react-query.tanstack.com/), 
+[rtk-query](https://rtk-query-docs.netlify.app/), and 
+[apollo-client](https://www.apollographql.com/docs/react/) are making it
 easier than ever to fetch and cache data from an API server.  All of them
 have their unique attributes and I encourage everyone to check them out if they
 haven't.
@@ -47,10 +53,12 @@ from the end-developer.  For the happy path, this works beautifully.  Why learn
 how to cache API data when a library can do it for you?  However, what happens 
 when the queries you're performing against your cache are too slow? What happens 
 when `useMemo` isn't good enough?  What happens when you're fighting against a
-library that doesn't neatly fit into the status quo?  If you've never needed 
-to performance tune selector queries on the front-end, then this library might 
-not be for you.  If you just need to make some API requests with loading states
-and not much else, then those other libraries are probably a better for you.
+library that doesn't do exactly what you need it to do?  What happens when you 
+want to reuse your business logic for another platform (e.g. a cli) and can't 
+use `react`? If you've never needed to performance tune selector queries on the 
+front-end, then this library might not be for you.  If you just need to make 
+some API requests with loading states and not much else, then those other 
+libraries are probably a better fit for you.
 
 This library is intended for large scale, complex flow control applications 
 that need full control over the data cache layer while setting good standards
@@ -67,6 +75,7 @@ for using redux and a flexible middleware to handle all business logic.
 ## `saga-query` is *not*
 
 - A DSL wrapped around data fetching and caching logic
+- A one-line solution to fetch and cache server data
 - Going to accommodate all use-cases
 - Going to erradicate all boilerplate
 
@@ -688,4 +697,44 @@ const store = setupStore(api.saga(), reducers);
 store.dispatch(archiveMessage({ id: '1' }));
 // wait 2 seconds
 store.dispatch(undo());
+```
+
+### Redux-toolkit
+
+`redux-toolkit` is a very popular redux library officially supported by the
+`redux` team.  When using it with `saga-query` the main thing it is responsible
+for is setting up the redux slice where we want to cache the API endpoint
+response data.
+
+```ts
+import { createSlice } from 'redux-toolkit';
+
+const users = createSlice({ 
+  name: 'users', 
+  initialState: {},
+  reducers: {
+    add: (state, action) => {
+      action.payload.forEach((user) => {
+        state[user.id] = user.id; 
+      });
+    }
+  } 
+});
+
+const query = createQuery();
+query.use(queryCtx);
+query.use(urlParser);
+// made up window.fetch logic
+query.use(apiFetch);
+
+const fetchUsers = query.get<{ users: User[] }>('/users', function* (ctx, next) {
+  yield next();
+  const { data } = response.data;
+  yield put(users.actions.add(data.users));
+});
+
+const reducers = createReducerMap(users);
+const store = setupStore(query.saga(), reducers);
+
+store.dispatch(fetchUsers());
 ```
