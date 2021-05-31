@@ -15,6 +15,7 @@ quickly build data loading within your redux application.
 - [Optimistic UI](#optimistic-ui)
 - [Undo](#undo)
 - [redux-toolkit](#redux-toolkit)
+- [Examples](#examples)
 
 ## Features
 
@@ -121,7 +122,7 @@ const api = createQuery<FetchCtx>();
 api.use(queryCtx);
 api.use(urlParser);
 api.use(function* onFetch(ctx, next) {
-  const { url, ...options } = ctx.request;
+  const { url = '', ...options } = ctx.request;
   const resp = yield call(fetch, url, options);
   const data = yield call([resp, 'json']);
 
@@ -219,7 +220,7 @@ api.use(urlParser);
 api.use(function* onFetch(ctx, next) {
   // ctx.request is the object used to make a fetch request when using
   // `queryCtx` and `urlParser`
-  const { url, ...options } = ctx.request;
+  const { url = '', ...options } = ctx.request;
   const resp = yield call(fetch, url, options);
   const data = yield call([resp, 'json']);
 
@@ -431,7 +432,7 @@ api.use(urlParser);
 api.use(loadingTracker(loaders));
 
 api.use(function* onFetch(ctx, next) {
-  const { url, ...options } = ctx.request;
+  const { url = '', ...options } = ctx.request;
   const resp = yield call(fetch, url, options);
   const data = yield call([resp, 'json']);
 
@@ -827,3 +828,7 @@ const store = setupStore(query.saga(), reducers);
 
 store.dispatch(fetchUsers());
 ```
+
+### Examples
+
+- [Simple](https://codesandbox.io/s/saga-query-simple-2r2tr)
