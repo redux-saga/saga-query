@@ -15,7 +15,6 @@ quickly build data loading within your redux application.
 - [Optimistic UI](#optimistic-ui)
 - [Undo](#undo)
 - [redux-toolkit](#redux-toolkit)
-- [window.fetch middleware](#fetch-middleware)
 
 ## Features
 
@@ -831,7 +830,7 @@ store.dispatch(fetchUsers());
 
 ### Fetch middleware
 
-**Active development!**
+**WARNING: Active development!**
 
 Using the above example, we can build middleware for `window.fetch` that
 handles most of what's required for basic fetching JSON.

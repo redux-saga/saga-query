@@ -30,7 +30,7 @@ export interface FetchCtx<P = any, D = any, E = any> extends QueryCtx {
   response: ApiFetchResponse<D, E>;
 }
 
-export function fetchJsonify<
+/* export function fetchJsonify<
   Ctx extends FetchCtx = FetchCtx<any, any, { message: string }>,
 >() {
   return function* onFetchJson(ctx: Ctx, next: Next): Generator<any, any, any> {
@@ -54,4 +54,4 @@ export function fetchJsonify<
 
     yield next();
   };
-}
+} */
