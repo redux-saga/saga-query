@@ -445,7 +445,7 @@ const store = setupStore(reducers, api.saga());
 
 ```tsx
 // app.tsx
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { 
   loaders, 
@@ -456,10 +456,14 @@ import {
 } from './api';
 
 const App = () => {
+  const dispatch = useDispatch();
   const users = useSelector(selectUsersAsList);
   const loader = useSelector(
     (s) => selectLoaderById(s, { id: `${fetchUsers}` })
   );
+  useEffect(() => {
+    dispatch(fetchUsers());
+  }, []);
 
   if (loader.loading) {
     return <div>Loading ...</div>
