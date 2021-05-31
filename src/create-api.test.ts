@@ -9,6 +9,7 @@ import { Middleware, Next, createApi, CreateActionPayload } from './create-api';
 interface RoboCtx<D = any, P = any> {
   payload: CreateActionPayload<P>;
   url: string;
+  request: any;
   response: D;
   actions: Action[];
 }
@@ -240,6 +241,35 @@ test('error handling - error handler', (t) => {
   });
 
   const action = api.create(`/error`);
+  const store = setupStore(api.saga());
+  store.dispatch(action());
+});
+
+test('create fn is an array', (t) => {
+  t.plan(1);
+  const api = createApi<RoboCtx>();
+  api.use(function* (ctx, next) {
+    t.deepEqual(ctx.request, {
+      method: 'POST',
+      body: {
+        test: 'me',
+      },
+    });
+    yield next();
+  });
+  const action = api.create('/users', [
+    function* (ctx, next) {
+      ctx.request = {
+        method: 'POST',
+      };
+      yield next();
+    },
+    function* (ctx, next) {
+      ctx.request.body = { test: 'me' };
+      yield next();
+    },
+  ]);
+
   const store = setupStore(api.saga());
   store.dispatch(action());
 });

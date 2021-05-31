@@ -49,13 +49,20 @@ export interface SagaApi<Ctx = any> {
   create<P>(name: string): (p: P) => ActionWithPayload<P>;
   create(name: string, req: { saga?: any }): () => Action;
   create<P>(name: string, req: { saga?: any }): (p: P) => ActionWithPayload<P>;
-  create(name: string, fn: Middleware<Ctx>): () => Action;
-  create<P>(name: string, fn: Middleware<Ctx>): (p: P) => ActionWithPayload<P>;
-  create(name: string, req: { saga?: any }, fn: Middleware<Ctx>): () => Action;
+  create(name: string, fn: Middleware<Ctx> | Middleware<Ctx>[]): () => Action;
+  create<P>(
+    name: string,
+    fn: Middleware<Ctx> | Middleware<Ctx>[],
+  ): (p: P) => ActionWithPayload<P>;
+  create(
+    name: string,
+    req: { saga?: any },
+    fn: Middleware<Ctx> | Middleware<Ctx>[],
+  ): () => Action;
   create<P>(
     name: string,
     req: { saga?: any },
-    fn: Middleware<Ctx>,
+    fn: Middleware<Ctx> | Middleware<Ctx>[],
   ): (p: P) => ActionWithPayload<P>;
 }
 
@@ -97,7 +104,7 @@ export function createApi<Ctx = any>({
     }
 
     if (args.length === 1) {
-      if (isFn(args[0])) {
+      if (isFn(args[0]) || Array.isArray(args[0])) {
         fn = args[0];
       } else {
         req = args[0];
@@ -106,6 +113,10 @@ export function createApi<Ctx = any>({
 
     if (req && !isObject(req)) {
       throw new Error('Options must be an object');
+    }
+
+    if (fn && Array.isArray(fn)) {
+      fn = compose(fn);
     }
 
     if (fn && !isFn(fn)) {

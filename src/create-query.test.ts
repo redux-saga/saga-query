@@ -5,6 +5,7 @@ import { createReducerMap, MapEntity, createTable } from 'robodux';
 import { createStore, combineReducers, applyMiddleware } from 'redux';
 import { FetchCtx, urlParser, fetchBody } from './middleware';
 import { createQuery } from './create-query';
+import { request } from './';
 
 interface User {
   id: string;
@@ -65,4 +66,17 @@ test('createQuery - POST', (t) => {
   const reducers = createReducerMap(cache);
   const store = setupStore(query.saga(), reducers);
   store.dispatch(createUser({ email: mockUser.email }));
+});
+
+test('middleware - with request fn', (t) => {
+  t.plan(1);
+  const query = createQuery();
+  query.use(fetchBody);
+  query.use(urlParser);
+  query.use(function* (ctx, next) {
+    t.deepEqual(ctx.request, { method: 'POST', url: '/users' });
+  });
+  const createUser = query.create('/users', request({ method: 'POST' }));
+  const store = setupStore(query.saga(), (state: any) => state);
+  store.dispatch(createUser());
 });

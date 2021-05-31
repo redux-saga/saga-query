@@ -94,6 +94,13 @@ export function createLoadingTracker<Ctx extends FetchCtx = FetchCtx>(
   };
 }
 
+export function request<Ctx extends FetchCtx = FetchCtx>(req: Ctx['request']) {
+  return function* onRequest(ctx: Ctx, next: Next) {
+    ctx.request = req;
+    yield next();
+  };
+}
+
 export function* latest(action: string, saga: any, ...args: any[]) {
   yield takeLatest(`${action}`, saga, ...args);
 }
