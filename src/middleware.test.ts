@@ -9,12 +9,8 @@ import {
 } from 'robodux';
 import { createStore, combineReducers, applyMiddleware } from 'redux';
 import { Next, createApi } from './create-api';
-import {
-  FetchCtx,
-  urlParser,
-  createLoadingTracker,
-  fetchBody,
-} from './middleware';
+import { urlParser, loadingTracker, queryCtx } from './middleware';
+import { FetchCtx } from './fetch';
 
 interface User {
   id: string;
@@ -42,7 +38,7 @@ test('middleware - basic', (t) => {
   const cache = createTable<User>({ name });
   const query = createApi<FetchCtx>();
 
-  query.use(fetchBody);
+  query.use(queryCtx);
   query.use(urlParser);
   query.use(function* fetchApi(ctx, next) {
     if (`${ctx.request.url}`.startsWith('/users/')) {
@@ -106,7 +102,7 @@ test('middleware - with loader', (t) => {
   const loaders = createLoaderTable({ name: 'loaders' });
 
   const api = createApi<FetchCtx>();
-  api.use(fetchBody);
+  api.use(queryCtx);
   api.use(urlParser);
   api.use(function* fetchApi(ctx, next) {
     ctx.response = {
@@ -118,7 +114,7 @@ test('middleware - with loader', (t) => {
     };
     yield next();
   });
-  api.use(createLoadingTracker(loaders));
+  api.use(loadingTracker(loaders));
 
   const fetchUsers = api.create(
     `/users`,
@@ -156,7 +152,7 @@ test('middleware - with POST', (t) => {
   const cache = createTable<User>({ name });
   const query = createApi<FetchCtx>();
 
-  query.use(fetchBody);
+  query.use(queryCtx);
   query.use(urlParser);
   query.use(function* fetchApi(ctx, next) {
     t.deepEqual(ctx.request, {

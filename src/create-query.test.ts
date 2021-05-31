@@ -3,9 +3,9 @@ import createSagaMiddleware from 'redux-saga';
 import { put } from 'redux-saga/effects';
 import { createReducerMap, MapEntity, createTable } from 'robodux';
 import { createStore, combineReducers, applyMiddleware } from 'redux';
-import { FetchCtx, urlParser, fetchBody } from './middleware';
+import { urlParser, queryCtx } from './middleware';
+import { FetchCtx } from './fetch';
 import { createQuery } from './create-query';
-import { request } from './';
 
 interface User {
   id: string;
@@ -16,7 +16,10 @@ interface User {
 const mockUser: User = { id: '1', name: 'test', email: 'test@test.com' };
 const mockUser2: User = { id: '2', name: 'two', email: 'two@test.com' };
 
-function setupStore(saga: any, reducers: any) {
+function setupStore(
+  saga: any,
+  reducers: any = { users: (state: any = {}) => state },
+) {
   const sagaMiddleware = createSagaMiddleware();
   const reducer = combineReducers(reducers);
   const store: any = createStore(reducer, applyMiddleware(sagaMiddleware));
@@ -30,7 +33,7 @@ test('createQuery - POST', (t) => {
   const cache = createTable<User>({ name });
   const query = createQuery<FetchCtx>();
 
-  query.use(fetchBody);
+  query.use(queryCtx);
   query.use(urlParser);
   query.use(function* fetchApi(ctx, next) {
     t.deepEqual(ctx.request, {
@@ -71,12 +74,12 @@ test('createQuery - POST', (t) => {
 test('middleware - with request fn', (t) => {
   t.plan(1);
   const query = createQuery();
-  query.use(fetchBody);
+  query.use(queryCtx);
   query.use(urlParser);
   query.use(function* (ctx, next) {
     t.deepEqual(ctx.request, { method: 'POST', url: '/users' });
   });
-  const createUser = query.create('/users', request({ method: 'POST' }));
-  const store = setupStore(query.saga(), (state: any) => state);
+  const createUser = query.create('/users', query.request({ method: 'POST' }));
+  const store = setupStore(query.saga());
   store.dispatch(createUser());
 });

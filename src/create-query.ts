@@ -1,9 +1,11 @@
-import { Action, ActionWithPayload } from './types';
-import { FetchCtx } from './middleware';
-import { SagaApi, Middleware, createApi } from './create-api';
+import { Action, ActionWithPayload, QueryCtx } from './types';
+import { SagaApi, Middleware, createApi, Next } from './create-api';
 
-export interface SagaQueryApi<Ctx extends FetchCtx = FetchCtx>
+export interface SagaQueryApi<Ctx extends QueryCtx = QueryCtx>
   extends SagaApi<Ctx> {
+  request: (
+    r: Ctx['request'],
+  ) => (ctx: Ctx, next: Next) => Generator<any, any, any>;
   get(name: string): () => Action;
   get<P>(name: string): (p: P) => ActionWithPayload<P>;
   get(name: string, req: { saga?: any }): () => Action;
@@ -122,7 +124,7 @@ export interface SagaQueryApi<Ctx extends FetchCtx = FetchCtx>
   ): (p: P) => ActionWithPayload<P>;
 }
 
-export function createQuery<Ctx extends FetchCtx = FetchCtx>(
+export function createQuery<Ctx extends QueryCtx = QueryCtx>(
   baseApi?: SagaApi<Ctx>,
 ): SagaQueryApi<Ctx> {
   const api = baseApi || createApi<Ctx>();
@@ -130,6 +132,12 @@ export function createQuery<Ctx extends FetchCtx = FetchCtx>(
     use: api.use,
     saga: api.saga,
     create: api.create,
+    request: (req: Ctx['request']) => {
+      return function* onRequest(ctx: Ctx, next: Next) {
+        ctx.request = req;
+        yield next();
+      };
+    },
     get: (name: string, ...args: any[]) =>
       (api.create as any)(`${name} [GET]`, ...args),
     post: (name: string, ...args: any[]) =>

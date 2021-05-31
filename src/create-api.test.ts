@@ -4,7 +4,8 @@ import createSagaMiddleware from 'redux-saga';
 import { put } from 'redux-saga/effects';
 import { createTable, Action, MapEntity, createReducerMap } from 'robodux';
 
-import { Middleware, Next, createApi, CreateActionPayload } from './create-api';
+import { Middleware, Next, createApi } from './create-api';
+import { CreateActionPayload } from './types';
 
 interface RoboCtx<D = any, P = any> {
   payload: CreateActionPayload<P>;

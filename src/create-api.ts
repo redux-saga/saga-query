@@ -1,7 +1,7 @@
 import { call, takeEvery } from 'redux-saga/effects';
 import sagaCreator from 'redux-saga-creator';
 
-import { Action, ActionWithPayload } from './types';
+import { Action, ActionWithPayload, CreateActionPayload } from './types';
 
 export type Middleware<Ctx = any> = (ctx: Ctx, next: Next) => any;
 export type Next = () => any;
@@ -36,11 +36,6 @@ export function compose<Ctx = any>(middleware: Middleware<Ctx>[]) {
 
 const isFn = (fn?: any) => fn && typeof fn === 'function';
 const isObject = (obj?: any) => typeof obj === 'object' && obj !== null;
-
-export interface CreateActionPayload<P = any> {
-  name: string;
-  options: P;
-}
 
 export interface SagaApi<Ctx = any> {
   saga: () => (...options: any[]) => Generator<any, any, any>;

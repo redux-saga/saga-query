@@ -9,7 +9,7 @@
   "private": false,
   "types": "./dist/index.d.ts",
   "scripts": {
-    "test": "ava",
+    "test": "tsc --noEmit && ava",
     "prepare": "husky install",
     "format": "prettier --write **/*.ts",
     "build": "tsc",

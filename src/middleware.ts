@@ -1,44 +1,18 @@
 import { put, takeLatest, race, delay, take } from 'redux-saga/effects';
 
-import { Next, CreateActionPayload } from './create-api';
-import { ActionWithPayload } from './types';
+import { Next, compose } from './create-api';
+import { ActionWithPayload, CreateActionPayload, QueryCtx } from './types';
 
-export interface FetchApiOpts extends RequestInit {
-  url?: RequestInfo;
-}
-
-export interface ApiFetchSuccess<Data = any> {
-  status: number;
-  ok: true;
-  data: Data;
-}
-
-export interface ApiFetchError<E = any> {
-  status: number;
-  ok: false;
-  data: E;
-}
-
-export type ApiFetchResponse<Data = any, E = any> =
-  | ApiFetchSuccess<Data>
-  | ApiFetchError<E>;
-
-export interface FetchCtx<D = any, E = any, P = any> {
-  payload: CreateActionPayload<P>;
-  request: FetchApiOpts;
-  response: ApiFetchResponse<D, E>;
-}
-
-export function* fetchBody<Ctx extends FetchCtx = FetchCtx>(
+export function* queryCtx<Ctx extends QueryCtx = QueryCtx>(
   ctx: Ctx,
   next: Next,
 ) {
   if (!ctx.request) ctx.request = { url: '' };
-  if (!ctx.response) ctx.response = { status: -1, ok: false, data: {} };
+  if (!ctx.response) ctx.response = {};
   yield next();
 }
 
-export function* urlParser<Ctx extends FetchCtx = FetchCtx>(
+export function* urlParser<Ctx extends QueryCtx = QueryCtx>(
   ctx: Ctx,
   next: Next,
 ) {
@@ -63,7 +37,11 @@ export function* urlParser<Ctx extends FetchCtx = FetchCtx>(
 
     url = httpMethods.reduce((acc, method) => {
       const pattern = new RegExp(`\\s*\\[` + method + `\\]\\s*`, 'i');
-      return acc.replace(pattern, '');
+      const result = acc.replace(pattern, '');
+      if (result.length !== acc.length) {
+        ctx.request.method = method.toLocaleUpperCase();
+      }
+      return result;
     }, url);
     ctx.request.url = url;
   }
@@ -71,7 +49,7 @@ export function* urlParser<Ctx extends FetchCtx = FetchCtx>(
   yield next();
 }
 
-export function createLoadingTracker<Ctx extends FetchCtx = FetchCtx>(
+export function loadingTracker<Ctx extends QueryCtx = QueryCtx>(
   loaders: {
     actions: {
       loading: (l: { id: string }) => any;
@@ -94,18 +72,11 @@ export function createLoadingTracker<Ctx extends FetchCtx = FetchCtx>(
   };
 }
 
-export function request<Ctx extends FetchCtx = FetchCtx>(req: Ctx['request']) {
-  return function* onRequest(ctx: Ctx, next: Next) {
-    ctx.request = req;
-    yield next();
-  };
-}
-
 export function* latest(action: string, saga: any, ...args: any[]) {
   yield takeLatest(`${action}`, saga, ...args);
 }
 
-export interface UndoCtx extends FetchCtx {
+export interface UndoCtx extends QueryCtx {
   undo: {
     apply: ActionWithPayload<any>;
     revert: ActionWithPayload<any>;
@@ -115,10 +86,7 @@ export interface UndoCtx extends FetchCtx {
 export const undo = () => ({
   type: 'undo',
 });
-export function* undoMiddleware(
-  ctx: UndoCtx,
-  next: Next,
-): Generator<any, any, any> {
+export function* undoer(ctx: UndoCtx, next: Next): Generator<any, any, any> {
   if (!ctx.undo) yield next();
   const { apply, revert } = ctx.undo;
 
