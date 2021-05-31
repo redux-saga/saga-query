@@ -26,7 +26,7 @@ quickly build data loading within your redux application.
 - Pre-built middleware to cut out boilerplate for interacting with redux and
   redux-saga
 - Simple recipes to handle complex use-cases like cancellation, polling,
-  optimistic updates, loading states, undo
+  optimistic updates, loading states, undo, react
 - Progressively add it to your codebase: all we do is add reducers to your
   state and bootup some sagas
 - Use it with any other redux libraries
@@ -51,12 +51,17 @@ rivals the readability and maintainability of redux/redux-saga.
 
 All three libraries above are reinventing async flow control and hiding them
 from the end-developer.  For the happy path, this works beautifully.  Why learn 
-how to cache API data when a library can do it for you?  However, what happens 
-when the queries you're performing against your cache are too slow? What happens 
-when `useMemo` isn't good enough?  What happens when you're fighting against a
-library that doesn't do exactly what you need it to do?  What happens when you 
-want to reuse your business logic for another platform (e.g. a cli) and can't 
-use `react`? If you've never needed to performance tune selector queries on the 
+how to cache API data when a library can do it for you?  However:
+
+- What happens when the queries you're performing against your cache are too slow? 
+- What happens when [`useMemo` isn't good
+  enough](https://medium.com/swlh/should-you-use-usememo-in-react-a-benchmarked-analysis-159faf6609b7)?  
+- What happens when you're fighting against a data sync library that doesn't do exactly 
+what you need it to do?  
+- What happens when you want to reuse your business logic for another platform 
+(e.g. a cli) and can't use `react`? 
+
+If you've never needed to performance tune selector queries on the 
 front-end, then this library might not be for you.  If you just need to make 
 some API requests with loading states and not much else, then those other 
 libraries are probably a better fit for you.
@@ -120,7 +125,7 @@ api.use(function* onFetch(ctx, next) {
   const resp = yield call(fetch, url, options);
   const data = yield call([resp, 'json']);
 
-  ctx.response = { status: resp.status, ok: true, data };
+  ctx.response = { status: resp.status, ok: resp.ok, data };
   yield next();
 });
 
@@ -173,7 +178,7 @@ loops through all the endpoints and creates a root saga that is fault tolerant
 use `takeEvery` from `redux-saga` but as you'll see in other recipes, this can
 be easily overriden.
 
-The actions created from `saga-query` are JSON serializable.  We are *not*
+The actions created from `saga-query` are JSON serializable.  We are **not**
 passing middleware functions through our actions.  This is a design decision to
 support things like [inter-process
 communication](https://www.electronjs.org/docs/api/ipc-main).
@@ -220,7 +225,7 @@ api.use(function* onFetch(ctx, next) {
 
   // with `FetchCtx` we want to set the `ctx.response` so other middleware can
   // use it.
-  ctx.response = { status: resp.status, ok: true, data };
+  ctx.response = { status: resp.status, ok: resp.ok, data };
 
   // we almost *always* need to call `yield next()` that way other middleware will be
   // called downstream of this middleware. The only time we don't call `next`
@@ -493,7 +498,7 @@ const App = () => {
 ### React
 
 Creating a hook that "hooks" into your redux state and how you handle loaders
-should be faily straight-forward.
+should be fairly straight-forward.
 
 We could build an API that does this automatically for you but it would quickly
 turn into a DSL with a bunch of configuration objects (e.g. fetch immediately
