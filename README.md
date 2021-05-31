@@ -16,10 +16,10 @@ quickly build data loading within your redux application.
 
 ## Features
 
-- A familiar middleware system that node.js developers are familiar with
-  (e.g. express, koa)
 - Write middleware to handle fetching, synchronizing, and caching API requests
   on the front-end
+- A familiar middleware system that node.js developers are familiar with
+  (e.g. express, koa)
 - Unleash the power of redux-saga to handle any async flow control use-cases
 - Pre-built middleware to cut out boilerplate for interacting with redux and
   redux-saga
@@ -55,6 +55,14 @@ and not much else, then those other libraries are probably a better for you.
 This library is intended for large scale, complex flow control applications 
 that need full control over the data cache layer while setting good standards
 for using redux and a flexible middleware to handle all business logic.
+
+## Core principles
+
+- The end-developer should have full control over fetching/caching/querying
+  their server data
+- The IO/business logic layer should be separate from the view layer
+- We should treat side-effects as data
+- Sagas are the central processing unit for IO/business logic
 
 ## `saga-query` is *not*
 
@@ -155,7 +163,12 @@ loops through all the endpoints and creates a root saga that is fault tolerant
 use `takeEvery` from `redux-saga` but as you'll see in other recipes, this can
 be easily overriden.
 
-## Break it down from me
+The actions created from `saga-query` are JSON serializable.  We are *not*
+passing middleware functions through our actions.  This is a design decision to
+support things like [inter-process
+communication](https://www.electronjs.org/docs/api/ipc-main).
+
+## Break it down for me
 
 ```ts
 import { put, call } from 'redux-saga/effects';
