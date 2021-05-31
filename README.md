@@ -9,6 +9,7 @@ quickly build data loading within your redux application.
 - [Manipulating the request](#manipulating-the-request)
 - [Error handling](#error-handling)
 - [Loading state](#loading-state)
+- [React](#react)
 - [Take latest](#take-latest)
 - [Polling](#polling)
 - [Optimistic UI](#optimistic-ui)
@@ -394,14 +395,14 @@ import {
   createTable, 
   createLoaderTable, 
   createReducerMap, 
-  defaultLoadingItem,
 } from 'robodux';
 import { 
   createQuery, 
+  FetchCtx,  
   queryCtx, 
   urlParser, 
-  FetchCtx, 
   loadingTracker,
+  takeLatest,
 } from 'saga-query';
 
 interface User {
@@ -410,9 +411,9 @@ interface User {
 }
 
 export const loaders = createLoaderTable({ name: 'loaders' });
-const selectLoaders = (s) => s[loaders.name];
-export const selectLoaderById = (s, { id }) => selectLoaders(s)(id) ||
-defaultLoadingItem();
+export const { 
+  selectById: selectLoaderById 
+} = loaders.getSelectors((s) => s[loaders.name]);
 
 export const users = createTable<User>({ name: 'users' });
 export const { 
@@ -435,6 +436,7 @@ api.use(function* onFetch(ctx, next) {
 
 const fetchUsers = api.get(
   `/users`,
+  { saga: takeLatest },
   function* processUsers(ctx: FetchCtx<{ users: User[] }>, next) {
     yield next();
     if (!ctx.response.ok) return;
@@ -484,6 +486,88 @@ const App = () => {
 
   return (
     <div>{users.map((user) => <div key={user.id}>{user.email}</div>)}</div>
+  );
+}
+```
+
+### React
+
+Creating a hook that "hooks" into your redux state and how you handle loaders
+should be faily straight-forward.
+
+We could build an API that does this automatically for you but it would quickly
+turn into a DSL with a bunch of configuration objects (e.g. fetch immediately
+or lazy load?) which is less than ideal.  A lot of the libraries cited above are
+inventing ways to be useful all the while removing control from the
+end-developer and requiring them to appease the library maintainers to think
+about their use-case.  It's frustrating and a waste of time.
+
+Furthermore, if you are calling `window.fetch` directly in your react component
+instead of building a hook that calls fetch for libraries like `react-query`
+then you're asking for pain in the future when you need to refactor that API
+call.
+
+Instead, we strive to make it as easy as possible build your own purpose-built
+hooks that give you full control over how it functions.  More code, but more
+control.
+
+Let's rewrite the react code used in the previous example [Loading
+state](#loading-state)
+
+```ts
+// use-query.ts
+import { useEffect } from 'react';
+import { Action } from 'redux';
+import { useSelector, useDispatch } from 'react-redux';
+
+import { 
+  fetchUsers, 
+  selectLoaderById, 
+  selectUsersAsList,
+} from './api';
+import { AppState } from './types';
+
+export const useQuery = <Ctx, R = any>(
+  action: { payload: { name: string } }, 
+  selector: (state: AppState) => R
+): LoadingItemState & { data: R } => {
+  const dispatch = useDispatch();
+  const props = { id: action.payload.name };
+  const loader = useSelector(
+    (state: AppState) => selectLoaderById(state, props)
+  );
+  const data = useSelector(selector);
+
+  // since we are using `takeLatest` if this action gets dispatched multiple
+  // times it will cancel all actions before the first one dispatched
+  useEffect(() => {
+    dispatch(action); 
+  }, []);
+
+  return { ...loader, data };
+}
+
+export const useQueryUsers = () => useQuery(fetchUsers(), selectUsersAsList);
+```
+
+```tsx
+// app.tsx
+import React from 'react';
+import { useQueryUsers } from './use-query';
+
+const App = () => {
+  const { data, loading, error } = useQueryUsers();
+  
+  if (loading) {
+    return <div>Loading ...</div>
+  }
+
+  if (error) {
+    return <div>Error: {loader.error}</div>
+  }
+
+  return (
+    <div>{data.map((user) => <div key={user.id}>{user.email}</div>)}</div>
   );
 }
 ```
