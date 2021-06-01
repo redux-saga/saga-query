@@ -3,8 +3,6 @@
 Data fetching and caching using redux-saga.  Use our saga middleware system to
 quickly build data loading within your redux application. 
 
-## ToC
-
 - [Simple fetch](#show-me-the-way)
 - [Manipulating the request](#manipulating-the-request)
 - [Error handling](#error-handling)
@@ -38,8 +36,7 @@ Libraries like [react-query](https://react-query.tanstack.com/),
 [rtk-query](https://rtk-query-docs.netlify.app/), and 
 [apollo-client](https://www.apollographql.com/docs/react/) are making it
 easier than ever to fetch and cache data from an API server.  All of them
-have their unique attributes and I encourage everyone to check them out if they
-haven't.
+have their unique attributes and I encourage everyone to check them out.
 
 I find that the async flow control of `redux-saga` is one of the most robust
 and powerful declaractive side-effect systems I have used.  Treating
@@ -82,15 +79,17 @@ for using redux and a flexible middleware to handle all business logic.
 ## `saga-query` is *not*
 
 - A DSL wrapped around data fetching and caching logic
-- A one-line solution to fetch and cache server data
+- A one-line solution to fetch and cache server data automatically
 - Going to accommodate all use-cases
 - Going to erradicate all boilerplate
 
 ## A note on `robodux`
 
 The docs heavily use [robodux](https://github.com/neurosnap/robodux) and is 
-recommended for usage with `saga-query`.  It will make caching data simple and 
-straight-forward.
+recommended for usage with `saga-query`.  I use it for most of my production
+applications and it will make caching data simple and straight-forward.  Even
+for large scale applications, 100% of my redux state is composed of `robodux`
+slice helpers.
 
 I also wrote a
 [redux-saga style-guide](https://erock.io/2020/01/01/redux-saga-style-guide.html) that
@@ -408,7 +407,7 @@ import {
   queryCtx, 
   urlParser, 
   loadingTracker,
-  takeLatest,
+  latest,
 } from 'saga-query';
 
 interface User {
@@ -442,7 +441,7 @@ api.use(function* onFetch(ctx, next) {
 
 const fetchUsers = api.get(
   `/users`,
-  { saga: takeLatest },
+  { saga: latest },
   function* processUsers(ctx: FetchCtx<{ users: User[] }>, next) {
     yield next();
     if (!ctx.response.ok) return;
@@ -607,35 +606,23 @@ const fetchUsers = api.get(
 
 ### Polling
 
+We built this saga helper for you which will either accept the timer as a number
+or if the payload contains a timer prop:
+
 ```ts
-import { take, call, delay, race } from 'redux-saga/effects';
+import { poll } from 'saga-query';
 
-function* poll(action: string, saga: any, ...args: any[]) {
-  function* fire(timer: number) {
-    while (true) {
-      yield call(saga, ...args);
-      yield delay(timer);
-    }
-  }
-
-  while (true) {
-    const action = yield take(`${action}`);
-    yield race([
-      call(fire, action.payload.timer),
-      take(`${action}`),
-    ]);
-  }
-}
-
-const pollUsers = api.create<{ timer: number }>(
+const pollUsers = api.create(
   `/users`,
-  { saga: poll },
+  { saga: poll(5 * 1000) },
   function* processUsers(ctx, next) {
     yield next();
     // ...
   }
 );
 ```
+
+`action.payload.timer` takes precedence.
 
 ```tsx
 import React, { useState, useEffect } from 'react';
@@ -647,7 +634,7 @@ const App = () => {
   const [polling, setPolling] = useState(false);
 
   useEffect(() => {
-    dispatch(pollUsers({ timer: 5 * 1000 }));
+    dispatch(pollUsers());
   }, [polling]);
 
   return (
@@ -660,6 +647,8 @@ const App = () => {
 ```
 
 ### Optimistic UI
+
+Here is the manual, one-off way to handle optimistic ui:
 
 ```ts
 import { put, select } from 'redux-saga/effects';
@@ -694,46 +683,33 @@ const updateUser = api.patch<Partial<User> & { id: string }>(
 )
 ```
 
-It would be relatively simple to build an optimistic ui middleware:
+Not too bad, but we built an optimistic middleware for you:
 
 ```tsx
-interface OptimisticCtx extends FetchCtx {
-  optimistic: {
-    apply: ActionWithPayload<MapEntity<Partial<User>>>,
-    revert: ActionWithPayload<MapEntity<User>>,
+import { MapEntity, PatchEntity } from 'robodux';
+import { OptimisticCtx, optimistic } from 'saga-query';
+
+const api = createQuery();
+api.use(optimistic);
+
+api.patch(
+  function* (ctx: OptimisticCtx<PatchEntity<User>, MapEntity<User>>, next) {
+    const { id, email } = ctx.payload.options;
+    const prevUser = yield select(selectUserById, { id }));
+
+    ctx.optimistic = {
+      apply: users.actions.patch({ [id]: { email } }),
+      revert: users.actions.add({ [id]: prevUser }),
+    };
+
+    ctx.request = {
+      method: 'PATCH',
+      body: JSON.stringify({ email }),
+    };
+
+    yield next();
   }
-}
-
-const api = createQuery<OptimisticCtx>();
-api.use(function* optimistic(ctx, next) {
-  if (!ctx.optimistic) yield next();
-  const { apply, revert } = ctx.optimistic;
-  // optimistically update user
-  yield put(apply);
-
-  yield next();
-
-  if (!ctx.response.ok) {
-    yield put(revert);
-  }
-});
-
-api.patch(function* (ctx, next) {
-  const { id, email } = ctx.payload.options;
-  const prevUser = yield select(selectUserById, { id }));
-
-  ctx.optimistic = {
-    apply: users.actions.patch({ [id]: { email } }),
-    revert: users.actions.add({ [id]: prevUser }),
-  };
-
-  ctx.request = {
-    method: 'PATCH',
-    body: JSON.stringify({ email }),
-  };
-
-  yield next();
-});
+);
 ```
 
 ### Undo
@@ -758,14 +734,14 @@ interface Message {
 }
 
 const messages = createTable<Message>({ name: 'messages' });
-const api = createQuery<UndoCtx>();
+const api = createQuery();
 api.use(queryCtx);
 api.use(urlParser);
 api.use(undoer);
 
 const archiveMessage = api.patch<{ id: string; }>(
   `message/:id`,
-  function* onArchive(ctx, next) {
+  function* onArchive(ctx: UndoCtx<PatchEntity<Message>, PatchEntity<Message>>, next) {
     ctx.undo = {
       apply: messages.actions.patch({ 1: { archived: true } }),
       revert: messages.actions.patch({ 1: { archived: false } }),

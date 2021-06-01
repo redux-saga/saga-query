@@ -1,4 +1,4 @@
-import { put, takeLatest, race, delay, take } from 'redux-saga/effects';
+import { put, takeLatest, race, delay, take, call } from 'redux-saga/effects';
 
 import { Next, compose } from './create-api';
 import { ActionWithPayload, CreateActionPayload, QueryCtx } from './types';
@@ -72,39 +72,85 @@ export function loadingTracker<Ctx extends QueryCtx = QueryCtx>(
   };
 }
 
-export function* latest(action: string, saga: any, ...args: any[]) {
-  yield takeLatest(`${action}`, saga, ...args);
-}
-
-export interface UndoCtx extends QueryCtx {
+export interface UndoCtx<A, R> extends QueryCtx {
   undo: {
-    apply: ActionWithPayload<any>;
-    revert: ActionWithPayload<any>;
+    apply: ActionWithPayload<A>;
+    revert: ActionWithPayload<R>;
   };
 }
 
 export const undo = () => ({
   type: 'undo',
 });
-export function* undoer(ctx: UndoCtx, next: Next): Generator<any, any, any> {
+export function* undoer<Ctx extends UndoCtx<any, any> = UndoCtx<any, any>>(
+  ctx: Ctx,
+  next: Next,
+): Generator<any, any, any> {
   if (!ctx.undo) yield next();
   const { apply, revert } = ctx.undo;
 
-  // first optimistically set the message to archived
   yield put(apply);
 
-  // race between a timer and the undo action
   const winner = yield race({
     timer: delay(5 * 1000),
     undo: take(`${undo}`),
   });
 
-  // if the undo action was dispatched within the timer window, revert
-  // archived
   if (winner.undo) {
     yield put(revert);
     return;
   }
 
   yield next();
+}
+
+export function* latest(action: string, saga: any, ...args: any[]) {
+  yield takeLatest(`${action}`, saga, ...args);
+}
+
+export function poll(parentTimer?: number) {
+  function* poller(
+    actionType: string,
+    saga: any,
+    ...args: any[]
+  ): Generator<any, any, any> {
+    function* fire(timer: number) {
+      while (true) {
+        yield call(saga, ...args);
+        yield delay(timer);
+      }
+    }
+
+    while (true) {
+      const action = yield take(`${actionType}`);
+      const timer = action.payload?.timer || parentTimer;
+      yield race([call(fire, timer), take(`${action}`)]);
+    }
+  }
+}
+
+export interface OptimisticCtx<A, R> extends QueryCtx {
+  optimistic: {
+    apply: ActionWithPayload<A>;
+    revert: ActionWithPayload<R>;
+  };
+}
+
+export function* optimistic<
+  Ctx extends OptimisticCtx<any, any> = OptimisticCtx<any, any>,
+>(ctx: Ctx, next: Next) {
+  if (!ctx.optimistic) {
+    yield next();
+    return;
+  }
+
+  const { apply, revert } = ctx.optimistic;
+  // optimistically update user
+  yield put(apply);
+
+  yield next();
+
+  if (!ctx.response.ok) {
+    yield put(revert);
+  }
 }
