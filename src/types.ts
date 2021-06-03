@@ -1,3 +1,5 @@
+import { CallEffect } from 'redux-saga/effects';
+
 export interface Action {
   type: string;
 }
@@ -9,6 +11,15 @@ export interface ActionWithPayload<P> extends Action {
 export interface CreateActionPayload<P = any> {
   name: string;
   options: P;
+}
+
+export interface CreateAction {
+  (): ActionWithPayload<CreateActionPayload<{}>>;
+  run: () => CallEffect;
+}
+export interface CreateActionWithPayload<P> {
+  (p: P): ActionWithPayload<CreateActionPayload<P>>;
+  run: (p: P) => CallEffect;
 }
 
 export interface RequestCtx {

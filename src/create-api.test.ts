@@ -274,3 +274,22 @@ test('create fn is an array', (t) => {
   const store = setupStore(api.saga());
   store.dispatch(action());
 });
+
+test('run() on endpoint action - should run the effect', (t) => {
+  t.plan(1);
+  const api = createApi<RoboCtx>();
+  let acc = '';
+  const action1 = api.create('/users', function* (ctx, next) {
+    yield next();
+    acc += 'a';
+  });
+  const action2 = api.create('/users2', function* (ctx, next) {
+    yield next();
+    yield action1.run();
+    acc += 'b';
+    t.assert(acc === 'ab');
+  });
+
+  const store = setupStore(api.saga());
+  store.dispatch(action2());
+});

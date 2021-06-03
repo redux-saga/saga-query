@@ -83,3 +83,22 @@ test('middleware - with request fn', (t) => {
   const store = setupStore(query.saga());
   store.dispatch(createUser());
 });
+
+test('run() on endpoint action - should run the effect', (t) => {
+  t.plan(1);
+  const api = createQuery();
+  let acc = '';
+  const action1 = api.get('/users', function* (ctx, next) {
+    yield next();
+    acc += 'a';
+  });
+  const action2 = api.get('/users2', function* (ctx, next) {
+    yield next();
+    yield action1.run();
+    acc += 'b';
+    t.assert(acc === 'ab');
+  });
+
+  const store = setupStore(api.saga());
+  store.dispatch(action2());
+});

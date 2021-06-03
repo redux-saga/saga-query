@@ -1,7 +1,13 @@
 import { call, takeEvery } from 'redux-saga/effects';
 import sagaCreator from 'redux-saga-creator';
 
-import { Action, ActionWithPayload, CreateActionPayload } from './types';
+import {
+  Action,
+  ActionWithPayload,
+  CreateActionPayload,
+  CreateAction,
+  CreateActionWithPayload,
+} from './types';
 
 export type Middleware<Ctx = any> = (ctx: Ctx, next: Next) => any;
 export type Next = () => any;
@@ -40,25 +46,25 @@ const isObject = (obj?: any) => typeof obj === 'object' && obj !== null;
 export interface SagaApi<Ctx = any> {
   saga: () => (...options: any[]) => Generator<any, any, any>;
   use: (fn: Middleware<Ctx>) => void;
-  create(name: string): () => Action;
-  create<P>(name: string): (p: P) => ActionWithPayload<P>;
-  create(name: string, req: { saga?: any }): () => Action;
-  create<P>(name: string, req: { saga?: any }): (p: P) => ActionWithPayload<P>;
-  create(name: string, fn: Middleware<Ctx> | Middleware<Ctx>[]): () => Action;
+  create(name: string): CreateAction;
+  create<P>(name: string): CreateActionWithPayload<P>;
+  create(name: string, req: { saga?: any }): CreateAction;
+  create<P>(name: string, req: { saga?: any }): CreateActionWithPayload<P>;
+  create(name: string, fn: Middleware<Ctx> | Middleware<Ctx>[]): CreateAction;
   create<P>(
     name: string,
     fn: Middleware<Ctx> | Middleware<Ctx>[],
-  ): (p: P) => ActionWithPayload<P>;
+  ): CreateActionWithPayload<P>;
   create(
     name: string,
     req: { saga?: any },
     fn: Middleware<Ctx> | Middleware<Ctx>[],
-  ): () => Action;
+  ): CreateAction;
   create<P>(
     name: string,
     req: { saga?: any },
     fn: Middleware<Ctx> | Middleware<Ctx>[],
-  ): (p: P) => ActionWithPayload<P>;
+  ): CreateActionWithPayload<P>;
 }
 
 export const defaultOnError = (err: Error) => {
@@ -127,6 +133,8 @@ export function createApi<Ctx = any>({
     sagas[`${action}`] = curSaga;
     const actionFn = (options?: any) => action({ name: createName, options });
     actionFn.toString = () => createName;
+    actionFn.run = (options?: any) =>
+      call(onApi, curMiddleware, actionFn(options));
     return actionFn;
   }
 
