@@ -276,18 +276,23 @@ test('create fn is an array', (t) => {
 });
 
 test('run() on endpoint action - should run the effect', (t) => {
-  t.plan(1);
+  t.plan(2);
   const api = createApi<RoboCtx>();
   let acc = '';
   const action1 = api.create('/users', function* (ctx, next) {
     yield next();
+    ctx.request = 'expect this';
     acc += 'a';
   });
-  const action2 = api.create('/users2', function* (ctx, next) {
+  const action2 = api.create('/users2', function* (ctx, next): Generator {
     yield next();
-    yield action1.run();
+    const curCtx = yield action1.run();
     acc += 'b';
     t.assert(acc === 'ab');
+    t.deepEqual(curCtx, {
+      payload: { name: '/users', options: undefined },
+      request: 'expect this',
+    });
   });
 
   const store = setupStore(api.saga());

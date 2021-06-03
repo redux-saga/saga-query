@@ -83,12 +83,13 @@ export function createApi<Ctx = any>({
   function* onApi(
     curMiddleware: Middleware<Ctx>[],
     action: ActionWithPayload<any>,
-  ) {
+  ): Generator<any, Ctx, any> {
     const ctx: any = {
       payload: action.payload,
     };
     const fn = compose(curMiddleware as any);
     yield call(fn, ctx);
+    return ctx;
   }
 
   function create(createName: string, ...args: any[]) {
