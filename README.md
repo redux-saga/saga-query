@@ -28,8 +28,8 @@ quickly build data loading within your redux application.
   redux-saga
 - Simple recipes to handle complex use-cases like cancellation, polling,
   optimistic updates, loading states, undo, react
-- Progressively add it to your codebase: all we do is add reducers to your
-  state and bootup some sagas
+- Progressively add it to your codebase: all we do is add sagas and action
+  creators to your system
 - Use it with any other redux libraries
 
 ## Why?
