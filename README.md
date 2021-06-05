@@ -5,6 +5,7 @@ quickly build data loading within your redux application.
 
 - [Simple fetch](#show-me-the-way)
 - [Manipulating the request](#manipulating-the-request)
+- [Dispatching many actions](#dispatching-many-actions)
 - [Error handling](#error-handling)
 - [Loading state](#loading-state)
 - [React](#react)
@@ -118,6 +119,7 @@ const selectors = users.getSelectors((s) => s[users.name]);
 export const { selectTableAsList: selectUsersAsList } = selectors;
 
 const api = createQuery<FetchCtx>();
+api.use(api.routes());
 api.use(queryCtx);
 api.use(urlParser);
 api.use(function* onFetch(ctx, next) {
@@ -207,6 +209,12 @@ const users = createTable<User>({ name: 'users' });
 // The generic passed to `createQuery` must extend `QueryCtx` to be accepted.
 const api = createQuery<FetchCtx>();
 
+// This is where all the endpoints (e.g. `.get()`, `.put()`, etc.) you created 
+// get added to the middleware stack.  It is recommended to put this as close to 
+// the beginning of the stack so everything after `yield next()` 
+// happens at the end of the effect.
+api.use(api.routes());
+
 // queryCtx sets up the ctx object with `ctx.request` and `ctx.response`
 // required for `createQuery` to function properly.
 api.use(queryCtx);
@@ -239,9 +247,8 @@ api.use(function* onFetch(ctx, next) {
 // want with it.
 const fetchUsers = api.get(
   `/users`,
-  // This middleware is special: it gets prepended to the list of middleware.
-  // This has the unique benefit of being in full control of when the other
-  // middleware get activated.
+  // Since this middleware is first it has the unique benefit of being in full 
+  // control of when the other middleware get activated.
   // The type inside of `FetchCtx` is the response object
   function* processUsers(ctx: FetchCtx<{ users: User[] }>, next) {
     // anything before this call can mutate the `ctx` object before it gets
@@ -267,20 +274,20 @@ const fetchUsers = api.get(
 );
 
 // BONUS: POST request to create a user
-const createUser = query.post<{ email: string }>(
+const createUser = api.post<{ email: string }>(
   `/users`,
   function* createUser(ctx: FetchCtx<User>, next) {
     // since this middleware is the first one that gets called after the action
-    // is dispatched, we can set the `ctx.request` to whatever want.  The
+    // is dispatched, we can set the `ctx.request` to whatever we want.  The
     // middleware we setup for `createQuery` will then use the `ctx` to fill in
     // the other details like `url` and `method`
     ctx.request = {
-      body: JSON.stringify({ email: ctx.payload.options.email }),
+      body: JSON.stringify({ email: ctx.payload.email }),
     };
     yield next();
     if (!ctx.response.ok) return;
 
-    const curUser = ctx.responspayload.options;
+    const curUser = ctx.response.data;
     const curUsers = { [curUser.id]: curUser };
 
     yield put(users.actions.add(curUsers));
@@ -301,12 +308,12 @@ store.dispatch(createUser({ email: 'change.me@saga.com' }));
 ### Manipulating the request
 
 ```ts
-const createUser = query.post<{ id: string, email: string }>(
+const createUser = api.post<{ id: string, email: string }>(
   `/users`,
   function* onCreateUser(ctx: FetchCtx<User>, next) {
     // here we manipulate the request before it gets sent to our middleware
     ctx.request = {
-      body: JSON.stringify({ email: ctx.payload.options.email }),
+      body: JSON.stringify({ email: ctx.payload.email }),
     };
     yield next();
     if (!ctx.response.ok) return;
@@ -324,11 +331,135 @@ store.dispatch(createUser({ id: '1', }));
 Have some `request` data that you want to set when creating the endpoint?
 
 ```ts
-const fetchUsers = query.get('/users', query.request({ credentials: 'include' }))
+const fetchUsers = api.get('/users', api.request({ credentials: 'include' }))
 ```
 
-`query.request()` accepts the request for the `Ctx` that the end-developer
+`api.request()` accepts the request for the `Ctx` that the end-developer
 provides.
+
+### Dispatching many actions
+
+Sometimes we need to dispatch a bunch of actions for an endpoint.  From loading
+states to making multiple requests in a single saga, there can be a lot of
+actions being dispatched in on saga.  My recommendation is:
+
+- Use a library like `redux-batched-actions` to dispatch many actions at once
+  and only have the reducers hit once.
+- Leverage `ctx.actions` (which is a required property to use `createQuery`) in
+  your middleware.
+- Build a middleware that will use `redux-batched-actions` with `ctx.actions`
+  and put it at the beginning of the middleware stack.
+
+```ts
+// api.ts
+import { batchActions } from 'redux-batched-actions';
+import { createQuery, urlParser, queryCtx } from 'saga-query';
+
+export const api = createQuery();
+// we want to put this at the beginning of the middleware stack so all
+// middleware is done once `yield next()` gets called.
+api.use(function* (ctx, next) {
+  // activate all middleware after this middleware in the stack
+  yield next();
+  yield put(batchActions(ctx.actions));
+});
+
+// this creates `ctx.actions` for us
+api.use(queryCtx);
+api.use(urlParser);
+
+// example loader
+api.use(function* loader(ctx, next) {
+  yield put(setLoaderStart());
+  yield next();
+
+  if (!ctx.response.ok) {
+    ctx.actions.push(setLoaderError({ message: ctx.response.data.message }));
+    return;
+  }
+
+  ctx.actions.push(setLoaderSucces());
+});
+
+api.use(function* onFetch(ctx, next) {
+  const { url = '', options } = ctx.request;
+  const resp = yield call(fetch, url, options);
+  const data = yield call([resp, 'json']);
+
+  ctx.response = { status: resp.status, ok: resp.ok, data };
+  yield next();
+});
+
+api.get('/user/:id', function* (ctx, next) {
+  yield next();
+  const { id } = ctx.payload;
+  if (!ctx.response.ok) {
+    yield next();
+    return;
+  }
+
+  ctx.actions.push(addUsers({ [id]: ctx.repsonse.data }));
+  yield next();
+});
+```
+
+```ts
+// store.ts
+import {
+  createStore,
+  applyMiddleware,
+  Middleware,
+  Store,
+  Reducer,
+  AnyAction,
+} from 'redux';
+import createSagaMiddleware, { Saga, stdChannel } from 'redux-saga';
+import { enableBatching, BATCH } from 'redux-batched-actions';
+
+interface AppState {}
+
+interface Props {
+  initState?: Partial<AppState>;
+  rootReducer: Reducer<AppState, AnyAction>;
+  rootSaga: Saga<any>;
+}
+
+interface AppStore<State> {
+  store: Store<State>;
+}
+
+export function setupStore({
+  initState,
+  rootReducer,
+  rootSaga,
+}: Props): AppStore<AppState> {
+  const middleware: Middleware[] = [];
+
+  // this is important for redux-batched-actions to work with redux-saga
+  const channel = stdChannel();
+  const rawPut = channel.put;
+  channel.put = (action: { type: string, payload: any }) => {
+    if (action.type === BATCH) {
+      action.payload.forEach(rawPut);
+      return;
+    }
+    rawPut(action);
+  };
+
+  const sagaMiddleware = createSagaMiddleware({ channel } as any);
+  middleware.push(sagaMiddleware);
+
+  const store = createStore(
+    enableBatching(rootReducer),
+    initState as AppState,
+    applyMiddleware(...middleware),
+  );
+
+  sagaMiddleware.run(rootSaga);
+
+  return { store };
+}
+```
 
 ### Error handling
 
@@ -339,6 +470,7 @@ Catch all middleware before itself:
 
 ```ts
 const api = createQuery();
+api.use(api.routes());
 api.use(function* upstream(ctx, next) {
   try {
     yield next();
@@ -360,6 +492,7 @@ Catch middleware inside the action handler:
 
 ```ts
 const api = createQuery();
+api.use(api.routes());
 api.use(function* fail() {
   throw new Error('some error');
 });
@@ -382,6 +515,7 @@ Global error handler:
 const api = createQuery({
   onError: (err: Error) => { console.log('error!'); },
 });
+api.use(api.routes());
 api.use(function* upstream(ctx, next) {
   throw new Error('failure');
 });
@@ -426,9 +560,16 @@ export const {
 } = users.getSelectors((s) => s[users.name]);
 
 export const api = createQuery<FetchCtx>();
+// This is one case where we want the middleware to be before the router
+// middleware.  Since with `robodux` loaders are decoupled from the data that
+// it is tracking we can get into weird race conditions where the success or
+// error action for the loader gets saved before the data gets saved.  So here
+// we ensure that all the other middleware get called before setting the
+// loading state to success or failure.
+api.use(loadingTracker(loaders));
+api.use(api.routes());
 api.use(queryCtx);
 api.use(urlParser);
-api.use(loadingTracker(loaders));
 
 api.use(function* onFetch(ctx, next) {
   const { url = '', ...options } = ctx.request;
@@ -451,6 +592,7 @@ const fetchUsers = api.get(
       acc[u.id] = u;
       return acc;
     }, {});
+
     yield put(users.actions.add(curUsers));
   },
 );
@@ -586,12 +728,12 @@ If two requests are made:
 While (A) request is still in flight, (B) request would be cancelled.
 
 ```ts
-import { takeLatest } from 'redux-saga/effects';
+import { takeLeading } from 'redux-saga/effects';
 
 // this is for demonstration purposes, you can import it using
-// import { latest } from 'saga-query';
+// import { leading } from 'saga-query';
 function* latest(action: string, saga: any, ...args: any[]) {
-  yield takeLatest(`${action}`, saga, ...args);
+  yield takeLeading(`${action}`, saga, ...args);
 }
 
 const fetchUsers = api.get(
@@ -656,7 +798,7 @@ import { put, select } from 'redux-saga/effects';
 const updateUser = api.patch<Partial<User> & { id: string }>(
   `/users/:id`, 
   function* onUpdateUser(ctx: FetchCtx<User>, next) {
-    const { id, email } = ctx.payload.options;
+    const { id, email } = ctx.payload;
     ctx.request = {
       body: JSON.stringify(email),
     };
@@ -690,11 +832,12 @@ import { MapEntity, PatchEntity } from 'robodux';
 import { OptimisticCtx, optimistic } from 'saga-query';
 
 const api = createQuery();
+api.use(api.routes());
 api.use(optimistic);
 
 api.patch(
   function* (ctx: OptimisticCtx<PatchEntity<User>, MapEntity<User>>, next) {
-    const { id, email } = ctx.payload.options;
+    const { id, email } = ctx.payload;
     const prevUser = yield select(selectUserById, { id }));
 
     ctx.optimistic = {
@@ -735,6 +878,7 @@ interface Message {
 
 const messages = createTable<Message>({ name: 'messages' });
 const api = createQuery();
+api.use(api.routes());
 api.use(queryCtx);
 api.use(urlParser);
 api.use(undoer);
@@ -787,20 +931,21 @@ const users = createSlice({
   } 
 });
 
-const query = createQuery();
-query.use(queryCtx);
-query.use(urlParser);
+const api = createQuery();
+api.use(api.routes());
+api.use(queryCtx);
+api.use(urlParser);
 // made up window.fetch logic
-query.use(apiFetch);
+api.use(apiFetch);
 
-const fetchUsers = query.get<{ users: User[] }>('/users', function* (ctx, next) {
+const fetchUsers = api.get<{ users: User[] }>('/users', function* (ctx, next) {
   yield next();
   const { data } = response.data;
   yield put(users.actions.add(data.users));
 });
 
 const reducers = createReducerMap(users);
-const store = setupStore(query.saga(), reducers);
+const store = setupStore(api.saga(), reducers);
 
 store.dispatch(fetchUsers());
 ```

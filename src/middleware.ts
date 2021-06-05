@@ -82,11 +82,11 @@ export function loadingTracker<Ctx extends QueryCtx = QueryCtx>(
     yield next();
 
     if (!ctx.response.ok) {
-      ctx.actions.push(loaders.actions.error({ id, message: errorFn(ctx) }));
+      yield put(loaders.actions.error({ id, message: errorFn(ctx) }));
       return;
     }
 
-    ctx.actions.push(loaders.actions.success({ id }));
+    yield put(loaders.actions.success({ id }));
   };
 }
 
