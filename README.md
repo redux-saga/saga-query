@@ -3,6 +3,7 @@
 Data fetching and caching using redux-saga.  Use our saga middleware system to
 quickly build data loading within your redux application. 
 
+- [Examples](#examples)
 - [Simple fetch](#show-me-the-way)
 - [Manipulating the request](#manipulating-the-request)
 - [Dispatching many actions](#dispatching-many-actions)
@@ -15,7 +16,6 @@ quickly build data loading within your redux application.
 - [Optimistic UI](#optimistic-ui)
 - [Undo](#undo)
 - [redux-toolkit](#redux-toolkit)
-- [Examples](#examples)
 
 ## Features
 
@@ -84,6 +84,10 @@ for using redux and a flexible middleware to handle all business logic.
 - A one-line solution to fetch and cache server data automatically
 - Going to accommodate all use-cases
 - Going to erradicate all boilerplate
+
+### Examples
+
+- [Simple](https://codesandbox.io/s/saga-query-simple-2r2tr)
 
 ## A note on `robodux`
 
@@ -342,7 +346,7 @@ provides.
 
 Sometimes we need to dispatch a bunch of actions for an endpoint.  From loading
 states to making multiple requests in a single saga, there can be a lot of
-actions being dispatched in on saga.  My recommendation is:
+actions being dispatched.  My recommendation is:
 
 - Use a library like `redux-batched-actions` to dispatch many actions at once
   and only have the reducers hit once.
@@ -391,7 +395,7 @@ api.use(function* onFetch(ctx, next) {
   yield next();
 });
 
-api.get('/user/:id', function* (ctx, next) {
+api.get<{ id: string }>('/user/:id', function* (ctx, next) {
   yield next();
   const { id } = ctx.payload;
   if (!ctx.response.ok) {
@@ -505,7 +509,6 @@ Catch all middleware before itself:
 
 ```ts
 const api = createQuery();
-api.use(api.routes());
 api.use(function* upstream(ctx, next) {
   try {
     yield next();
@@ -513,6 +516,7 @@ api.use(function* upstream(ctx, next) {
     console.log('error!');
   }
 });
+api.use(api.routes());
 
 api.use(function* fail() {
   throw new Error('some error');
@@ -576,7 +580,7 @@ import {
   queryCtx, 
   urlParser, 
   loadingTracker,
-  latest,
+  leading,
 } from 'saga-query';
 
 interface User {
@@ -617,7 +621,7 @@ api.use(function* onFetch(ctx, next) {
 
 const fetchUsers = api.get(
   `/users`,
-  { saga: latest },
+  { saga: leading },
   function* processUsers(ctx: FetchCtx<{ users: User[] }>, next) {
     yield next();
     if (!ctx.response.ok) return;
@@ -679,10 +683,7 @@ should be fairly straight-forward.
 
 We could build an API that does this automatically for you but it would quickly
 turn into a DSL with a bunch of configuration objects (e.g. fetch immediately
-or lazy load?) which is less than ideal.  A lot of the libraries cited above are
-inventing ways to be useful all the while removing control from the
-end-developer and requiring them to appease the library maintainers to think
-about their use-case.  It's frustrating and a waste of time.
+or lazy load?) which is less than ideal.
 
 Furthermore, if you are calling `window.fetch` directly in your react component
 instead of building a hook that calls fetch for libraries like `react-query`
@@ -693,8 +694,8 @@ Instead, we strive to make it as easy as possible build your own purpose-built
 hooks that give you full control over how it functions.  More code, but more
 control.
 
-Let's rewrite the react code used in the previous example [Loading
-state](#loading-state)
+Let's rewrite the react code used in the previous example ([loading
+state](#loading-state))
 
 ```ts
 // use-query.ts
@@ -720,7 +721,7 @@ export const useQuery = <Ctx, R = any>(
   );
   const data = useSelector(selector);
 
-  // since we are using `takeLatest` if this action gets dispatched multiple
+  // since we are using `takeLeading` if this action gets dispatched multiple
   // times it will cancel all actions before the first one dispatched
   useEffect(() => {
     dispatch(action); 
@@ -754,7 +755,7 @@ const App = () => {
 }
 ```
 
-### Take Latest
+### Take Leading
 
 If two requests are made:
 - (A) request; then
@@ -767,13 +768,13 @@ import { takeLeading } from 'redux-saga/effects';
 
 // this is for demonstration purposes, you can import it using
 // import { leading } from 'saga-query';
-function* latest(action: string, saga: any, ...args: any[]) {
+function* leading(action: string, saga: any, ...args: any[]) {
   yield takeLeading(`${action}`, saga, ...args);
 }
 
 const fetchUsers = api.get(
   `/users`,
-  { saga: latest },
+  { saga: leading },
   function* processUsers(ctx, next) {
     yield next();
     // ...
@@ -984,7 +985,3 @@ const store = setupStore(api.saga(), reducers);
 
 store.dispatch(fetchUsers());
 ```
-
-### Examples
-
-- [Simple](https://codesandbox.io/s/saga-query-simple-2r2tr)
