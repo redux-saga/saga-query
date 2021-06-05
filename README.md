@@ -11,7 +11,7 @@ quickly build data loading within your redux application.
 - [Dependent queries](#dependent-queries)
 - [Loading state](#loading-state)
 - [React](#react)
-- [Take latest](#take-latest)
+- [Take leading](#take-leading)
 - [Polling](#polling)
 - [Optimistic UI](#optimistic-ui)
 - [Undo](#undo)
