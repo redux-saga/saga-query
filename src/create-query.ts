@@ -1,11 +1,10 @@
+import { SagaIterator } from 'redux-saga';
 import { CreateAction, CreateActionWithPayload, QueryCtx } from './types';
 import { SagaApi, Middleware, createApi, Next } from './create-api';
 
 export interface SagaQueryApi<Ctx extends QueryCtx = QueryCtx>
   extends SagaApi<Ctx> {
-  request: (
-    r: Ctx['request'],
-  ) => (ctx: Ctx, next: Next) => Generator<any, any, any>;
+  request: (r: Ctx['request']) => (ctx: Ctx, next: Next) => SagaIterator<any>;
 
   get(name: string): CreateAction;
   get<P>(name: string): CreateActionWithPayload<P>;

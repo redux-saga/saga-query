@@ -13,6 +13,12 @@ export interface CreateActionPayload<P = any> {
   options: P;
 }
 
+export interface ApiCtx<P = any> {
+  name: string;
+  payload: P;
+  action: CreateActionPayload<P>;
+}
+
 export interface CreateAction {
   (): ActionWithPayload<CreateActionPayload<{}>>;
   run: () => CallEffect;
@@ -27,9 +33,8 @@ export interface RequestCtx {
   method: string;
 }
 
-export interface QueryCtx<P = any, R = any> {
-  name: string;
-  payload: P;
+export interface QueryCtx<P = any, R = any> extends ApiCtx<P> {
   request: Partial<RequestCtx>;
   response: R;
+  actions: Action[];
 }

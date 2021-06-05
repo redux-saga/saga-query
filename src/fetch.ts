@@ -33,7 +33,7 @@ export interface FetchCtx<D = any, E = any, P = any> extends QueryCtx {
 /* export function fetchJsonify<
   Ctx extends FetchCtx = FetchCtx<any, any, { message: string }>,
 >() {
-  return function* onFetchJson(ctx: Ctx, next: Next): Generator<any, any, any> {
+  return function* onFetchJson(ctx: Ctx, next: Next): SagaIterator<any> {
     const { url = '', ...options } = ctx.request;
     if (!options.headers) {
       options.headers = {} as HeadersInit;

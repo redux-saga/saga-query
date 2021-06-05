@@ -1,18 +1,16 @@
 import { call, takeEvery } from 'redux-saga/effects';
+import { SagaIterator } from 'redux-saga';
 import sagaCreator from 'redux-saga-creator';
 
+import { isFn, isObject } from './util';
 import {
   Action,
   ActionWithPayload,
   CreateActionPayload,
   CreateAction,
   CreateActionWithPayload,
+  ApiCtx,
 } from './types';
-
-interface ApiCtx<P = any> {
-  name: string;
-  payload: P;
-}
 
 export type Middleware<Ctx = any> = (ctx: Ctx, next: Next) => any;
 export type Next = () => any;
@@ -32,7 +30,7 @@ export function compose<Ctx = any>(middleware: Middleware<Ctx>[]) {
     let index = -1;
     yield call(dispatch, 0);
 
-    function* dispatch(i: number): any {
+    function* dispatch(i: number): SagaIterator<void> {
       if (i <= index) {
         throw new Error('next() called multiple times');
       }
@@ -45,11 +43,8 @@ export function compose<Ctx = any>(middleware: Middleware<Ctx>[]) {
   };
 }
 
-const isFn = (fn?: any) => fn && typeof fn === 'function';
-const isObject = (obj?: any) => typeof obj === 'object' && obj !== null;
-
 export interface SagaApi<Ctx extends ApiCtx> {
-  saga: () => (...options: any[]) => Generator<any, any, any>;
+  saga: () => (...options: any[]) => SagaIterator<void>;
   use: (fn: Middleware<Ctx>) => void;
   routes: () => Middleware<Ctx>;
 
@@ -93,9 +88,10 @@ export function createApi<Ctx extends ApiCtx = ApiCtx<any>>({
   }
 
   const createType = (post: string) => `${API_ACTION_PREFIX}${post}`;
-  function* onApi(action: ActionWithPayload<any>): Generator<any, Ctx, any> {
+  function* onApi(action: ActionWithPayload<any>): SagaIterator<Ctx> {
     const { name, options } = action.payload;
     const ctx: any = {
+      action,
       name,
       payload: options,
     };

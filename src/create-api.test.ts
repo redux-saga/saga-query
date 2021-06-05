@@ -1,15 +1,13 @@
 import test from 'ava';
 import { createStore, combineReducers, applyMiddleware } from 'redux';
-import createSagaMiddleware from 'redux-saga';
+import createSagaMiddleware, { SagaIterator } from 'redux-saga';
 import { put } from 'redux-saga/effects';
 import { createTable, Action, MapEntity, createReducerMap } from 'robodux';
 
 import { Middleware, Next, createApi } from './create-api';
-import { CreateActionPayload } from './types';
+import { CreateActionPayload, ApiCtx } from './types';
 
-interface RoboCtx<D = any, P = any> {
-  name: string;
-  payload: P;
+interface RoboCtx<D = any, P = any> extends ApiCtx<P> {
   url: string;
   request: any;
   response: D;
@@ -292,17 +290,27 @@ test('run() on endpoint action - should run the effect', (t) => {
     ctx.request = 'expect this';
     acc += 'a';
   });
-  const action2 = api.create('/users2', function* (ctx, next): Generator {
-    yield next();
-    const curCtx = yield action1.run();
-    acc += 'b';
-    t.assert(acc === 'ab');
-    t.deepEqual(curCtx, {
-      name: '/users',
-      payload: undefined,
-      request: 'expect this',
-    });
-  });
+  const action2 = api.create(
+    '/users2',
+    function* (ctx, next): SagaIterator<void> {
+      yield next();
+      const curCtx = yield action1.run();
+      acc += 'b';
+      t.assert(acc === 'ab');
+      t.deepEqual(curCtx, {
+        action: {
+          type: '@@saga-query/users',
+          payload: {
+            name: '/users',
+            options: undefined,
+          },
+        },
+        name: '/users',
+        payload: undefined,
+        request: 'expect this',
+      });
+    },
+  );
 
   const store = setupStore(api.saga());
   store.dispatch(action2());

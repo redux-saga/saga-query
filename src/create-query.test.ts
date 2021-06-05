@@ -91,13 +91,13 @@ test('run() on endpoint action - should run the effect', (t) => {
   const api = createQuery();
   api.use(api.routes());
   let acc = '';
-  const action1 = api.get('/users', function* (ctx, next) {
+  const action1 = api.get<{ id: string }>('/users/:id', function* (ctx, next) {
     yield next();
     acc += 'a';
   });
   const action2 = api.get('/users2', function* (ctx, next) {
     yield next();
-    yield action1.run();
+    yield action1.run({ id: '1' });
     acc += 'b';
     t.assert(acc === 'ab');
   });

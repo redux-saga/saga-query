@@ -1,14 +1,25 @@
-import { put, takeLatest, race, delay, take, call } from 'redux-saga/effects';
+import {
+  put,
+  takeLatest,
+  takeLeading,
+  race,
+  delay,
+  take,
+  call,
+} from 'redux-saga/effects';
+import { SagaIterator } from 'redux-saga';
 
 import { Next, compose } from './create-api';
 import { ActionWithPayload, CreateActionPayload, QueryCtx } from './types';
+import { isObject } from './util';
 
 export function* queryCtx<Ctx extends QueryCtx = QueryCtx>(
   ctx: Ctx,
   next: Next,
 ) {
-  if (!ctx.request) ctx.request = { url: '' };
+  if (!ctx.request) ctx.request = { url: '', method: 'GET' };
   if (!ctx.response) ctx.response = {};
+  if (!ctx.actions) ctx.actions = [];
   yield next();
 }
 
@@ -29,6 +40,11 @@ export function* urlParser<Ctx extends QueryCtx = QueryCtx>(
   ];
 
   const options = ctx.payload || {};
+  if (!isObject(options)) {
+    yield next();
+    return;
+  }
+
   if (!ctx.request) throw new Error('ctx.request does not exist');
   if (!ctx.request.url) {
     let url = Object.keys(options).reduce((acc, key) => {
@@ -57,14 +73,13 @@ export function loadingTracker<Ctx extends QueryCtx = QueryCtx>(
       success: (l: { id: string }) => any;
     };
   },
-  successFn: (ctx: Ctx) => boolean = (ctx) => ctx.response.ok,
   errorFn: (ctx: Ctx) => string = (ctx) => ctx.response.data.message,
 ) {
   return function* trackLoading(ctx: Ctx, next: Next) {
     const id = ctx.name;
     yield put(loaders.actions.loading({ id }));
     yield next();
-    if (!successFn(ctx)) {
+    if (!ctx.response.ok) {
       yield put(loaders.actions.error({ id, message: errorFn(ctx) }));
       return;
     }
@@ -85,7 +100,7 @@ export const undo = () => ({
 export function* undoer<Ctx extends UndoCtx<any, any> = UndoCtx<any, any>>(
   ctx: Ctx,
   next: Next,
-): Generator<any, any, any> {
+): SagaIterator<void> {
   if (!ctx.undo) yield next();
   const { apply, revert } = ctx.undo;
 
@@ -108,12 +123,16 @@ export function* latest(action: string, saga: any, ...args: any[]) {
   yield takeLatest(`${action}`, saga, ...args);
 }
 
+export function* leading(action: string, saga: any, ...args: any[]) {
+  yield takeLeading(`${action}`, saga, ...args);
+}
+
 export function poll(parentTimer?: number) {
   function* poller(
     actionType: string,
     saga: any,
     ...args: any[]
-  ): Generator<any, any, any> {
+  ): SagaIterator<void> {
     function* fire(timer: number) {
       while (true) {
         yield call(saga, ...args);
