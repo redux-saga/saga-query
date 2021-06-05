@@ -28,7 +28,8 @@ export interface RequestCtx {
 }
 
 export interface QueryCtx<P = any, R = any> {
-  payload: CreateActionPayload<P>;
+  name: string;
+  payload: P;
   request: Partial<RequestCtx>;
   response: R;
 }

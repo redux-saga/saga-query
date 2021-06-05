@@ -33,6 +33,7 @@ test('createQuery - POST', (t) => {
   const cache = createTable<User>({ name });
   const query = createQuery<FetchCtx>();
 
+  query.use(query.routes());
   query.use(queryCtx);
   query.use(urlParser);
   query.use(function* fetchApi(ctx, next) {
@@ -53,7 +54,7 @@ test('createQuery - POST', (t) => {
     function* processUsers(ctx: FetchCtx<{ users: User[] }>, next) {
       ctx.request = {
         method: 'POST',
-        body: JSON.stringify({ email: ctx.payload.options.email }),
+        body: JSON.stringify({ email: ctx.payload.email }),
       };
       yield next();
       if (!ctx.response.ok) return;
@@ -74,6 +75,7 @@ test('createQuery - POST', (t) => {
 test('middleware - with request fn', (t) => {
   t.plan(1);
   const query = createQuery();
+  query.use(query.routes());
   query.use(queryCtx);
   query.use(urlParser);
   query.use(function* (ctx, next) {
@@ -87,6 +89,7 @@ test('middleware - with request fn', (t) => {
 test('run() on endpoint action - should run the effect', (t) => {
   t.plan(1);
   const api = createQuery();
+  api.use(api.routes());
   let acc = '';
   const action1 = api.get('/users', function* (ctx, next) {
     yield next();

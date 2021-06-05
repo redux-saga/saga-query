@@ -9,6 +9,11 @@ import {
   CreateActionWithPayload,
 } from './types';
 
+interface ApiCtx<P = any> {
+  name: string;
+  payload: P;
+}
+
 export type Middleware<Ctx = any> = (ctx: Ctx, next: Next) => any;
 export type Next = () => any;
 
@@ -43,9 +48,11 @@ export function compose<Ctx = any>(middleware: Middleware<Ctx>[]) {
 const isFn = (fn?: any) => fn && typeof fn === 'function';
 const isObject = (obj?: any) => typeof obj === 'object' && obj !== null;
 
-export interface SagaApi<Ctx = any> {
+export interface SagaApi<Ctx extends ApiCtx> {
   saga: () => (...options: any[]) => Generator<any, any, any>;
   use: (fn: Middleware<Ctx>) => void;
+  routes: () => Middleware<Ctx>;
+
   create(name: string): CreateAction;
   create<P>(name: string): CreateActionWithPayload<P>;
   create(name: string, req: { saga?: any }): CreateAction;
@@ -71,23 +78,28 @@ export const defaultOnError = (err: Error) => {
   throw err;
 };
 
-export const API_ACTION_PREFIX = '@@saga-query/api';
-export function createApi<Ctx = any>({
+export const API_ACTION_PREFIX = '@@saga-query';
+export function createApi<Ctx extends ApiCtx = ApiCtx<any>>({
   onError = defaultOnError,
 }: {
   onError?: (err: Error) => any;
 } = {}): SagaApi<Ctx> {
   const middleware: Middleware<Ctx>[] = [];
   const sagas: { [key: string]: any } = {};
-  const createType = (post: string) => `${API_ACTION_PREFIX}/${post}`;
-  function* onApi(
-    curMiddleware: Middleware<Ctx>[],
-    action: ActionWithPayload<any>,
-  ): Generator<any, Ctx, any> {
+  const middlewareMap: { [key: string]: Middleware<Ctx> } = {};
+
+  function* defaultMiddleware(ctx: Ctx, next: Next) {
+    yield next();
+  }
+
+  const createType = (post: string) => `${API_ACTION_PREFIX}${post}`;
+  function* onApi(action: ActionWithPayload<any>): Generator<any, Ctx, any> {
+    const { name, options } = action.payload;
     const ctx: any = {
-      payload: action.payload,
+      name,
+      payload: options,
     };
-    const fn = compose(curMiddleware as any);
+    const fn = compose(middleware);
     yield call(fn, ctx);
     return ctx;
   }
@@ -125,18 +137,31 @@ export function createApi<Ctx = any>({
       throw new Error('Middleware must be a function');
     }
 
-    const tt = req ? (req as any).saga : takeEvery;
-    const curMiddleware = fn ? [fn, ...middleware] : [...middleware];
+    middlewareMap[`${createName}`] = fn || defaultMiddleware;
 
+    const tt = req ? (req as any).saga : takeEvery;
     function* curSaga() {
-      yield tt(`${action}`, onApi, curMiddleware);
+      yield tt(`${action}`, onApi);
     }
-    sagas[`${action}`] = curSaga;
+    sagas[`${createName}`] = curSaga;
     const actionFn = (options?: any) => action({ name: createName, options });
+    actionFn.run = (options?: any) => call(onApi, actionFn(options));
     actionFn.toString = () => createName;
-    actionFn.run = (options?: any) =>
-      call(onApi, curMiddleware, actionFn(options));
     return actionFn;
+  }
+
+  function routes() {
+    function* router(ctx: Ctx, next: Next) {
+      const match = middlewareMap[ctx.name];
+      if (!match) {
+        yield next();
+        return;
+      }
+
+      yield call(match, ctx, next);
+    }
+
+    return router;
   }
 
   return {
@@ -145,5 +170,6 @@ export function createApi<Ctx = any>({
       middleware.push(fn);
     },
     create,
+    routes,
   };
 }

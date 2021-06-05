@@ -38,6 +38,7 @@ test('middleware - basic', (t) => {
   const cache = createTable<User>({ name });
   const query = createApi<FetchCtx>();
 
+  query.use(query.routes());
   query.use(queryCtx);
   query.use(urlParser);
   query.use(function* fetchApi(ctx, next) {
@@ -102,6 +103,7 @@ test('middleware - with loader', (t) => {
   const loaders = createLoaderTable({ name: 'loaders' });
 
   const api = createApi<FetchCtx>();
+  api.use(api.routes());
   api.use(queryCtx);
   api.use(urlParser);
   api.use(function* fetchApi(ctx, next) {
@@ -152,6 +154,7 @@ test('middleware - with POST', (t) => {
   const cache = createTable<User>({ name });
   const query = createApi<FetchCtx>();
 
+  query.use(query.routes());
   query.use(queryCtx);
   query.use(urlParser);
   query.use(function* fetchApi(ctx, next) {
@@ -172,7 +175,7 @@ test('middleware - with POST', (t) => {
     function* processUsers(ctx: FetchCtx<{ users: User[] }>, next) {
       ctx.request = {
         method: 'POST',
-        body: JSON.stringify({ email: ctx.payload.options.email }),
+        body: JSON.stringify({ email: ctx.payload.email }),
       };
       yield next();
       if (!ctx.response.ok) return;

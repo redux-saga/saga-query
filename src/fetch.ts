@@ -25,7 +25,7 @@ export type ApiFetchResponse<Data = any, E = any> =
   | ApiFetchError<E>;
 
 export interface FetchCtx<D = any, E = any, P = any> extends QueryCtx {
-  payload: CreateActionPayload<P>;
+  payload: P;
   request: Partial<FetchApiOpts>;
   response: ApiFetchResponse<D, E>;
 }

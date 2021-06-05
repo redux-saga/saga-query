@@ -28,12 +28,12 @@ export function* urlParser<Ctx extends QueryCtx = QueryCtx>(
     'patch',
   ];
 
-  const { options = {} } = ctx.payload;
+  const options = ctx.payload || {};
   if (!ctx.request) throw new Error('ctx.request does not exist');
   if (!ctx.request.url) {
     let url = Object.keys(options).reduce((acc, key) => {
       return acc.replace(`:${key}`, options[key]);
-    }, ctx.payload.name);
+    }, ctx.name);
 
     url = httpMethods.reduce((acc, method) => {
       const pattern = new RegExp(`\\s*\\[` + method + `\\]\\s*`, 'i');
@@ -61,7 +61,7 @@ export function loadingTracker<Ctx extends QueryCtx = QueryCtx>(
   errorFn: (ctx: Ctx) => string = (ctx) => ctx.response.data.message,
 ) {
   return function* trackLoading(ctx: Ctx, next: Next) {
-    const id = ctx.payload.name;
+    const id = ctx.name;
     yield put(loaders.actions.loading({ id }));
     yield next();
     if (!successFn(ctx)) {

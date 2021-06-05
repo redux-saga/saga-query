@@ -8,7 +8,8 @@ import { Middleware, Next, createApi } from './create-api';
 import { CreateActionPayload } from './types';
 
 interface RoboCtx<D = any, P = any> {
-  payload: CreateActionPayload<P>;
+  name: string;
+  payload: P;
   url: string;
   request: any;
   response: D;
@@ -66,7 +67,7 @@ const mockTicket = { id: '2', name: 'test-ticket' };
 
 function* convertNameToUrl(ctx: RoboCtx, next: Next) {
   if (!ctx.url) {
-    ctx.url = ctx.payload.name;
+    ctx.url = ctx.name;
   }
   yield next();
 }
@@ -145,6 +146,7 @@ function setupStore(saga: any) {
 
 test('createApi: when create a query fetch pipeline - execute all middleware and save to redux', (t) => {
   const api = createApi<RoboCtx>();
+  api.use(api.routes());
   api.use(convertNameToUrl);
   api.use(onFetchApi);
   api.use(setupActionState);
@@ -164,6 +166,7 @@ test('createApi: when create a query fetch pipeline - execute all middleware and
 test('createApi: when providing a generator the to api.create function - should call that generator before all other middleware', (t) => {
   t.plan(2);
   const api = createApi<RoboCtx>();
+  api.use(api.routes());
   api.use(convertNameToUrl);
   api.use(onFetchApi);
   api.use(setupActionState);
@@ -198,6 +201,7 @@ test('createApi: when providing a generator the to api.create function - should 
 test('error handling', (t) => {
   t.plan(1);
   const api = createApi<RoboCtx>();
+  api.use(api.routes());
   api.use(function* upstream(ctx, next) {
     try {
       yield next();
@@ -217,6 +221,7 @@ test('error handling', (t) => {
 test('error handling inside create', (t) => {
   t.plan(1);
   const api = createApi<RoboCtx>();
+  api.use(api.routes());
   api.use(function* fail() {
     throw new Error('some error');
   });
@@ -237,6 +242,7 @@ test('error handling - error handler', (t) => {
   const api = createApi<RoboCtx>({
     onError: (err: Error) => t.assert(err.message === 'failure'),
   });
+  api.use(api.routes());
   api.use(function* upstream(ctx, next) {
     throw new Error('failure');
   });
@@ -249,6 +255,7 @@ test('error handling - error handler', (t) => {
 test('create fn is an array', (t) => {
   t.plan(1);
   const api = createApi<RoboCtx>();
+  api.use(api.routes());
   api.use(function* (ctx, next) {
     t.deepEqual(ctx.request, {
       method: 'POST',
@@ -278,6 +285,7 @@ test('create fn is an array', (t) => {
 test('run() on endpoint action - should run the effect', (t) => {
   t.plan(2);
   const api = createApi<RoboCtx>();
+  api.use(api.routes());
   let acc = '';
   const action1 = api.create('/users', function* (ctx, next) {
     yield next();
@@ -290,7 +298,8 @@ test('run() on endpoint action - should run the effect', (t) => {
     acc += 'b';
     t.assert(acc === 'ab');
     t.deepEqual(curCtx, {
-      payload: { name: '/users', options: undefined },
+      name: '/users',
+      payload: undefined,
       request: 'expect this',
     });
   });

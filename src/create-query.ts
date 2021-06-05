@@ -6,6 +6,7 @@ export interface SagaQueryApi<Ctx extends QueryCtx = QueryCtx>
   request: (
     r: Ctx['request'],
   ) => (ctx: Ctx, next: Next) => Generator<any, any, any>;
+
   get(name: string): CreateAction;
   get<P>(name: string): CreateActionWithPayload<P>;
   get(name: string, req: { saga?: any }): CreateAction;
@@ -132,6 +133,7 @@ export function createQuery<Ctx extends QueryCtx = QueryCtx>(
     use: api.use,
     saga: api.saga,
     create: api.create,
+    routes: api.routes,
     request: (req: Ctx['request']) => {
       return function* onRequest(ctx: Ctx, next: Next) {
         ctx.request = req;
