@@ -25,7 +25,7 @@ export function compose<Ctx = any>(middleware: Middleware<Ctx>[]) {
     }
   }
 
-  return function* composeSaga(context: Ctx, next?: Next) {
+  return function* composeSaga(context: Ctx, next?: Next): SagaIterator<void> {
     // last called middleware #
     let index = -1;
     yield call(dispatch, 0);
@@ -83,7 +83,7 @@ export function createApi<Ctx extends ApiCtx = ApiCtx<any>>({
   const sagas: { [key: string]: any } = {};
   const middlewareMap: { [key: string]: Middleware<Ctx> } = {};
 
-  function* defaultMiddleware(ctx: Ctx, next: Next) {
+  function* defaultMiddleware(ctx: Ctx, next: Next): SagaIterator<void> {
     yield next();
   }
 
@@ -136,7 +136,7 @@ export function createApi<Ctx extends ApiCtx = ApiCtx<any>>({
     middlewareMap[`${createName}`] = fn || defaultMiddleware;
 
     const tt = req ? (req as any).saga : takeEvery;
-    function* curSaga() {
+    function* curSaga(): SagaIterator<void> {
       yield tt(`${action}`, onApi);
     }
     sagas[`${createName}`] = curSaga;
@@ -147,7 +147,7 @@ export function createApi<Ctx extends ApiCtx = ApiCtx<any>>({
   }
 
   function routes() {
-    function* router(ctx: Ctx, next: Next) {
+    function* router(ctx: Ctx, next: Next): SagaIterator<void> {
       const match = middlewareMap[ctx.name];
       if (!match) {
         yield next();

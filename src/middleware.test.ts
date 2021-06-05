@@ -103,6 +103,14 @@ test('middleware - with loader', (t) => {
   const loaders = createLoaderTable({ name: 'loaders' });
 
   const api = createApi<FetchCtx>();
+  api.use(function* (ctx, next) {
+    yield next();
+    for (let i = 0; i < ctx.actions.length; i += 1) {
+      const action = ctx.actions[i];
+      yield put(action);
+    }
+  });
+  api.use(loadingTracker(loaders));
   api.use(api.routes());
   api.use(queryCtx);
   api.use(urlParser);
@@ -116,7 +124,6 @@ test('middleware - with loader', (t) => {
     };
     yield next();
   });
-  api.use(loadingTracker(loaders));
 
   const fetchUsers = api.create(
     `/users`,
@@ -128,7 +135,8 @@ test('middleware - with loader', (t) => {
         acc[u.id] = u;
         return acc;
       }, {});
-      yield put(users.actions.add(curUsers));
+
+      ctx.actions.push(users.actions.add(curUsers));
     },
   );
 

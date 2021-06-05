@@ -78,12 +78,15 @@ export function loadingTracker<Ctx extends QueryCtx = QueryCtx>(
   return function* trackLoading(ctx: Ctx, next: Next) {
     const id = ctx.name;
     yield put(loaders.actions.loading({ id }));
+
     yield next();
+
     if (!ctx.response.ok) {
-      yield put(loaders.actions.error({ id, message: errorFn(ctx) }));
+      ctx.actions.push(loaders.actions.error({ id, message: errorFn(ctx) }));
       return;
     }
-    yield put(loaders.actions.success({ id }));
+
+    ctx.actions.push(loaders.actions.success({ id }));
   };
 }
 
