@@ -7,6 +7,7 @@ quickly build data loading within your redux application.
 - [Manipulating the request](#manipulating-the-request)
 - [Dispatching many actions](#dispatching-many-actions)
 - [Error handling](#error-handling)
+- [Dependent queries](#dependent-queries)
 - [Loading state](#loading-state)
 - [React](#react)
 - [Take latest](#take-latest)
@@ -459,6 +460,40 @@ export function setupStore({
 
   return { store };
 }
+```
+
+### Dependent queries
+
+Sometimes it's necessary to compose multiple endpoints together.  For example
+we might want to fetch a mailbox and its associated messages.  Every endpoint
+also returns a property on the action creator `.run(props)` which returns a
+redux-saga `call` object that you can yield to.
+
+**WARNING: This API is probably going to change so we don't hardcode `call` as
+the return value.**
+
+```ts
+const fetchMailbox = api.get('/mailboxes');
+
+const fetchMessages = api.get<{ id: string }>(
+  '/mailboxes/:id/messages',
+  function*(ctx, next) {
+    // Under the hood this is just a `yield call(onApi, fetchMailbox(props))`.
+    // The return value of a `.run` is the entire `ctx` object.
+    const mailCtx = yield fetchMailbox.run();
+
+    if (!mailCtx.response.ok) {
+      yield next();
+      return;
+    }
+
+    ctx.request = {
+      url: `/mailboxes/${mailCtx.response.id}/messages`
+    };
+
+    yield next();
+  },
+);
 ```
 
 ### Error handling
