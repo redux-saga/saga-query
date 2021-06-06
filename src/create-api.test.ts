@@ -1,7 +1,7 @@
 import test from 'ava';
 import { createStore, combineReducers, applyMiddleware } from 'redux';
 import createSagaMiddleware, { SagaIterator } from 'redux-saga';
-import { put } from 'redux-saga/effects';
+import { put, call } from 'redux-saga/effects';
 import { createTable, Action, MapEntity, createReducerMap } from 'robodux';
 
 import { Middleware, Next, createApi } from './create-api';
@@ -294,7 +294,7 @@ test('run() on endpoint action - should run the effect', (t) => {
     '/users2',
     function* (ctx, next): SagaIterator<void> {
       yield next();
-      const curCtx = yield action1.run();
+      const curCtx = yield call(action1.run, action1());
       acc += 'b';
       t.assert(acc === 'ab');
       t.deepEqual(curCtx, {
