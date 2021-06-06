@@ -1,7 +1,9 @@
 # saga-query
 
+[![ci](https://github.com/neurosnap/saga-query/actions/workflows/test.yml/badge.svg)](https://github.com/neurosnap/saga-query/actions/workflows/test.yml)
+
 Data fetching and caching using redux-saga.  Use our saga middleware system to
-quickly build data loading within your redux application. 
+quickly build data loading within your redux application.
 
 - [Examples](#examples)
 - [Simple fetch](#show-me-the-way)
@@ -34,8 +36,8 @@ quickly build data loading within your redux application.
 
 ## Why?
 
-Libraries like [react-query](https://react-query.tanstack.com/), 
-[rtk-query](https://rtk-query-docs.netlify.app/), and 
+Libraries like [react-query](https://react-query.tanstack.com/),
+[rtk-query](https://rtk-query-docs.netlify.app/), and
 [apollo-client](https://www.apollographql.com/docs/react/) are making it
 easier than ever to fetch and cache data from an API server.  All of them
 have their unique attributes and I encourage everyone to check them out.
@@ -44,29 +46,29 @@ I find that the async flow control of `redux-saga` is one of the most robust
 and powerful declaractive side-effect systems I have used.  Treating
 side-effects as data makes testing dead simple and provides a powerful effect
 handling system to accomodate any use-case.  Features like polling, data
-loading states, cancellation, racing, parallelization, optimistic updates, 
+loading states, cancellation, racing, parallelization, optimistic updates,
 and undo are at your disposal when using `redux-saga`.  Other
 libraries and paradigms can also accomplish the same tasks, but I think nothing
 rivals the readability and maintainability of redux/redux-saga.
 
 All three libraries above are reinventing async flow control and hiding them
-from the end-developer.  For the happy path, this works beautifully.  Why learn 
+from the end-developer.  For the happy path, this works beautifully.  Why learn
 how to cache API data when a library can do it for you?  However:
 
-- What happens when the queries you're performing against your cache are too slow? 
+- What happens when the queries you're performing against your cache are too slow?
 - What happens when [`useMemo` isn't good
-  enough](https://medium.com/swlh/should-you-use-usememo-in-react-a-benchmarked-analysis-159faf6609b7)?  
-- What happens when you're fighting against a data sync library that doesn't do exactly 
-what you need it to do?  
-- What happens when you want to reuse your business logic for another platform 
-(e.g. a cli) and can't use `react`? 
+  enough](https://medium.com/swlh/should-you-use-usememo-in-react-a-benchmarked-analysis-159faf6609b7)?
+- What happens when you're fighting against a data sync library that doesn't do exactly
+what you need it to do?
+- What happens when you want to reuse your business logic for another platform
+(e.g. a cli) and can't use `react`?
 
-If you've never needed to performance tune selector queries on the 
-front-end, then this library might not be for you.  If you just need to make 
-some API requests with loading states and not much else, then those other 
+If you've never needed to performance tune selector queries on the
+front-end, then this library might not be for you.  If you just need to make
+some API requests with loading states and not much else, then those other
 libraries are probably a better fit for you.
 
-This library is intended for large scale, complex flow control applications 
+This library is intended for large scale, complex flow control applications
 that need full control over the data cache layer while setting good standards
 for using redux and a flexible middleware to handle all business logic.
 
@@ -91,7 +93,7 @@ for using redux and a flexible middleware to handle all business logic.
 
 ## A note on `robodux`
 
-The docs heavily use [robodux](https://github.com/neurosnap/robodux) and is 
+The docs heavily use [robodux](https://github.com/neurosnap/robodux) and is
 recommended for usage with `saga-query`.  I use it for most of my production
 applications and it will make caching data simple and straight-forward.  Even
 for large scale applications, 100% of my redux state is composed of `robodux`
@@ -107,11 +109,11 @@ is also heavily encouraged.
 // api.ts
 import { put, call } from 'redux-saga/effects';
 import { createTable, createReducerMap } from 'robodux';
-import { 
-  createQuery, 
-  queryCtx, 
-  urlParser, 
-  FetchCtx 
+import {
+  createQuery,
+  queryCtx,
+  urlParser,
+  FetchCtx
 } from 'saga-query';
 
 interface User {
@@ -195,13 +197,13 @@ communication](https://www.electronjs.org/docs/api/ipc-main).
 ```ts
 import { put, call } from 'redux-saga/effects';
 import { createTable, createReducerMap } from 'robodux';
-import { 
-  createQuery, 
-  queryCtx, 
-  urlParser, 
+import {
+  createQuery,
+  queryCtx,
+  urlParser,
   // FetchCtx is an interface that's built around using window.fetch
   // You don't have to use it if you don't want to.
-  FetchCtx 
+  FetchCtx
 } from 'saga-query';
 
 // create a reducer that acts like a SQL database table
@@ -214,9 +216,9 @@ const users = createTable<User>({ name: 'users' });
 // The generic passed to `createQuery` must extend `QueryCtx` to be accepted.
 const api = createQuery<FetchCtx>();
 
-// This is where all the endpoints (e.g. `.get()`, `.put()`, etc.) you created 
-// get added to the middleware stack.  It is recommended to put this as close to 
-// the beginning of the stack so everything after `yield next()` 
+// This is where all the endpoints (e.g. `.get()`, `.put()`, etc.) you created
+// get added to the middleware stack.  It is recommended to put this as close to
+// the beginning of the stack so everything after `yield next()`
 // happens at the end of the effect.
 api.use(api.routes());
 
@@ -252,7 +254,7 @@ api.use(function* onFetch(ctx, next) {
 // want with it.
 const fetchUsers = api.get(
   `/users`,
-  // Since this middleware is first it has the unique benefit of being in full 
+  // Since this middleware is first it has the unique benefit of being in full
   // control of when the other middleware get activated.
   // The type inside of `FetchCtx` is the response object
   function* processUsers(ctx: FetchCtx<{ users: User[] }>, next) {
@@ -567,16 +569,16 @@ store.dispatch(action());
 ```ts
 // api.ts
 import { put, call } from 'redux-saga/effects';
-import { 
-  createTable, 
-  createLoaderTable, 
-  createReducerMap, 
+import {
+  createTable,
+  createLoaderTable,
+  createReducerMap,
 } from 'robodux';
-import { 
-  createQuery, 
-  FetchCtx,  
-  queryCtx, 
-  urlParser, 
+import {
+  createQuery,
+  FetchCtx,
+  queryCtx,
+  urlParser,
   loadingTracker,
   leading,
 } from 'saga-query';
@@ -587,13 +589,13 @@ interface User {
 }
 
 export const loaders = createLoaderTable({ name: 'loaders' });
-export const { 
-  selectById: selectLoaderById 
+export const {
+  selectById: selectLoaderById
 } = loaders.getSelectors((s) => s[loaders.name]);
 
 export const users = createTable<User>({ name: 'users' });
-export const { 
-  selectTableAsList: selectUsersAsList 
+export const {
+  selectTableAsList: selectUsersAsList
 } = users.getSelectors((s) => s[users.name]);
 
 export const api = createQuery<FetchCtx>();
@@ -642,11 +644,11 @@ const store = setupStore(reducers, api.saga());
 // app.tsx
 import React, { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { 
-  loaders, 
-  users, 
-  fetchUsers, 
-  selectUsersAsList, 
+import {
+  loaders,
+  users,
+  fetchUsers,
+  selectUsersAsList,
   selectLoaderById
 } from './api';
 
@@ -701,15 +703,15 @@ import { useEffect } from 'react';
 import { Action } from 'redux';
 import { useSelector, useDispatch } from 'react-redux';
 
-import { 
-  fetchUsers, 
-  selectLoaderById, 
+import {
+  fetchUsers,
+  selectLoaderById,
   selectUsersAsList,
 } from './api';
 import { AppState } from './types';
 
 export const useQuery = <Ctx, R = any>(
-  action: { payload: { name: string } }, 
+  action: { payload: { name: string } },
   selector: (state: AppState) => R
 ): LoadingItemState & { data: R } => {
   const dispatch = useDispatch();
@@ -722,7 +724,7 @@ export const useQuery = <Ctx, R = any>(
   // since we are using `takeLeading` if this action gets dispatched multiple
   // times it will cancel all actions before the first one dispatched
   useEffect(() => {
-    dispatch(action); 
+    dispatch(action);
   }, []);
 
   return { ...loader, data };
@@ -738,7 +740,7 @@ import { useQueryUsers } from './use-query';
 
 const App = () => {
   const { data, loading, error } = useQueryUsers();
-  
+
   if (loading) {
     return <div>Loading ...</div>
   }
@@ -830,7 +832,7 @@ Here is the manual, one-off way to handle optimistic ui:
 import { put, select } from 'redux-saga/effects';
 
 const updateUser = api.patch<Partial<User> & { id: string }>(
-  `/users/:id`, 
+  `/users/:id`,
   function* onUpdateUser(ctx: FetchCtx<User>, next) {
     const { id, email } = ctx.payload;
     ctx.request = {
@@ -851,10 +853,10 @@ const updateUser = api.patch<Partial<User> & { id: string }>(
       return;
     }
 
-    // even though we know what was updated, it's still a good habit to 
+    // even though we know what was updated, it's still a good habit to
     // update our local cache with what the server sent us
     const nextUser = ctx.response.data;
-    yield put(users.actions.add({ [nextUser.id]: nextUser })); 
+    yield put(users.actions.add({ [nextUser.id]: nextUser }));
   },
 )
 ```
@@ -896,11 +898,11 @@ We built a middleware for anyone to use:
 ```ts
 import { delay, put, race } from 'redux-saga/effects';
 import { createAction } from 'robodux';
-import { 
-  createQuery, 
-  queryCtx, 
-  urlParser, 
-  undoer, 
+import {
+  createQuery,
+  queryCtx,
+  urlParser,
+  undoer,
   undo,
   UndoCtx,
 } from 'saga-query';
@@ -953,16 +955,16 @@ response data.
 ```ts
 import { createSlice } from 'redux-toolkit';
 
-const users = createSlice({ 
-  name: 'users', 
+const users = createSlice({
+  name: 'users',
   initialState: {},
   reducers: {
     add: (state, action) => {
       action.payload.forEach((user) => {
-        state[user.id] = user.id; 
+        state[user.id] = user.id;
       });
     }
-  } 
+  }
 });
 
 const api = createQuery();
