@@ -89,7 +89,8 @@ for using redux and a flexible middleware to handle all business logic.
 
 ### Examples
 
-- [Simple](https://codesandbox.io/s/saga-query-simple-2r2tr)
+- [Simple](https://codesandbox.io/s/saga-query-simple-ifcwf)
+- [Basic](https://codesandbox.io/s/saga-query-basic-jtceo)
 
 ## A note on `robodux`
 
