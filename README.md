@@ -470,11 +470,10 @@ export function setupStore({
 
 Sometimes it's necessary to compose multiple endpoints together.  For example
 we might want to fetch a mailbox and its associated messages.  Every endpoint
-also returns a property on the action creator `.run(props)` which returns a
-redux-saga `call` object that you can yield to.
+also returns a property on the action creator `.run` which returns the saga
+that runs when the action is dispatched.
 
-**WARNING: This API is probably going to change so we don't hardcode `call` as
-the return value.**
+This allows us to `yield` to that saga inside another endpoint.
 
 ```ts
 const fetchMailbox = api.get('/mailboxes');
@@ -482,9 +481,8 @@ const fetchMailbox = api.get('/mailboxes');
 const fetchMessages = api.get<{ id: string }>(
   '/mailboxes/:id/messages',
   function*(ctx, next) {
-    // Under the hood this is just a `yield call(onApi, fetchMailbox(props))`.
     // The return value of a `.run` is the entire `ctx` object.
-    const mailCtx = yield fetchMailbox.run();
+    const mailCtx = yield call(fetchMailbox.run, fetchMailbox());
 
     if (!mailCtx.response.ok) {
       yield next();

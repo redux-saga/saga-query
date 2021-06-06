@@ -1,6 +1,6 @@
 import test from 'ava';
 import createSagaMiddleware from 'redux-saga';
-import { put } from 'redux-saga/effects';
+import { put, call } from 'redux-saga/effects';
 import { createReducerMap, MapEntity, createTable } from 'robodux';
 import { createStore, combineReducers, applyMiddleware } from 'redux';
 import { urlParser, queryCtx } from './middleware';
@@ -97,7 +97,7 @@ test('run() on endpoint action - should run the effect', (t) => {
   });
   const action2 = api.get('/users2', function* (ctx, next) {
     yield next();
-    yield action1.run({ id: '1' });
+    yield call(action1.run, action1({ id: '1' }));
     acc += 'b';
     t.assert(acc === 'ab');
   });

@@ -6,122 +6,170 @@ export interface SagaQueryApi<Ctx extends QueryCtx = QueryCtx>
   extends SagaApi<Ctx> {
   request: (r: Ctx['request']) => (ctx: Ctx, next: Next) => SagaIterator<any>;
 
-  get(name: string): CreateAction;
-  get<P>(name: string): CreateActionWithPayload<P>;
-  get(name: string, req: { saga?: any }): CreateAction;
-  get<P>(name: string, req: { saga?: any }): CreateActionWithPayload<P>;
-  get(name: string, fn: Middleware<Ctx>): CreateAction;
-  get<P>(name: string, fn: Middleware<Ctx>): CreateActionWithPayload<P>;
-  get(name: string, req: { saga?: any }, fn: Middleware<Ctx>): CreateAction;
+  get(name: string): CreateAction<Ctx>;
+  get<P>(name: string): CreateActionWithPayload<Ctx, P>;
+  get(name: string, req: { saga?: any }): CreateAction<Ctx>;
+  get<P>(name: string, req: { saga?: any }): CreateActionWithPayload<Ctx, P>;
+  get(name: string, fn: Middleware<Ctx>): CreateAction<Ctx>;
+  get<P>(name: string, fn: Middleware<Ctx>): CreateActionWithPayload<Ctx, P>;
+  get(
+    name: string,
+    req: { saga?: any },
+    fn: Middleware<Ctx>,
+  ): CreateAction<Ctx>;
   get<P>(
     name: string,
     req: { saga?: any },
     fn: Middleware<Ctx>,
-  ): CreateActionWithPayload<P>;
+  ): CreateActionWithPayload<Ctx, P>;
 
-  post(name: string): CreateAction;
-  post<P>(name: string): CreateActionWithPayload<P>;
-  post(name: string, req: { saga?: any }): CreateAction;
-  post<P>(name: string, req: { saga?: any }): CreateActionWithPayload<P>;
-  post(name: string, fn: Middleware<Ctx>): CreateAction;
-  post<P>(name: string, fn: Middleware<Ctx>): CreateActionWithPayload<P>;
-  post(name: string, req: { saga?: any }, fn: Middleware<Ctx>): CreateAction;
+  post(name: string): CreateAction<Ctx>;
+  post<P>(name: string): CreateActionWithPayload<Ctx, P>;
+  post(name: string, req: { saga?: any }): CreateAction<Ctx>;
+  post<P>(name: string, req: { saga?: any }): CreateActionWithPayload<Ctx, P>;
+  post(name: string, fn: Middleware<Ctx>): CreateAction<Ctx>;
+  post<P>(name: string, fn: Middleware<Ctx>): CreateActionWithPayload<Ctx, P>;
+  post(
+    name: string,
+    req: { saga?: any },
+    fn: Middleware<Ctx>,
+  ): CreateAction<Ctx>;
   post<P>(
     name: string,
     req: { saga?: any },
     fn: Middleware<Ctx>,
-  ): CreateActionWithPayload<P>;
+  ): CreateActionWithPayload<Ctx, P>;
 
-  put(name: string): CreateAction;
-  put<P>(name: string): CreateActionWithPayload<P>;
-  put(name: string, req: { saga?: any }): CreateAction;
-  put<P>(name: string, req: { saga?: any }): CreateActionWithPayload<P>;
-  put(name: string, fn: Middleware<Ctx>): CreateAction;
-  put<P>(name: string, fn: Middleware<Ctx>): CreateActionWithPayload<P>;
-  put(name: string, req: { saga?: any }, fn: Middleware<Ctx>): CreateAction;
+  put(name: string): CreateAction<Ctx>;
+  put<P>(name: string): CreateActionWithPayload<Ctx, P>;
+  put(name: string, req: { saga?: any }): CreateAction<Ctx>;
+  put<P>(name: string, req: { saga?: any }): CreateActionWithPayload<Ctx, P>;
+  put(name: string, fn: Middleware<Ctx>): CreateAction<Ctx>;
+  put<P>(name: string, fn: Middleware<Ctx>): CreateActionWithPayload<Ctx, P>;
+  put(
+    name: string,
+    req: { saga?: any },
+    fn: Middleware<Ctx>,
+  ): CreateAction<Ctx>;
   put<P>(
     name: string,
     req: { saga?: any },
     fn: Middleware<Ctx>,
-  ): CreateActionWithPayload<P>;
+  ): CreateActionWithPayload<Ctx, P>;
 
-  patch(name: string): CreateAction;
-  patch<P>(name: string): CreateActionWithPayload<P>;
-  patch(name: string, req: { saga?: any }): CreateAction;
-  patch<P>(name: string, req: { saga?: any }): CreateActionWithPayload<P>;
-  patch(name: string, fn: Middleware<Ctx>): CreateAction;
-  patch<P>(name: string, fn: Middleware<Ctx>): CreateActionWithPayload<P>;
-  patch(name: string, req: { saga?: any }, fn: Middleware<Ctx>): CreateAction;
+  patch(name: string): CreateAction<Ctx>;
+  patch<P>(name: string): CreateActionWithPayload<Ctx, P>;
+  patch(name: string, req: { saga?: any }): CreateAction<Ctx>;
+  patch<P>(name: string, req: { saga?: any }): CreateActionWithPayload<Ctx, P>;
+  patch(name: string, fn: Middleware<Ctx>): CreateAction<Ctx>;
+  patch<P>(name: string, fn: Middleware<Ctx>): CreateActionWithPayload<Ctx, P>;
+  patch(
+    name: string,
+    req: { saga?: any },
+    fn: Middleware<Ctx>,
+  ): CreateAction<Ctx>;
   patch<P>(
     name: string,
     req: { saga?: any },
     fn: Middleware<Ctx>,
-  ): CreateActionWithPayload<P>;
+  ): CreateActionWithPayload<Ctx, P>;
 
-  delete(name: string): CreateAction;
-  delete<P>(name: string): CreateActionWithPayload<P>;
-  delete(name: string, req: { saga?: any }): CreateAction;
-  delete<P>(name: string, req: { saga?: any }): CreateActionWithPayload<P>;
-  delete(name: string, fn: Middleware<Ctx>): CreateAction;
-  delete<P>(name: string, fn: Middleware<Ctx>): CreateActionWithPayload<P>;
-  delete(name: string, req: { saga?: any }, fn: Middleware<Ctx>): CreateAction;
+  delete(name: string): CreateAction<Ctx>;
+  delete<P>(name: string): CreateActionWithPayload<Ctx, P>;
+  delete(name: string, req: { saga?: any }): CreateAction<Ctx>;
+  delete<P>(name: string, req: { saga?: any }): CreateActionWithPayload<Ctx, P>;
+  delete(name: string, fn: Middleware<Ctx>): CreateAction<Ctx>;
+  delete<P>(name: string, fn: Middleware<Ctx>): CreateActionWithPayload<Ctx, P>;
+  delete(
+    name: string,
+    req: { saga?: any },
+    fn: Middleware<Ctx>,
+  ): CreateAction<Ctx>;
   delete<P>(
     name: string,
     req: { saga?: any },
     fn: Middleware<Ctx>,
-  ): CreateActionWithPayload<P>;
+  ): CreateActionWithPayload<Ctx, P>;
 
-  options(name: string): CreateAction;
-  options<P>(name: string): CreateActionWithPayload<P>;
-  options(name: string, req: { saga?: any }): CreateAction;
-  options<P>(name: string, req: { saga?: any }): CreateActionWithPayload<P>;
-  options(name: string, fn: Middleware<Ctx>): CreateAction;
-  options<P>(name: string, fn: Middleware<Ctx>): CreateActionWithPayload<P>;
-  options(name: string, req: { saga?: any }, fn: Middleware<Ctx>): CreateAction;
+  options(name: string): CreateAction<Ctx>;
+  options<P>(name: string): CreateActionWithPayload<Ctx, P>;
+  options(name: string, req: { saga?: any }): CreateAction<Ctx>;
+  options<P>(
+    name: string,
+    req: { saga?: any },
+  ): CreateActionWithPayload<Ctx, P>;
+  options(name: string, fn: Middleware<Ctx>): CreateAction<Ctx>;
+  options<P>(
+    name: string,
+    fn: Middleware<Ctx>,
+  ): CreateActionWithPayload<Ctx, P>;
+  options(
+    name: string,
+    req: { saga?: any },
+    fn: Middleware<Ctx>,
+  ): CreateAction<Ctx>;
   options<P>(
     name: string,
     req: { saga?: any },
     fn: Middleware<Ctx>,
-  ): CreateActionWithPayload<P>;
+  ): CreateActionWithPayload<Ctx, P>;
 
-  head(name: string): CreateAction;
-  head<P>(name: string): CreateActionWithPayload<P>;
-  head(name: string, req: { saga?: any }): CreateAction;
-  head<P>(name: string, req: { saga?: any }): CreateActionWithPayload<P>;
-  head(name: string, fn: Middleware<Ctx>): CreateAction;
-  head<P>(name: string, fn: Middleware<Ctx>): CreateActionWithPayload<P>;
-  head(name: string, req: { saga?: any }, fn: Middleware<Ctx>): CreateAction;
+  head(name: string): CreateAction<Ctx>;
+  head<P>(name: string): CreateActionWithPayload<Ctx, P>;
+  head(name: string, req: { saga?: any }): CreateAction<Ctx>;
+  head<P>(name: string, req: { saga?: any }): CreateActionWithPayload<Ctx, P>;
+  head(name: string, fn: Middleware<Ctx>): CreateAction<Ctx>;
+  head<P>(name: string, fn: Middleware<Ctx>): CreateActionWithPayload<Ctx, P>;
+  head(
+    name: string,
+    req: { saga?: any },
+    fn: Middleware<Ctx>,
+  ): CreateAction<Ctx>;
   head<P>(
     name: string,
     req: { saga?: any },
     fn: Middleware<Ctx>,
-  ): CreateActionWithPayload<P>;
+  ): CreateActionWithPayload<Ctx, P>;
 
-  connect(name: string): CreateAction;
-  connect<P>(name: string): CreateActionWithPayload<P>;
-  connect(name: string, req: { saga?: any }): CreateAction;
-  connect<P>(name: string, req: { saga?: any }): CreateActionWithPayload<P>;
-  connect(name: string, fn: Middleware<Ctx>): CreateAction;
-  connect<P>(name: string, fn: Middleware<Ctx>): CreateActionWithPayload<P>;
-  connect(name: string, req: { saga?: any }, fn: Middleware<Ctx>): CreateAction;
+  connect(name: string): CreateAction<Ctx>;
+  connect<P>(name: string): CreateActionWithPayload<Ctx, P>;
+  connect(name: string, req: { saga?: any }): CreateAction<Ctx>;
+  connect<P>(
+    name: string,
+    req: { saga?: any },
+  ): CreateActionWithPayload<Ctx, P>;
+  connect(name: string, fn: Middleware<Ctx>): CreateAction<Ctx>;
+  connect<P>(
+    name: string,
+    fn: Middleware<Ctx>,
+  ): CreateActionWithPayload<Ctx, P>;
+  connect(
+    name: string,
+    req: { saga?: any },
+    fn: Middleware<Ctx>,
+  ): CreateAction<Ctx>;
   connect<P>(
     name: string,
     req: { saga?: any },
     fn: Middleware<Ctx>,
-  ): CreateActionWithPayload<P>;
+  ): CreateActionWithPayload<Ctx, P>;
 
-  trace(name: string): CreateAction;
-  trace<P>(name: string): CreateActionWithPayload<P>;
-  trace(name: string, req: { saga?: any }): CreateAction;
-  trace<P>(name: string, req: { saga?: any }): CreateActionWithPayload<P>;
-  trace(name: string, fn: Middleware<Ctx>): CreateAction;
-  trace<P>(name: string, fn: Middleware<Ctx>): CreateActionWithPayload<P>;
-  trace(name: string, req: { saga?: any }, fn: Middleware<Ctx>): CreateAction;
+  trace(name: string): CreateAction<Ctx>;
+  trace<P>(name: string): CreateActionWithPayload<Ctx, P>;
+  trace(name: string, req: { saga?: any }): CreateAction<Ctx>;
+  trace<P>(name: string, req: { saga?: any }): CreateActionWithPayload<Ctx, P>;
+  trace(name: string, fn: Middleware<Ctx>): CreateAction<Ctx>;
+  trace<P>(name: string, fn: Middleware<Ctx>): CreateActionWithPayload<Ctx, P>;
+  trace(
+    name: string,
+    req: { saga?: any },
+    fn: Middleware<Ctx>,
+  ): CreateAction<Ctx>;
   trace<P>(
     name: string,
     req: { saga?: any },
     fn: Middleware<Ctx>,
-  ): CreateActionWithPayload<P>;
+  ): CreateActionWithPayload<Ctx, P>;
 }
 
 export function createQuery<Ctx extends QueryCtx = QueryCtx>(

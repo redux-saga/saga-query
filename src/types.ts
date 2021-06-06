@@ -1,4 +1,4 @@
-import { CallEffect } from 'redux-saga/effects';
+import { SagaIterator } from 'redux-saga';
 
 export interface Action {
   type: string;
@@ -19,13 +19,13 @@ export interface ApiCtx<P = any> {
   action: CreateActionPayload<P>;
 }
 
-export interface CreateAction {
+export interface CreateAction<Ctx> {
   (): ActionWithPayload<CreateActionPayload<{}>>;
-  run: () => CallEffect;
+  run: (p: ActionWithPayload<CreateActionPayload<{}>>) => SagaIterator<Ctx>;
 }
-export interface CreateActionWithPayload<P> {
+export interface CreateActionWithPayload<Ctx, P> {
   (p: P): ActionWithPayload<CreateActionPayload<P>>;
-  run: (p: P) => CallEffect;
+  run: (a: ActionWithPayload<CreateActionPayload<P>>) => SagaIterator<Ctx>;
 }
 
 export interface RequestCtx {

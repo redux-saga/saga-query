@@ -48,25 +48,28 @@ export interface SagaApi<Ctx extends ApiCtx> {
   use: (fn: Middleware<Ctx>) => void;
   routes: () => Middleware<Ctx>;
 
-  create(name: string): CreateAction;
-  create<P>(name: string): CreateActionWithPayload<P>;
-  create(name: string, req: { saga?: any }): CreateAction;
-  create<P>(name: string, req: { saga?: any }): CreateActionWithPayload<P>;
-  create(name: string, fn: Middleware<Ctx> | Middleware<Ctx>[]): CreateAction;
+  create(name: string): CreateAction<Ctx>;
+  create<P>(name: string): CreateActionWithPayload<Ctx, P>;
+  create(name: string, req: { saga?: any }): CreateAction<Ctx>;
+  create<P>(name: string, req: { saga?: any }): CreateActionWithPayload<Ctx, P>;
+  create(
+    name: string,
+    fn: Middleware<Ctx> | Middleware<Ctx>[],
+  ): CreateAction<Ctx>;
   create<P>(
     name: string,
     fn: Middleware<Ctx> | Middleware<Ctx>[],
-  ): CreateActionWithPayload<P>;
+  ): CreateActionWithPayload<Ctx, P>;
   create(
     name: string,
     req: { saga?: any },
     fn: Middleware<Ctx> | Middleware<Ctx>[],
-  ): CreateAction;
+  ): CreateAction<Ctx>;
   create<P>(
     name: string,
     req: { saga?: any },
     fn: Middleware<Ctx> | Middleware<Ctx>[],
-  ): CreateActionWithPayload<P>;
+  ): CreateActionWithPayload<Ctx, P>;
 }
 
 export const defaultOnError = (err: Error) => {
@@ -141,7 +144,7 @@ export function createApi<Ctx extends ApiCtx = ApiCtx<any>>({
     }
     sagas[`${createName}`] = curSaga;
     const actionFn = (options?: any) => action({ name: createName, options });
-    actionFn.run = (options?: any) => call(onApi, actionFn(options));
+    actionFn.run = onApi as any;
     actionFn.toString = () => createName;
     return actionFn;
   }
