@@ -62,6 +62,17 @@ export function* urlParser<Ctx extends QueryCtx = QueryCtx>(
     ctx.request.url = url;
   }
 
+  if (!ctx.request.method) {
+    httpMethods.forEach((method) => {
+      const url = ctx.request.url || '';
+      const pattern = new RegExp(`\\s*\\[` + method + `\\]\\s*`, 'i');
+      const result = url.replace(pattern, '');
+      if (result.length !== url.length) {
+        ctx.request.method = method.toLocaleUpperCase();
+      }
+    });
+  }
+
   yield next();
 }
 
