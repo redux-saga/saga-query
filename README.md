@@ -95,10 +95,10 @@ for using redux and a flexible middleware to handle all business logic.
 ## A note on `robodux`
 
 The docs heavily use [robodux](https://github.com/neurosnap/robodux) and is
-recommended for usage with `saga-query`.  I use it for most of my production
-applications and it will make caching data simple and straight-forward.  Even
-for large scale applications, 100% of my redux state is composed of `robodux`
-slice helpers.
+recommended for usage with `saga-query`.  **It is not required to use
+`saga-query`.**  I use it for most of my production applications and it will 
+make caching data simple and straight-forward.  Even for large scale applications, 
+100% of my redux state is composed of `robodux` slice helpers.
 
 I also wrote a
 [redux-saga style-guide](https://erock.io/2020/01/01/redux-saga-style-guide.html) that
