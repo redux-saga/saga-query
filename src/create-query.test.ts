@@ -1,8 +1,14 @@
 import test from 'ava';
-import createSagaMiddleware from 'redux-saga';
+import createSagaMiddleware, { SagaIterator } from 'redux-saga';
 import { put, call } from 'redux-saga/effects';
-import { createReducerMap, MapEntity, createTable } from 'robodux';
+import {
+  createAction,
+  createReducerMap,
+  MapEntity,
+  createTable,
+} from 'robodux';
 import { createStore, combineReducers, applyMiddleware } from 'redux';
+import sagaCreator from 'redux-saga-creator';
 import { urlParser, queryCtx } from './middleware';
 import { FetchCtx } from './fetch';
 import { createQuery } from './create-query';
@@ -103,5 +109,34 @@ test('run() on endpoint action - should run the effect', (t) => {
   });
 
   const store = setupStore(api.saga());
+  store.dispatch(action2());
+});
+
+test('run() from a normal saga', (t) => {
+  t.plan(2);
+  const api = createQuery();
+  api.use(api.routes());
+  let acc = '';
+  const action1 = api.get<{ id: string }>('/users/:id', function* (ctx, next) {
+    yield next();
+    acc += 'a';
+  });
+  const action2 = createAction('ACTION');
+  function* onAction(): SagaIterator {
+    const ctx = yield call(action1.run, action1({ id: '1' }));
+    const payload = { name: '/users/:id [GET]', options: { id: '1' } };
+    t.deepEqual(ctx, {
+      action: {
+        type: '@@saga-query/users/:id [GET]',
+        payload,
+      },
+      name: '/users/:id [GET]',
+      payload: { id: '1' },
+    });
+    acc += 'b';
+    t.assert(acc === 'ab');
+  }
+
+  const store = setupStore(sagaCreator({ api: api.saga(), action: onAction }));
   store.dispatch(action2());
 });
