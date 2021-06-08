@@ -61,6 +61,7 @@ how to cache API data when a library can do it for you?  However:
   enough](https://medium.com/swlh/should-you-use-usememo-in-react-a-benchmarked-analysis-159faf6609b7)?
 - What happens when you're fighting against a data sync library that doesn't do exactly
 what you need it to do?
+- What happens when data is not caching as efficiently as you want it to?
 - What happens when you want to reuse your business logic for another platform
 (e.g. a cli) and can't use `react`?
 
@@ -80,7 +81,7 @@ for using redux and a flexible middleware to handle all business logic.
 - Fetching and caching data should be separate from the view layer
 - We should treat side-effects as data
 - Sagas are the central processing unit for IO/business logic
-- A minimal API that encourages end-developers to write code instead of 
+- A minimal API that encourages end-developers to write code instead of
   configuring objects
 
 ## `saga-query` is *not*
@@ -103,8 +104,8 @@ recommended for usage with `saga-query`.  **It is not required to use
 libraries like `redux-toolkit` and I didn't want to impose `robodux` on other
 developers.
 
-Having said that, I use it for most of my production applications and it will 
-make caching data simple and straight-forward.  Even for large scale applications, 
+Having said that, I use it for most of my production applications and it will
+make caching data simple and straight-forward.  Even for large scale applications,
 100% of my redux state is composed of `robodux` slice helpers.
 
 I also wrote a
