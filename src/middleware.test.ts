@@ -148,9 +148,7 @@ test('middleware - with loader', (t) => {
     [users.name]: { [mockUser.id]: mockUser },
     [loaders.name]: {
       '/users': {
-        error: false,
-        loading: false,
-        success: true,
+        status: 'success',
       },
     },
   });

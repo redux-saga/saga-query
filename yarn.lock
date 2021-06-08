@@ -1011,10 +1011,10 @@ ignore@^5.1.4:
   resolved "https://registry.yarnpkg.com/ignore/-/ignore-5.1.8.tgz#f150a8b50a34289b33e22f5889abd4d8016f0e57"
   integrity sha512-BMpfD7PpiETpBl/A6S498BaIJ6Y/ABT93ETbby2fP00v4EbvPBXWEoaR1UBPKs3iR53pJY7EtZk5KACI57i1Uw==
 
-immer@^9.0.2:
-  version "9.0.2"
-  resolved "https://registry.yarnpkg.com/immer/-/immer-9.0.2.tgz#83e4593df9914acaecfd9fac6a8601ef44d883fc"
-  integrity sha512-mkcmzLtIfSp40vAqteRr1MbWNSoI7JE+/PB36FNPoSfJ9RQRmNKuTYCjKkyXyuq3Dgn07HuJBrwJd4ZSk2yUbw==
+immer@^8.0.1:
+  version "8.0.4"
+  resolved "https://registry.yarnpkg.com/immer/-/immer-8.0.4.tgz#3a21605a4e2dded852fb2afd208ad50969737b7a"
+  integrity sha512-jMfL18P+/6P6epANRvRk6q8t+3gGhqsJ9EuJ25AXE+9bNTYtssvzeYbEd0mXRYWCmmXSIbnlpz6vd6iJlmGGGQ==
 
 import-fresh@^3.2.1:
   version "3.3.0"
@@ -1861,10 +1861,12 @@ rimraf@^3.0.2:
   dependencies:
     glob "^7.1.3"
 
-robodux@^10.1.2:
-  version "10.1.2"
-  resolved "https://registry.yarnpkg.com/robodux/-/robodux-10.1.2.tgz#a18621c86bdcb74898ce25ae0e497b36da3ba522"
-  integrity sha512-6LuouhHsxjAHk2a4IDgbrZQF5Oyo+W0pSJMpCWj0eR24QhOnNxd5SJ24KAoheuQUWTs3VSWBgk7rlYxOnhD1lg==
+robodux@^11.0.1:
+  version "11.0.1"
+  resolved "https://registry.yarnpkg.com/robodux/-/robodux-11.0.1.tgz#7b4284031b049908bf1c28522afd04229701b898"
+  integrity sha512-qxMQoz2cufZC8o58MwDGBQVlg2WouzvTxlS1Ahwe+wsgV8D9vPDldRISj+UF3v0eK8cMDREiSU7osdumw0Jyzw==
+  dependencies:
+    immer "^8.0.1"
 
 run-parallel@^1.1.9:
   version "1.2.0"

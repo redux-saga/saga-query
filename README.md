@@ -26,6 +26,8 @@ quickly build data loading within your redux application.
 - A familiar middleware system that node.js developers are familiar with
   (e.g. express, koa)
 - Unleash the power of redux-saga to handle any async flow control use-cases
+- Full control over the data fetching and caching layers in your application
+- Fine tune queries and caching for your specific needs
 - Pre-built middleware to cut out boilerplate for interacting with redux and
   redux-saga
 - Simple recipes to handle complex use-cases like cancellation, polling,
@@ -55,7 +57,6 @@ All three libraries above are reinventing async flow control and hiding them
 from the end-developer.  For the happy path, this works beautifully.  Why learn
 how to cache API data when a library can do it for you?  However:
 
-- What happens when the queries you're performing against your cache are too slow?
 - What happens when [`useMemo` isn't good
   enough](https://medium.com/swlh/should-you-use-usememo-in-react-a-benchmarked-analysis-159faf6609b7)?
 - What happens when you're fighting against a data sync library that doesn't do exactly
@@ -76,9 +77,11 @@ for using redux and a flexible middleware to handle all business logic.
 
 - The end-developer should have full control over fetching/caching/querying
   their server data
-- The IO/business logic layer should be separate from the view layer
+- Fetching and caching data should be separate from the view layer
 - We should treat side-effects as data
 - Sagas are the central processing unit for IO/business logic
+- A minimal API that encourages end-developers to write code instead of 
+  configuring objects
 
 ## `saga-query` is *not*
 
@@ -96,7 +99,11 @@ for using redux and a flexible middleware to handle all business logic.
 
 The docs heavily use [robodux](https://github.com/neurosnap/robodux) and is
 recommended for usage with `saga-query`.  **It is not required to use
-`saga-query`.**  I use it for most of my production applications and it will 
+`saga-query`.**  At this point in time `saga-query` works fine any other
+libraries like `redux-toolkit` and I didn't want to impose `robodux` on other
+developers.
+
+Having said that, I use it for most of my production applications and it will 
 make caching data simple and straight-forward.  Even for large scale applications, 
 100% of my redux state is composed of `robodux` slice helpers.
 
