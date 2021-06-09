@@ -7,10 +7,12 @@ quickly build data loading within your redux application.
 
 - [Examples](#examples)
 - [Simple fetch](#show-me-the-way)
+- [How does it work?](#how-does-it-work?)
 - [Manipulating the request](#manipulating-the-request)
 - [Dispatching many actions](#dispatching-many-actions)
-- [Error handling](#error-handling)
 - [Dependent queries](#dependent-queries)
+- [Dynamic endpoints](#dynamic-endpoints)
+- [Error handling](#error-handling)
 - [Loading state](#loading-state)
 - [React](#react)
 - [Take leading](#take-leading)
@@ -195,6 +197,58 @@ loops through all the endpoints and creates a root saga that is fault tolerant
 (one saga won't crash all the other sagas).  The default for each saga is to
 use `takeEvery` from `redux-saga` but as you'll see in other recipes, this can
 be easily overriden.
+
+The middleware that is loaded into the query via `.use(...)` gets added to an
+array.  This array becomes a pipeline that each endpoint calls in order.  When
+`yield next()` is called inside the middleware or an endpoint, it calls the
+next middleware in the stack until it finishes.  Everything after `yield
+next()` gets called after all the middleware ahead of the current middleware
+finishes its execution.
+
+Here's a test that demonstrates the order of execution:
+
+```ts
+test('middleware order of execution', async (t) => {
+  t.plan(1);
+  let acc = '';
+  const api = createApi();
+  api.use(api.routes());
+
+  api.use(function* (ctx, next) {
+    yield delay(10);
+    acc += 'b';
+
+    yield next();
+
+    yield delay(10);
+    acc += 'f';
+  });
+
+  api.use(function* (ctx, next) {
+    acc += 'c';
+
+    yield next();
+
+    acc += 'd';
+    yield delay(30);
+    acc += 'e';
+  });
+
+  const action = api.create('/api', function* (ctx, next) {
+    acc += 'a';
+
+    yield next();
+
+    acc += 'g';
+  });
+
+  const store = setupStore(api.saga());
+  store.dispatch(action());
+
+  await sleep(60);
+  t.assert(acc === 'abcdefg');
+});
+```
 
 The actions created from `saga-query` are JSON serializable.  We are **not**
 passing middleware functions through our actions.  This is a design decision to
@@ -507,6 +561,35 @@ const fetchMessages = api.get<{ id: string }>(
     yield next();
   },
 );
+```
+
+### Dynamic endpoints
+
+Sometimes a URL needs to be generated from other data.  When creating an
+endpoint, it **must** be created **before** `api.saga()` is called.  Because of
+this, there's a limitation to what we can permit inside the `name` of the
+endpoint.  The `name` is the first parameter passed to the HTTP methods
+`api.get(name)` or `api.post(name)`.  If you need to generate the URL based on
+dynamic content, like a state derived value, then the recommended solution is
+to do the following:
+
+```ts
+api.post<{ message: string }>('create-message', function* onCreateMsg(ctx, next) {
+  // made up selector that grabs a mailbox
+  const mailbox = yield select(selectMailbox);
+  const message = ctx.payload.message;
+
+  ctx.request = {
+    url: `/mailboxes/${mailbox.id}/messages`,
+    // NOTE: at this point in time, when `ctx.request.url` is present before
+    // `urlParser` is activated, then we cannot automatically set the `method`
+    // property, you **must** add it youself.
+    method: 'POST',
+    body: JSON.stringify({ message }),
+  };
+
+  yield next();
+})
 ```
 
 ### Error handling

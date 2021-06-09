@@ -1,7 +1,7 @@
 import test from 'ava';
 import { createStore, combineReducers, applyMiddleware } from 'redux';
 import createSagaMiddleware, { SagaIterator } from 'redux-saga';
-import { put, call } from 'redux-saga/effects';
+import { put, call, delay } from 'redux-saga/effects';
 import { createTable, Action, MapEntity, createReducerMap } from 'robodux';
 
 import { Middleware, Next, createApi } from './create-api';
@@ -314,4 +314,46 @@ test('run() on endpoint action - should run the effect', (t) => {
 
   const store = setupStore(api.saga());
   store.dispatch(action2());
+});
+
+const sleep = (n: number) =>
+  new Promise<void>((resolve) => {
+    setTimeout(() => {
+      resolve();
+    }, n);
+  });
+
+test('middleware order of execution', async (t) => {
+  t.plan(1);
+  let acc = '';
+  const api = createApi();
+  api.use(api.routes());
+
+  api.use(function* (ctx, next) {
+    yield delay(10);
+    acc += 'b';
+    yield next();
+    yield delay(10);
+    acc += 'f';
+  });
+
+  api.use(function* (ctx, next) {
+    acc += 'c';
+    yield next();
+    acc += 'd';
+    yield delay(30);
+    acc += 'e';
+  });
+
+  const action = api.create('/api', function* (ctx, next) {
+    acc += 'a';
+    yield next();
+    acc += 'g';
+  });
+
+  const store = setupStore(api.saga());
+  store.dispatch(action());
+
+  await sleep(60);
+  t.assert(acc === 'abcdefg');
 });
