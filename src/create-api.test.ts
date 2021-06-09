@@ -354,6 +354,6 @@ test('middleware order of execution', async (t) => {
   const store = setupStore(api.saga());
   store.dispatch(action());
 
-  await sleep(60);
+  await sleep(100);
   t.assert(acc === 'abcdefg');
 });
