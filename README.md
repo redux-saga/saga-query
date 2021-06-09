@@ -102,7 +102,7 @@ for using redux and a flexible middleware to handle all business logic.
 
 The docs heavily use [robodux](https://github.com/neurosnap/robodux) and is
 recommended for usage with `saga-query`.  **It is not required to use
-`saga-query`.**  At this point in time `saga-query` works fine any other
+`saga-query`.**  At this point in time `saga-query` works fine with other
 libraries like `redux-toolkit` and I didn't want to impose `robodux` on other
 developers.
 
@@ -217,18 +217,14 @@ test('middleware order of execution', async (t) => {
   api.use(function* (ctx, next) {
     yield delay(10);
     acc += 'b';
-
     yield next();
-
     yield delay(10);
     acc += 'f';
   });
 
   api.use(function* (ctx, next) {
     acc += 'c';
-
     yield next();
-
     acc += 'd';
     yield delay(30);
     acc += 'e';
@@ -236,9 +232,7 @@ test('middleware order of execution', async (t) => {
 
   const action = api.create('/api', function* (ctx, next) {
     acc += 'a';
-
     yield next();
-
     acc += 'g';
   });
 
