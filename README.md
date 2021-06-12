@@ -9,12 +9,14 @@ quickly build data loading within your redux application.
 - [Simple fetch](#show-me-the-way)
 - [How does it work?](#how-does-it-work?)
 - [Manipulating the request](#manipulating-the-request)
+- [Simple cache](#simple-cache)
 - [Dispatching many actions](#dispatching-many-actions)
 - [Dependent queries](#dependent-queries)
 - [Dynamic endpoints](#dynamic-endpoints)
 - [Error handling](#error-handling)
 - [Loading state](#loading-state)
 - [React](#react)
+- [Cache timer](#cache-timer)
 - [Take leading](#take-leading)
 - [Polling](#polling)
 - [Optimistic UI](#optimistic-ui)
@@ -401,6 +403,143 @@ const fetchUsers = api.get('/users', api.request({ credentials: 'include' }))
 `api.request()` accepts the request for the `Ctx` that the end-developer
 provides.
 
+### Simple cache
+
+If you want to have a cache that doesn't enforce strict types and is more of a
+dumb cache that fetches and stores data for you, you could build a redux slice
+that can do that and then a simple react hook to provide the correct types for
+each endpoint.
+
+The following code will mimick what a library like `react-query` is doing
+behind-the-scenes.  I want to make it clear that `react-query` is doing a lot
+more than this so I don't want to understate its usefuless.  However, you can 
+see that not only can we get a core chunk of the functionality `react-query`
+provides with a little over 100 lines of code but we also have full control 
+over fetching, querying, and caching data with the ability to customize it
+using middleware.  This provides the end-developer with the tools to customize
+their experience without submitting PRs to add configuration options to an
+upstream library.
+
+```ts
+// api.ts
+import { put } from 'redux-saga/effects';
+import { 
+  createLoaderTable, 
+  createTable, 
+  createReducerMap,
+  LoadingItemState,
+} from 'robodux';
+import { 
+  FetchApiOpts,
+  createQuery,
+  urlParser,
+  queryCtx,
+  loadingTracker,
+  timer,
+} from 'saga-query';
+
+export interface AppState {
+  data: MapEntity<any>;
+  loaders: { [key: string]: LoadingItemState };
+}
+
+const name = 'data';
+const data = createTable<any>({ name });
+export const { selectById: selectDataById } = data.getSelectors((s) => s[name]);
+
+const LOADING_NAME = 'loaders';
+const loaders = createLoaderTable({ name: LOADING_NAME });
+const { selectById: selectLoaderById } = data.getSelectors(
+  (s) => s[LOADING_NAME]
+);
+export const selectLoader = (id: string) => (state: AppState) =>
+  selectLoaderById(state, { id });
+
+export const reducers = createReducerMap(data, loaders);
+
+const api = createQuery();
+api.use(loadingTracker(loaders));
+api.use(api.routes());
+api.use(queryCtx);
+api.use(urlParser);
+// this middleware will automatically save data for you keyed by the action.
+api.use(function* (ctx, next) {
+  yield next();
+  if (!ctx.response.ok) return;
+  const key = JSON.stringify(ctx.action);
+  yield put(data.actions.add({ [key]: ctx.response.data }));
+});
+// made up api fetch
+api.use(apiFetch);
+
+// this will only activate the endpoint at most once every 5 minutes.
+const cacheTimer = timer(5 * 60 * 1000);
+export const fetchUsers = api.get('/users', { saga: cacheTimer });
+```
+
+```tsx
+// use-query.ts
+import { useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { LoadingState } from 'robodux';
+
+import { AppState, selectLoader, selectDataById } from './api';
+
+type Data<D = any> = LoadingState & { data: D };
+
+export function useQuery<D = any>(
+  action: {
+    payload: { name: string };
+  },
+): Data<D> {
+  const { name } = action.payload;
+  const id = JSON.stringify(action);
+  const dispatch = useDispatch();
+  const loader = useSelector(selectLoader(name));
+  const data = useSelector((s: AppState) => selectDataById(s, { id }));
+
+  useEffect(() => {
+    if (!name) return;
+    dispatch(action);
+  }, [id, name]);
+
+  return { ...loader, data };
+}
+```
+
+```tsx
+// app.tsx
+import React from 'react';
+
+import { fetchUsers } from './api';
+import { useQuery } from './use-query';
+
+interface User {
+  id: string;
+  name: string;
+}
+
+const useUsers = () => {
+  const { data: users = [], ...loader } = useQuery<{ users: User[] }>(
+    fetchUsers()
+  );
+  return { users, ...loader };
+}
+
+export const App = () => {
+  const { users, isLoading, isError, message } = useUsers();
+
+  if (isLoading) return <div>Loading ...</div>;
+  if (isError) return <div>Error: {message}</div>;
+
+  return (
+    <div>
+      {users.map((user) => <div key={user.id}>{user.name}</div>)}
+    </div>
+  );
+}
+```
+
 ### Dispatching many actions
 
 Sometimes we need to dispatch a bunch of actions for an endpoint.  From loading
@@ -748,12 +887,12 @@ const App = () => {
     dispatch(fetchUsers());
   }, []);
 
-  if (loader.loading) {
+  if (loader.isLoading) {
     return <div>Loading ...</div>
   }
 
-  if (loader.error) {
-    return <div>Error: {loader.error}</div>
+  if (loader.isError) {
+    return <div>Error: {loader.message}</div>
   }
 
   return (
@@ -825,14 +964,14 @@ import React from 'react';
 import { useQueryUsers } from './use-query';
 
 const App = () => {
-  const { data, loading, error } = useQueryUsers();
+  const { data, isLoading, isError, message } = useQueryUsers();
 
-  if (loading) {
+  if (isLoading) {
     return <div>Loading ...</div>
   }
 
-  if (error) {
-    return <div>Error: {loader.error}</div>
+  if (isError) {
+    return <div>Error: {message}</div>
   }
 
   return (
@@ -841,7 +980,25 @@ const App = () => {
 }
 ```
 
-### Take Leading
+### Cache timer
+
+Only call the endpoint at most on an interval.  We can call the endpoint
+as many times as we want but it will only get activated once every X
+miliseconds.  This effectively updates the cache on an interval.
+
+```ts
+import { timer } from 'saga-query';
+
+const SECONDS = 1000;
+const MINUTES = 60 * SECONDS;
+
+const fetchUsers = api.get(
+  '/users',
+  { saga: timer(5 * MINUTES) }
+);
+```
+
+### Take leading
 
 If two requests are made:
 - (A) request; then

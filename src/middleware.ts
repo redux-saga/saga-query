@@ -141,6 +141,20 @@ export function* leading(action: string, saga: any, ...args: any[]) {
   yield takeLeading(`${action}`, saga, ...args);
 }
 
+export function timer(timer: number) {
+  return function* onTimer(
+    type: string,
+    saga: any,
+    ...args: any[]
+  ): SagaIterator<void> {
+    while (true) {
+      const action = yield take(`${type}`);
+      yield call(saga, ...args);
+      yield delay(timer);
+    }
+  };
+}
+
 export function poll(parentTimer?: number) {
   function* poller(
     actionType: string,

@@ -16,7 +16,7 @@ export interface CreateActionPayload<P = any> {
 export interface ApiCtx<P = any> {
   name: string;
   payload: P;
-  action: CreateActionPayload<P>;
+  action: ActionWithPayload<CreateActionPayload<P>>;
 }
 
 export interface CreateAction<Ctx> {
