@@ -5,6 +5,9 @@
 Data fetching and caching using redux-saga.  Use our saga middleware system to
 quickly build data loading within your redux application.
 
+**This library is undergoing active development. Consider this in a beta
+state.**
+
 - [Examples](#examples)
 - [Simple fetch](#show-me-the-way)
 - [How does it work?](#how-does-it-work?)
