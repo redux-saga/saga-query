@@ -66,8 +66,10 @@ how to cache API data when a library can do it for you?  However:
 
 - What happens when [`useMemo` isn't good
   enough](https://medium.com/swlh/should-you-use-usememo-in-react-a-benchmarked-analysis-159faf6609b7)?
-- What happens when you're fighting against a data sync library that doesn't do exactly
-what you need it to do?
+- What happens when the data syncing library lacks the caching granularity you
+  need?
+- What happens when the data syncing library doesn't cache things in an
+  optimized way for your needs?
 - What happens when data is not caching as efficiently as you want it to?
 - What happens when you want to reuse your business logic for another platform
 (e.g. a cli) and can't use `react`?
