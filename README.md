@@ -567,6 +567,7 @@ export const api = createQuery();
 api.use(function* (ctx, next) {
   // activate all middleware after this middleware in the stack
   yield next();
+  if (ctx.actions.length === 0) return;
   yield put(batchActions(ctx.actions));
 });
 
@@ -727,6 +728,10 @@ api.post<{ message: string }>('create-message', function* onCreateMsg(ctx, next)
   yield next();
 })
 ```
+
+As you can see, we can put whatever want for the `name` parameter passed into
+`api.get(name)`.  The key thing to realize here is that the name **must** be
+unique across all endpoints since the name is what we use for the action type.
 
 ### Error handling
 
