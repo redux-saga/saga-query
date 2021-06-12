@@ -70,7 +70,6 @@ how to cache API data when a library can do it for you?  However:
   need?
 - What happens when the data syncing library doesn't cache things in an
   optimized way for your needs?
-- What happens when data is not caching as efficiently as you want it to?
 - What happens when you want to reuse your business logic for another platform
 (e.g. a cli) and can't use `react`?
 
