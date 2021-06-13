@@ -149,7 +149,7 @@ export function timer(timer: number) {
   ): SagaIterator<void> {
     while (true) {
       const action = yield take(`${type}`);
-      yield call(saga, ...args);
+      yield call(saga, action, ...args);
       yield delay(timer);
     }
   };
