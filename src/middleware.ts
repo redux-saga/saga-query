@@ -10,7 +10,12 @@ import {
 import { SagaIterator } from 'redux-saga';
 
 import { Next, compose } from './create-api';
-import { ActionWithPayload, CreateActionPayload, QueryCtx } from './types';
+import {
+  Action,
+  ActionWithPayload,
+  CreateActionPayload,
+  QueryCtx,
+} from './types';
 import { isObject } from './util';
 
 export function* queryCtx<Ctx extends QueryCtx = QueryCtx>(
@@ -101,36 +106,39 @@ export function loadingTracker<Ctx extends QueryCtx = QueryCtx>(
   };
 }
 
-export interface UndoCtx<A, R> extends QueryCtx {
+export interface UndoCtx<A extends Action = any, R extends Action = any>
+  extends QueryCtx {
   undo: {
-    apply: ActionWithPayload<A>;
-    revert: ActionWithPayload<R>;
+    apply: A;
+    revert: R;
   };
 }
 
 export const undo = () => ({
   type: 'undo',
 });
-export function* undoer<Ctx extends UndoCtx<any, any> = UndoCtx<any, any>>(
-  ctx: Ctx,
-  next: Next,
-): SagaIterator<void> {
-  if (!ctx.undo) yield next();
-  const { apply, revert } = ctx.undo;
+export function* undoer(timer: number = 5 * 1000, undoType = `${undo}`) {
+  return function* onUndo<Ctx extends UndoCtx<any, any> = UndoCtx<any, any>>(
+    ctx: Ctx,
+    next: Next,
+  ): SagaIterator<void> {
+    if (!ctx.undo) yield next();
+    const { apply, revert } = ctx.undo;
 
-  yield put(apply);
+    yield put(apply);
 
-  const winner = yield race({
-    timer: delay(5 * 1000),
-    undo: take(`${undo}`),
-  });
+    const winner = yield race({
+      timer: delay(timer),
+      undo: take(`${undoType}`),
+    });
 
-  if (winner.undo) {
-    yield put(revert);
-    return;
-  }
+    if (winner.undo) {
+      yield put(revert);
+      return;
+    }
 
-  yield next();
+    yield next();
+  };
 }
 
 export function* latest(action: string, saga: any, ...args: any[]) {
@@ -155,15 +163,16 @@ export function timer(timer: number) {
   };
 }
 
-export function poll(parentTimer?: number) {
-  function* poller(
+export function poll(parentTimer?: number, cancelType?: string) {
+  return function* poller(
     actionType: string,
     saga: any,
     ...args: any[]
   ): SagaIterator<void> {
-    function* fire(timer: number) {
+    const cancel = cancelType || actionType;
+    function* fire(action: { type: string }, timer: number) {
       while (true) {
-        yield call(saga, ...args);
+        yield call(saga, action, ...args);
         yield delay(timer);
       }
     }
@@ -171,15 +180,16 @@ export function poll(parentTimer?: number) {
     while (true) {
       const action = yield take(`${actionType}`);
       const timer = action.payload?.timer || parentTimer;
-      yield race([call(fire, timer), take(`${action}`)]);
+      yield race([call(fire, action, timer), take(`${cancel}`)]);
     }
-  }
+  };
 }
 
-export interface OptimisticCtx<A, R> extends QueryCtx {
+export interface OptimisticCtx<A extends Action = any, R extends Action = any>
+  extends QueryCtx {
   optimistic: {
-    apply: ActionWithPayload<A>;
-    revert: ActionWithPayload<R>;
+    apply: A;
+    revert: R;
   };
 }
 
