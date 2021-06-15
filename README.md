@@ -130,7 +130,7 @@ is also heavily encouraged.
 import { put, call } from 'redux-saga/effects';
 import { createTable, createReducerMap } from 'robodux';
 import {
-  createQuery,
+  createApi,
   queryCtx,
   urlParser,
   FetchCtx
@@ -145,7 +145,7 @@ const users = createTable<User>({ name: 'users' });
 const selectors = users.getSelectors((s) => s[users.name]);
 export const { selectTableAsList: selectUsersAsList } = selectors;
 
-const api = createQuery<FetchCtx>();
+const api = createApi<FetchCtx>();
 api.use(api.routes());
 api.use(queryCtx);
 api.use(urlParser);
@@ -199,7 +199,7 @@ const App = () => {
 
 ## How does it work?
 
-`createQuery` will build a set of actions and sagas for each `create` or http
+`createApi` will build a set of actions and sagas for each `create` or http
 method used (e.g. `get`, `post`, `put`).  Let's call them endpoints.  Each
 endpoint gets their own action and linked saga.  When you call `api.saga()` it
 loops through all the endpoints and creates a root saga that is fault tolerant
@@ -264,7 +264,7 @@ communication](https://www.electronjs.org/docs/api/ipc-main).
 import { put, call } from 'redux-saga/effects';
 import { createTable, createReducerMap } from 'robodux';
 import {
-  createQuery,
+  createApi,
   queryCtx,
   urlParser,
   // FetchCtx is an interface that's built around using window.fetch
@@ -277,10 +277,10 @@ import {
 const users = createTable<User>({ name: 'users' });
 
 // something awesome happens in here
-// The default generic value here is `QueryCtx` which includes a `payload`,
+// The default generic value here is `ApiCtx` which includes a `payload`,
 // `request`, and `response`.
-// The generic passed to `createQuery` must extend `QueryCtx` to be accepted.
-const api = createQuery<FetchCtx>();
+// The generic passed to `createApi` must extend `ApiCtx` to be accepted.
+const api = createApi<FetchCtx>();
 
 // This is where all the endpoints (e.g. `.get()`, `.put()`, etc.) you created
 // get added to the middleware stack.  It is recommended to put this as close to
@@ -289,7 +289,7 @@ const api = createQuery<FetchCtx>();
 api.use(api.routes());
 
 // queryCtx sets up the ctx object with `ctx.request` and `ctx.response`
-// required for `createQuery` to function properly.
+// required for `createApi` to function properly.
 api.use(queryCtx);
 
 // urlParser is a middleware that will take the name of `api.create(name)` and
@@ -352,7 +352,7 @@ const createUser = api.post<{ email: string }>(
   function* createUser(ctx: FetchCtx<User>, next) {
     // since this middleware is the first one that gets called after the action
     // is dispatched, we can set the `ctx.request` to whatever we want.  The
-    // middleware we setup for `createQuery` will then use the `ctx` to fill in
+    // middleware we setup for `createApi` will then use the `ctx` to fill in
     // the other details like `url` and `method`
     ctx.request = {
       body: JSON.stringify({ email: ctx.payload.email }),
@@ -438,7 +438,7 @@ import {
 } from 'robodux';
 import { 
   FetchApiOpts,
-  createQuery,
+  createApi,
   urlParser,
   queryCtx,
   loadingTracker,
@@ -464,7 +464,7 @@ export const selectLoader = (id: string) => (state: AppState) =>
 
 export const reducers = createReducerMap(data, loaders);
 
-const api = createQuery();
+const api = createApi();
 api.use(loadingTracker(loaders));
 api.use(api.routes());
 api.use(queryCtx);
@@ -555,7 +555,7 @@ actions being dispatched.  My recommendation is:
 
 - Use a library like `redux-batched-actions` to dispatch many actions at once
   and only have the reducers hit once.
-- Leverage `ctx.actions` (which is a required property to use `createQuery`) in
+- Leverage `ctx.actions` (which is a required property to use `createApi`) in
   your middleware.
 - Build a middleware that will use `redux-batched-actions` with `ctx.actions`
   and put it at the beginning of the middleware stack.
@@ -563,9 +563,9 @@ actions being dispatched.  My recommendation is:
 ```ts
 // api.ts
 import { batchActions } from 'redux-batched-actions';
-import { createQuery, urlParser, queryCtx } from 'saga-query';
+import { createApi, urlParser, queryCtx } from 'saga-query';
 
-export const api = createQuery();
+export const api = createApi();
 // we want to put this at the beginning of the middleware stack so all
 // middleware is done once `yield next()` gets called.
 api.use(function* (ctx, next) {
@@ -745,7 +745,7 @@ pipeline.
 Catch all middleware before itself:
 
 ```ts
-const api = createQuery();
+const api = createApi();
 api.use(function* upstream(ctx, next) {
   try {
     yield next();
@@ -767,7 +767,7 @@ store.dispatch(action());
 Catch middleware inside the action handler:
 
 ```ts
-const api = createQuery();
+const api = createApi();
 api.use(api.routes());
 api.use(function* fail() {
   throw new Error('some error');
@@ -788,7 +788,7 @@ store.dispatch(action());
 Global error handler:
 
 ```ts
-const api = createQuery({
+const api = createApi({
   onError: (err: Error) => { console.log('error!'); },
 });
 api.use(api.routes());
@@ -812,7 +812,7 @@ import {
   createReducerMap,
 } from 'robodux';
 import {
-  createQuery,
+  createApi,
   FetchCtx,
   queryCtx,
   urlParser,
@@ -835,7 +835,7 @@ export const {
   selectTableAsList: selectUsersAsList
 } = users.getSelectors((s) => s[users.name]);
 
-export const api = createQuery<FetchCtx>();
+export const api = createApi<FetchCtx>();
 // This is one case where we want the middleware to be before the router
 // middleware.  Since with `robodux` loaders are decoupled from the data that
 // it is tracking we can get into weird race conditions where the success or
@@ -1122,7 +1122,7 @@ Not too bad, but we built an optimistic middleware for you:
 import { MapEntity, PatchEntity } from 'robodux';
 import { OptimisticCtx, optimistic } from 'saga-query';
 
-const api = createQuery();
+const api = createApi();
 api.use(api.routes());
 api.use(optimistic);
 
@@ -1154,7 +1154,7 @@ We built a middleware for anyone to use:
 import { delay, put, race } from 'redux-saga/effects';
 import { createAction } from 'robodux';
 import {
-  createQuery,
+  createApi,
   queryCtx,
   urlParser,
   undoer,
@@ -1168,7 +1168,7 @@ interface Message {
 }
 
 const messages = createTable<Message>({ name: 'messages' });
-const api = createQuery();
+const api = createApi();
 api.use(api.routes());
 api.use(queryCtx);
 api.use(urlParser);
@@ -1222,7 +1222,7 @@ const users = createSlice({
   }
 });
 
-const api = createQuery();
+const api = createApi();
 api.use(api.routes());
 api.use(queryCtx);
 api.use(urlParser);
