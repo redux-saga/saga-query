@@ -1,8 +1,14 @@
 import { SagaIterator } from 'redux-saga';
-import { CreateAction, CreateActionWithPayload, QueryCtx } from './types';
-import { SagaApi, Middleware, createApi, Next } from './create-api';
+import {
+  CreateAction,
+  CreateActionWithPayload,
+  ApiCtx,
+  Middleware,
+  Next,
+} from './types';
+import { SagaApi, createPipe } from './pipe';
 
-export interface SagaQueryApi<Ctx extends QueryCtx = QueryCtx>
+export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
   extends SagaApi<Ctx> {
   request: (r: Ctx['request']) => (ctx: Ctx, next: Next) => SagaIterator<any>;
 
@@ -172,10 +178,10 @@ export interface SagaQueryApi<Ctx extends QueryCtx = QueryCtx>
   ): CreateActionWithPayload<Ctx, P>;
 }
 
-export function createQuery<Ctx extends QueryCtx = QueryCtx>(
-  baseApi?: SagaApi<Ctx>,
+export function createApi<Ctx extends ApiCtx = ApiCtx>(
+  basePipe?: SagaApi<Ctx>,
 ): SagaQueryApi<Ctx> {
-  const api = baseApi || createApi<Ctx>();
+  const api = basePipe || createPipe<Ctx>();
   return {
     use: api.use,
     saga: api.saga,

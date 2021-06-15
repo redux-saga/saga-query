@@ -4,10 +4,10 @@ import createSagaMiddleware, { SagaIterator } from 'redux-saga';
 import { put, call, delay } from 'redux-saga/effects';
 import { createTable, Action, MapEntity, createReducerMap } from 'robodux';
 
-import { Middleware, Next, createApi } from './create-api';
-import { CreateActionPayload, ApiCtx } from './types';
+import { createPipe } from './pipe';
+import { CreateActionPayload, PipeCtx, Middleware, Next } from './types';
 
-interface RoboCtx<D = any, P = any> extends ApiCtx<P> {
+interface RoboCtx<D = any, P = any> extends PipeCtx<P> {
   url: string;
   request: any;
   response: D;
@@ -142,8 +142,8 @@ function setupStore(saga: any) {
   return store;
 }
 
-test('createApi: when create a query fetch pipeline - execute all middleware and save to redux', (t) => {
-  const api = createApi<RoboCtx>();
+test('createPipe: when create a query fetch pipeline - execute all middleware and save to redux', (t) => {
+  const api = createPipe<RoboCtx>();
   api.use(api.routes());
   api.use(convertNameToUrl);
   api.use(onFetchApi);
@@ -161,9 +161,9 @@ test('createApi: when create a query fetch pipeline - execute all middleware and
   });
 });
 
-test('createApi: when providing a generator the to api.create function - should call that generator before all other middleware', (t) => {
+test('createPipe: when providing a generator the to api.create function - should call that generator before all other middleware', (t) => {
   t.plan(2);
-  const api = createApi<RoboCtx>();
+  const api = createPipe<RoboCtx>();
   api.use(api.routes());
   api.use(convertNameToUrl);
   api.use(onFetchApi);
@@ -198,7 +198,7 @@ test('createApi: when providing a generator the to api.create function - should 
 
 test('error handling', (t) => {
   t.plan(1);
-  const api = createApi<RoboCtx>();
+  const api = createPipe<RoboCtx>();
   api.use(api.routes());
   api.use(function* upstream(ctx, next) {
     try {
@@ -218,7 +218,7 @@ test('error handling', (t) => {
 
 test('error handling inside create', (t) => {
   t.plan(1);
-  const api = createApi<RoboCtx>();
+  const api = createPipe<RoboCtx>();
   api.use(api.routes());
   api.use(function* fail() {
     throw new Error('some error');
@@ -237,7 +237,7 @@ test('error handling inside create', (t) => {
 
 test('error handling - error handler', (t) => {
   t.plan(1);
-  const api = createApi<RoboCtx>({
+  const api = createPipe<RoboCtx>({
     onError: (err: Error) => t.assert(err.message === 'failure'),
   });
   api.use(api.routes());
@@ -252,7 +252,7 @@ test('error handling - error handler', (t) => {
 
 test('create fn is an array', (t) => {
   t.plan(1);
-  const api = createApi<RoboCtx>();
+  const api = createPipe<RoboCtx>();
   api.use(api.routes());
   api.use(function* (ctx, next) {
     t.deepEqual(ctx.request, {
@@ -282,7 +282,7 @@ test('create fn is an array', (t) => {
 
 test('run() on endpoint action - should run the effect', (t) => {
   t.plan(2);
-  const api = createApi<RoboCtx>();
+  const api = createPipe<RoboCtx>();
   api.use(api.routes());
   let acc = '';
   const action1 = api.create('/users', function* (ctx, next) {
@@ -326,7 +326,7 @@ const sleep = (n: number) =>
 test('middleware order of execution', async (t) => {
   t.plan(1);
   let acc = '';
-  const api = createApi();
+  const api = createPipe();
   api.use(api.routes());
 
   api.use(function* (ctx, next) {

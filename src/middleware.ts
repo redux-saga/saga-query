@@ -9,29 +9,24 @@ import {
 } from 'redux-saga/effects';
 import { SagaIterator } from 'redux-saga';
 
-import { Next, compose } from './create-api';
+import { compose } from './pipe';
 import {
   Action,
   ActionWithPayload,
   CreateActionPayload,
-  QueryCtx,
+  ApiCtx,
+  Next,
 } from './types';
 import { isObject } from './util';
 
-export function* queryCtx<Ctx extends QueryCtx = QueryCtx>(
-  ctx: Ctx,
-  next: Next,
-) {
+export function* queryCtx<Ctx extends ApiCtx = ApiCtx>(ctx: Ctx, next: Next) {
   if (!ctx.request) ctx.request = { url: '', method: 'GET' };
   if (!ctx.response) ctx.response = {};
   if (!ctx.actions) ctx.actions = [];
   yield next();
 }
 
-export function* urlParser<Ctx extends QueryCtx = QueryCtx>(
-  ctx: Ctx,
-  next: Next,
-) {
+export function* urlParser<Ctx extends ApiCtx = ApiCtx>(ctx: Ctx, next: Next) {
   const httpMethods = [
     'get',
     'head',
@@ -81,7 +76,7 @@ export function* urlParser<Ctx extends QueryCtx = QueryCtx>(
   yield next();
 }
 
-export function loadingTracker<Ctx extends QueryCtx = QueryCtx>(
+export function loadingTracker<Ctx extends ApiCtx = ApiCtx>(
   loaders: {
     actions: {
       loading: (l: { id: string }) => any;
@@ -107,7 +102,7 @@ export function loadingTracker<Ctx extends QueryCtx = QueryCtx>(
 }
 
 export interface UndoCtx<A extends Action = any, R extends Action = any>
-  extends QueryCtx {
+  extends ApiCtx {
   undo: {
     apply: A;
     revert: R;
@@ -186,7 +181,7 @@ export function poll(parentTimer?: number, cancelType?: string) {
 }
 
 export interface OptimisticCtx<A extends Action = any, R extends Action = any>
-  extends QueryCtx {
+  extends ApiCtx {
   optimistic: {
     apply: A;
     revert: R;
