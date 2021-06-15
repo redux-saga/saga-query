@@ -1,5 +1,8 @@
 import { SagaIterator } from 'redux-saga';
 
+export type Middleware<Ctx = any> = (ctx: Ctx, next: Next) => any;
+export type Next = () => any;
+
 export interface Action {
   type: string;
 }
@@ -13,7 +16,7 @@ export interface CreateActionPayload<P = any> {
   options: P;
 }
 
-export interface ApiCtx<P = any> {
+export interface PipeCtx<P = any> {
   name: string;
   payload: P;
   action: ActionWithPayload<CreateActionPayload<P>>;
@@ -33,7 +36,7 @@ export interface RequestCtx {
   method: string;
 }
 
-export interface QueryCtx<P = any, R = any> extends ApiCtx<P> {
+export interface ApiCtx<P = any, R = any> extends PipeCtx<P> {
   request: Partial<RequestCtx>;
   response: R;
   actions: Action[];

@@ -8,7 +8,9 @@ import {
   createLoaderTable,
 } from 'robodux';
 import { createStore, combineReducers, applyMiddleware } from 'redux';
-import { Next, createApi } from './create-api';
+
+import { Next } from './types';
+import { createApi } from './api';
 import { urlParser, loadingTracker, queryCtx } from './middleware';
 import { FetchCtx } from './fetch';
 

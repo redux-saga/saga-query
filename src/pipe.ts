@@ -4,16 +4,15 @@ import sagaCreator from 'redux-saga-creator';
 
 import { isFn, isObject } from './util';
 import {
+  Middleware,
+  Next,
   Action,
   ActionWithPayload,
   CreateActionPayload,
   CreateAction,
   CreateActionWithPayload,
-  ApiCtx,
+  PipeCtx,
 } from './types';
-
-export type Middleware<Ctx = any> = (ctx: Ctx, next: Next) => any;
-export type Next = () => any;
 
 export function compose<Ctx = any>(middleware: Middleware<Ctx>[]) {
   if (!Array.isArray(middleware)) {
@@ -43,7 +42,7 @@ export function compose<Ctx = any>(middleware: Middleware<Ctx>[]) {
   };
 }
 
-export interface SagaApi<Ctx extends ApiCtx> {
+export interface SagaApi<Ctx extends PipeCtx> {
   saga: () => (...options: any[]) => SagaIterator<void>;
   use: (fn: Middleware<Ctx>) => void;
   routes: () => Middleware<Ctx>;
@@ -77,7 +76,7 @@ export const defaultOnError = (err: Error) => {
 };
 
 export const API_ACTION_PREFIX = '@@saga-query';
-export function createApi<Ctx extends ApiCtx = ApiCtx<any>>({
+export function createPipe<Ctx extends PipeCtx = PipeCtx<any>>({
   onError = defaultOnError,
 }: {
   onError?: (err: Error) => any;

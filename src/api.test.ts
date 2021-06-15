@@ -9,9 +9,10 @@ import {
 } from 'robodux';
 import { createStore, combineReducers, applyMiddleware } from 'redux';
 import sagaCreator from 'redux-saga-creator';
+
 import { urlParser, queryCtx } from './middleware';
 import { FetchCtx } from './fetch';
-import { createQuery } from './create-query';
+import { createApi } from './api';
 
 interface User {
   id: string;
@@ -33,11 +34,11 @@ function setupStore(
   return store;
 }
 
-test('createQuery - POST', (t) => {
+test('createApi - POST', (t) => {
   t.plan(1);
   const name = 'users';
   const cache = createTable<User>({ name });
-  const query = createQuery<FetchCtx>();
+  const query = createApi<FetchCtx>();
 
   query.use(query.routes());
   query.use(queryCtx);
@@ -80,7 +81,7 @@ test('createQuery - POST', (t) => {
 
 test('middleware - with request fn', (t) => {
   t.plan(1);
-  const query = createQuery();
+  const query = createApi();
   query.use(query.routes());
   query.use(queryCtx);
   query.use(urlParser);
@@ -94,7 +95,7 @@ test('middleware - with request fn', (t) => {
 
 test('run() on endpoint action - should run the effect', (t) => {
   t.plan(1);
-  const api = createQuery();
+  const api = createApi();
   api.use(api.routes());
   let acc = '';
   const action1 = api.get<{ id: string }>('/users/:id', function* (ctx, next) {
@@ -114,7 +115,7 @@ test('run() on endpoint action - should run the effect', (t) => {
 
 test('run() from a normal saga', (t) => {
   t.plan(2);
-  const api = createQuery();
+  const api = createApi();
   api.use(api.routes());
   let acc = '';
   const action1 = api.get<{ id: string }>('/users/:id', function* (ctx, next) {
