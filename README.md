@@ -106,6 +106,7 @@ for using redux and a flexible middleware to handle all business logic.
 - [Simple cache](https://codesandbox.io/s/saga-query-simple-cache-0ge33)
 - [Polling](https://codesandbox.io/s/saga-query-polling-1fwfo)
 - [Optimistic update](https://codesandbox.io/s/saga-query-optimistic-xwzz2)
+- [Undo](https://codesandbox.io/s/saga-query-undo-nn7fn)
 
 ## A note on `robodux`
 
@@ -1148,7 +1149,18 @@ api.patch(
 
 ### Undo
 
-We built a middleware for anyone to use:
+We build a simple undo middleware that waits for one of two actions to be
+dispatched:
+
+- doIt() which will call the endpoint
+- undo() which will cancel the endpoint
+
+The middleware accepts three properties:
+
+- `doItType` (default: `${doIt}`) => action type
+- `undoType` (default: `${undo}`) => action type
+- `timeout` (default: 30 * 1000) => time in milliseconds before the endpoint 
+  get cancelled automatically
 
 ```ts
 import { delay, put, race } from 'redux-saga/effects';
@@ -1159,6 +1171,7 @@ import {
   urlParser,
   undoer,
   undo,
+  doIt,
   UndoCtx,
 } from 'saga-query';
 
@@ -1168,19 +1181,16 @@ interface Message {
 }
 
 const messages = createTable<Message>({ name: 'messages' });
-const api = createApi();
+const api = createApi<UndoCtx>();
 api.use(api.routes());
 api.use(queryCtx);
 api.use(urlParser);
-api.use(undoer);
+api.use(undoer());
 
 const archiveMessage = api.patch<{ id: string; }>(
   `message/:id`,
-  function* onArchive(ctx: UndoCtx<PatchEntity<Message>, PatchEntity<Message>>, next) {
-    ctx.undo = {
-      apply: messages.actions.patch({ 1: { archived: true } }),
-      revert: messages.actions.patch({ 1: { archived: false } }),
-    };
+  function* onArchive(ctx, next) {
+    ctx.undoable = true;
 
     // prepare the request
     ctx.request = {
@@ -1196,8 +1206,37 @@ const reducers = createReducerMap(messages);
 const store = setupStore(api.saga(), reducers);
 
 store.dispatch(archiveMessage({ id: '1' }));
-// wait 2 seconds
+// wait 2 seconds to cancel endpoint
 store.dispatch(undo());
+// -or- to activate the endpoint
+store.dispatch(doIt());
+```
+
+This is not the **only** way to implement an undo mechanism, it's just the one
+we provide out-of-the-box to work with a UI that fully controls the undo
+mechanism.
+
+For example, if you want the endpoint to be called automatically after some
+timer, you could build a middleware to do that for you:
+
+```ts
+import { race, delay } from 'redux-saga/effects';
+
+const undo = createAction('UNDO');
+function* undoer<Ctx extends UndoCtx = UndoCtx>() {
+  if (!ctx.undoable) {
+    yield next();
+    return;
+  }
+
+  const winner = yield race({
+    timer: delay(3 * 1000),
+    undo: take(`${undo}`),
+  });
+
+  if (winner.undo) return;
+  yield next();
+}
 ```
 
 ### Redux-toolkit

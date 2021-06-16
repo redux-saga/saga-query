@@ -101,34 +101,38 @@ export function loadingTracker<Ctx extends ApiCtx = ApiCtx>(
   };
 }
 
-export interface UndoCtx<A extends Action = any, R extends Action = any>
-  extends ApiCtx {
-  undo: {
-    apply: A;
-    revert: R;
-  };
+interface UndoCtx<R = any, P = any> extends ApiCtx {
+  undoable: boolean;
 }
 
-export const undo = () => ({
-  type: 'undo',
-});
-export function* undoer(timer: number = 5 * 1000, undoType = `${undo}`) {
-  return function* onUndo<Ctx extends UndoCtx<any, any> = UndoCtx<any, any>>(
-    ctx: Ctx,
-    next: Next,
-  ): SagaIterator<void> {
-    if (!ctx.undo) yield next();
-    const { apply, revert } = ctx.undo;
-
-    yield put(apply);
+export const doIt = () => {
+  const type = '@@saga-query/DO_IT';
+  const action = { type };
+  action.toString = () => type;
+};
+export const undo = () => {
+  const type = '@@saga-query/UNDO';
+  const action = { type };
+  action.toString = () => type;
+};
+function undoer<Ctx extends UndoCtx = UndoCtx>(
+  doItType = `${doIt}`,
+  undoType = `${undo}`,
+  timeout = 30 * 1000,
+) {
+  return function* onUndo(ctx: Ctx, next: Next): SagaIterator<void> {
+    if (!ctx.undoable) {
+      yield next();
+      return;
+    }
 
     const winner = yield race({
-      timer: delay(timer),
+      doIt: take(`${doItType}`),
       undo: take(`${undoType}`),
+      timeout: delay(timeout),
     });
 
-    if (winner.undo) {
-      yield put(revert);
+    if (winner.undo || winner.timeout) {
       return;
     }
 
