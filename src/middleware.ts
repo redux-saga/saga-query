@@ -115,7 +115,7 @@ export const undo = () => {
   const action = { type };
   action.toString = () => type;
 };
-function undoer<Ctx extends UndoCtx = UndoCtx>(
+export function undoer<Ctx extends UndoCtx = UndoCtx>(
   doItType = `${doIt}`,
   undoType = `${undo}`,
   timeout = 30 * 1000,
