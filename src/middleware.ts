@@ -17,7 +17,7 @@ import {
   ApiCtx,
   Next,
 } from './types';
-import { isObject } from './util';
+import { isObject, createAction } from './util';
 
 export function* queryCtx<Ctx extends ApiCtx = ApiCtx>(ctx: Ctx, next: Next) {
   if (!ctx.request) ctx.request = { url: '', method: 'GET' };
@@ -105,18 +105,8 @@ interface UndoCtx<R = any, P = any> extends ApiCtx {
   undoable: boolean;
 }
 
-export const doIt = () => {
-  const type = '@@saga-query/DO_IT';
-  const action = { type };
-  action.toString = () => type;
-  return action;
-};
-export const undo = () => {
-  const type = '@@saga-query/UNDO';
-  const action = { type };
-  action.toString = () => type;
-  return action;
-};
+export const doIt = createAction('DO_IT');
+export const undo = createAction('UNDO');
 export function undoer<Ctx extends UndoCtx = UndoCtx>(
   doItType = `${doIt}`,
   undoType = `${undo}`,

@@ -13,6 +13,7 @@ import {
   CreateActionWithPayload,
   PipeCtx,
 } from './types';
+import { API_ACTION_PREFIX } from './constants';
 
 export function compose<Ctx = any>(middleware: Middleware<Ctx>[]) {
   if (!Array.isArray(middleware)) {
@@ -75,7 +76,6 @@ export const defaultOnError = (err: Error) => {
   throw err;
 };
 
-export const API_ACTION_PREFIX = '@@saga-query';
 export function createPipe<Ctx extends PipeCtx = PipeCtx<any>>({
   onError = defaultOnError,
 }: {
