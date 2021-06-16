@@ -1046,13 +1046,9 @@ or if the payload contains a timer prop:
 ```ts
 import { poll } from 'saga-query';
 
-const pollUsers = api.create(
+const pollUsers = api.get(
   `/users`,
   { saga: poll(5 * 1000) },
-  function* processUsers(ctx, next) {
-    yield next();
-    // ...
-  }
 );
 ```
 
@@ -1065,16 +1061,22 @@ import { pollUsers } from './api';
 
 const App = () => {
   const dispatch = useDispatch();
-  const [polling, setPolling] = useState(false);
+  const [polling, setPolling] = useState("init");
+
+  const onClick = () => {
+    if (polling === "on") setPolling("off");
+    else setPolling("on");
+  };
 
   useEffect(() => {
-    dispatch(pollUsers());
+    if (polling === "init") return;
+    dispatch(pollRepo());
   }, [polling]);
 
   return (
     <div>
-      <div>Polling: {polling ? 'on' : 'off'}</div>
-      <button onClick={() => setPolling(!polling)}>Toggle Polling</button>
+      <div>Polling: {polling}</div>
+      <button onClick={onClick}>Toggle Polling</button>
     </div>
   );
 }
