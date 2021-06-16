@@ -109,11 +109,13 @@ export const doIt = () => {
   const type = '@@saga-query/DO_IT';
   const action = { type };
   action.toString = () => type;
+  return action;
 };
 export const undo = () => {
   const type = '@@saga-query/UNDO';
   const action = { type };
   action.toString = () => type;
+  return action;
 };
 export function undoer<Ctx extends UndoCtx = UndoCtx>(
   doItType = `${doIt}`,
