@@ -31,9 +31,15 @@ export interface CreateActionWithPayload<Ctx, P> {
   run: (a: ActionWithPayload<CreateActionPayload<P>>) => SagaIterator<Ctx>;
 }
 
+export interface RequestData {
+  [key: string]: any;
+}
+
 export interface RequestCtx {
   url: string;
   method: string;
+  body: any;
+  data: RequestData;
 }
 
 export interface ApiCtx<P = any, R = any> extends PipeCtx<P> {

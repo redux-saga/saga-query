@@ -7,12 +7,19 @@ import {
   createTable,
   createLoaderTable,
 } from 'robodux';
-import { createStore, combineReducers, applyMiddleware } from 'redux';
 
 import { Next } from './types';
 import { createApi } from './api';
-import { urlParser, loadingTracker, queryCtx } from './middleware';
+import {
+  urlParser,
+  loadingTracker,
+  queryCtx,
+  LoadingCtx,
+  dispatchActions,
+} from './middleware';
 import { FetchCtx } from './fetch';
+import { setupStore } from './util';
+import { LOADERS_NAME, createQueryState } from './slice';
 
 interface User {
   id: string;
@@ -22,14 +29,6 @@ interface User {
 
 const mockUser: User = { id: '1', name: 'test', email: 'test@test.com' };
 const mockUser2: User = { id: '2', name: 'two', email: 'two@test.com' };
-
-function setupStore(saga: any, reducers: any) {
-  const sagaMiddleware = createSagaMiddleware();
-  const reducer = combineReducers(reducers);
-  const store: any = createStore(reducer, applyMiddleware(sagaMiddleware));
-  sagaMiddleware.run(saga);
-  return store;
-}
 
 function* latest(action: string, saga: any, ...args: any[]) {
   yield takeLatest(`${action}`, saga, ...args);
@@ -92,27 +91,22 @@ test('middleware - basic', (t) => {
   const store = setupStore(query.saga(), reducers);
   store.dispatch(fetchUsers());
   t.deepEqual(store.getState(), {
+    ...createQueryState(),
     users: { [mockUser.id]: mockUser },
   });
   store.dispatch(fetchUser({ id: '2' }));
   t.deepEqual(store.getState(), {
+    ...createQueryState(),
     users: { [mockUser.id]: mockUser, [mockUser2.id]: mockUser2 },
   });
 });
 
 test('middleware - with loader', (t) => {
   const users = createTable<User>({ name: 'users' });
-  const loaders = createLoaderTable({ name: 'loaders' });
 
   const api = createApi<FetchCtx>();
-  api.use(function* (ctx, next) {
-    yield next();
-    for (let i = 0; i < ctx.actions.length; i += 1) {
-      const action = ctx.actions[i];
-      yield put(action);
-    }
-  });
-  api.use(loadingTracker(loaders));
+  api.use(dispatchActions);
+  api.use(loadingTracker());
   api.use(api.routes());
   api.use(queryCtx);
   api.use(urlParser);
@@ -142,13 +136,13 @@ test('middleware - with loader', (t) => {
     },
   );
 
-  const reducers = createReducerMap(loaders, users);
+  const reducers = createReducerMap(users);
   const store = setupStore(api.saga(), reducers);
 
   store.dispatch(fetchUsers());
   t.like(store.getState(), {
     [users.name]: { [mockUser.id]: mockUser },
-    [loaders.name]: {
+    [LOADERS_NAME]: {
       '/users': {
         status: 'success',
       },
@@ -199,4 +193,60 @@ test('middleware - with POST', (t) => {
   const reducers = createReducerMap(cache);
   const store = setupStore(query.saga(), reducers);
   store.dispatch(createUser({ email: mockUser.email }));
+});
+
+test('overriding default loader behavior', (t) => {
+  const users = createTable<User>({ name: 'users' });
+
+  const api = createApi<FetchCtx>();
+  api.use(dispatchActions);
+  api.use(loadingTracker());
+  api.use(api.routes());
+  api.use(queryCtx);
+  api.use(urlParser);
+  api.use(function* fetchApi(ctx, next) {
+    ctx.response = {
+      status: 200,
+      ok: true,
+      data: {
+        users: [mockUser],
+      },
+    };
+    yield next();
+  });
+
+  const fetchUsers = api.create(
+    `/users`,
+    function* processUsers(ctx: FetchCtx<{ users: User[] }>, next) {
+      const id = ctx.name;
+      yield next();
+      if (!ctx.response.ok) {
+        ctx.loader.error = { id, message: 'boo' };
+        return;
+      }
+      const { data } = ctx.response;
+      const curUsers = data.users.reduce<MapEntity<User>>((acc, u) => {
+        acc[u.id] = u;
+        return acc;
+      }, {});
+
+      ctx.loader.success = { id, message: 'yes', meta: { wow: true } };
+      ctx.actions.push(users.actions.add(curUsers));
+    },
+  );
+
+  const reducers = createReducerMap(users);
+  const store = setupStore(api.saga(), reducers);
+
+  store.dispatch(fetchUsers());
+  t.like(store.getState(), {
+    [users.name]: { [mockUser.id]: mockUser },
+    [LOADERS_NAME]: {
+      '/users': {
+        status: 'success',
+        message: 'yes',
+        meta: { wow: true },
+      },
+    },
+  });
 });

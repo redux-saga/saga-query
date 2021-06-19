@@ -1,3 +1,4 @@
+import { batchActions } from 'redux-batched-actions';
 import {
   put,
   takeLatest,
@@ -18,6 +19,7 @@ import {
   Next,
 } from './types';
 import { isObject, createAction } from './util';
+import { setLoaderStart, setLoaderError, setLoaderSuccess } from './slice';
 
 export function* queryCtx<Ctx extends ApiCtx = ApiCtx>(ctx: Ctx, next: Next) {
   if (!ctx.request) ctx.request = { url: '', method: 'GET' };
@@ -62,6 +64,12 @@ export function* urlParser<Ctx extends ApiCtx = ApiCtx>(ctx: Ctx, next: Next) {
     ctx.request.url = url;
   }
 
+  if (!ctx.request.body && ctx.request.data) {
+    ctx.request.body = {
+      body: JSON.stringify(ctx.request.data),
+    };
+  }
+
   if (!ctx.request.method) {
     httpMethods.forEach((method) => {
       const url = ctx.request.url || '';
@@ -76,28 +84,58 @@ export function* urlParser<Ctx extends ApiCtx = ApiCtx>(ctx: Ctx, next: Next) {
   yield next();
 }
 
-export function loadingTracker<Ctx extends ApiCtx = ApiCtx>(
-  loaders: {
-    actions: {
-      loading: (l: { id: string }) => any;
-      error: (l: { id: string; message: string }) => any;
-      success: (l: { id: string }) => any;
-    };
-  },
+export function* dispatchActions<Ctx extends ApiCtx = ApiCtx>(
+  ctx: Ctx,
+  next: Next,
+) {
+  yield next();
+  if (ctx.actions.length === 0) return;
+  yield put(batchActions(ctx.actions));
+}
+
+interface LoaderPayload {
+  id: string;
+  message?: string;
+  meta?: { [key: string]: any };
+}
+
+interface LoaderCtxPayload {
+  loading: LoaderPayload;
+  success: LoaderPayload;
+  error: LoaderPayload;
+}
+
+export interface LoadingCtx<P = any, R = any> extends ApiCtx<P, R> {
+  loader: LoaderCtxPayload;
+}
+
+export function loadingTracker<Ctx extends LoadingCtx = LoadingCtx>(
   errorFn: (ctx: Ctx) => string = (ctx) => ctx.response.data.message,
 ) {
   return function* trackLoading(ctx: Ctx, next: Next) {
     const id = ctx.name;
-    yield put(loaders.actions.loading({ id }));
+    if (!ctx.loader) ctx.loader = {} as LoaderCtxPayload;
+    const { loading = {} } = ctx.loader;
+    ctx.loader.loading = { id, ...loading };
+    yield put(setLoaderStart(ctx.loader.loading));
 
     yield next();
 
+    const { success = {}, error = {} } = ctx.loader;
     if (!ctx.response.ok) {
-      yield put(loaders.actions.error({ id, message: errorFn(ctx) }));
+      ctx.loader.error = {
+        id,
+        message: errorFn(ctx),
+        ...error,
+      };
+      ctx.actions.push(setLoaderError(ctx.loader.error as any));
       return;
     }
 
-    yield put(loaders.actions.success({ id }));
+    if (!ctx.loader.success) {
+      ctx.loader.success = { id, ...success };
+    }
+    ctx.actions.push(setLoaderSuccess(ctx.loader.success as any));
   };
 }
 

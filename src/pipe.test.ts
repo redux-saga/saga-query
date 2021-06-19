@@ -6,6 +6,8 @@ import { createTable, Action, MapEntity, createReducerMap } from 'robodux';
 
 import { createPipe } from './pipe';
 import { CreateActionPayload, PipeCtx, Middleware, Next } from './types';
+import { setupStore as prepStore } from './util';
+import { createQueryState } from './slice';
 
 interface RoboCtx<D = any, P = any> extends PipeCtx<P> {
   url: string;
@@ -135,10 +137,7 @@ function* saveToRedux(ctx: RoboCtx, next: Next) {
 }
 
 function setupStore(saga: any) {
-  const sagaMiddleware = createSagaMiddleware();
-  const reducer = combineReducers(reducers as any);
-  const store: any = createStore(reducer, applyMiddleware(sagaMiddleware));
-  sagaMiddleware.run(saga);
+  const store = prepStore(saga, reducers);
   return store;
 }
 
@@ -156,6 +155,7 @@ test('createPipe: when create a query fetch pipeline - execute all middleware an
   const store = setupStore(api.saga());
   store.dispatch(fetchUsers());
   t.deepEqual(store.getState(), {
+    ...createQueryState(),
     [users.name]: { [mockUser.id]: deserializeUser(mockUser) },
     [tickets.name]: {},
   });
@@ -191,6 +191,7 @@ test('createPipe: when providing a generator the to api.create function - should
   const store = setupStore(api.saga());
   store.dispatch(fetchTickets());
   t.deepEqual(store.getState(), {
+    ...createQueryState(),
     [users.name]: { [mockUser.id]: deserializeUser(mockUser) },
     [tickets.name]: { [mockTicket.id]: deserializeTicket(mockTicket) },
   });

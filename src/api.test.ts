@@ -1,6 +1,6 @@
 import test from 'ava';
 import createSagaMiddleware, { SagaIterator } from 'redux-saga';
-import { put, call } from 'redux-saga/effects';
+import { takeEvery, put, call } from 'redux-saga/effects';
 import {
   createAction,
   createReducerMap,
@@ -13,6 +13,7 @@ import sagaCreator from 'redux-saga-creator';
 import { urlParser, queryCtx } from './middleware';
 import { FetchCtx } from './fetch';
 import { createApi } from './api';
+import { setupStore } from './util';
 
 interface User {
   id: string;
@@ -22,17 +23,6 @@ interface User {
 
 const mockUser: User = { id: '1', name: 'test', email: 'test@test.com' };
 const mockUser2: User = { id: '2', name: 'two', email: 'two@test.com' };
-
-function setupStore(
-  saga: any,
-  reducers: any = { users: (state: any = {}) => state },
-) {
-  const sagaMiddleware = createSagaMiddleware();
-  const reducer = combineReducers(reducers);
-  const store: any = createStore(reducer, applyMiddleware(sagaMiddleware));
-  sagaMiddleware.run(saga);
-  return store;
-}
 
 test('createApi - POST', (t) => {
   t.plan(1);
@@ -138,6 +128,10 @@ test('run() from a normal saga', (t) => {
     t.assert(acc === 'ab');
   }
 
-  const store = setupStore(sagaCreator({ api: api.saga(), action: onAction }));
+  function* watchAction() {
+    yield takeEvery(`${action2}`, onAction);
+  }
+
+  const store = setupStore({ api: api.saga(), watchAction });
   store.dispatch(action2());
 });
