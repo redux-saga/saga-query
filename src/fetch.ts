@@ -1,4 +1,4 @@
-import { ApiCtx, RequestData, LoadingCtx } from './types';
+import { ApiCtx, RequestData } from './types';
 
 export interface FetchApiOpts extends RequestInit {
   url: string;
@@ -22,9 +22,7 @@ export type ApiFetchResponse<Data = any, E = any> =
   | ApiFetchSuccess<Data>
   | ApiFetchError<E>;
 
-export interface FetchCtx<D = any, E = any, P = any>
-  extends ApiCtx,
-    LoadingCtx {
+export interface FetchCtx<D = any, E = any, P = any> extends ApiCtx {
   payload: P;
   request: Partial<FetchApiOpts>;
   response: ApiFetchResponse<D, E>;

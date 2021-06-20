@@ -17,7 +17,6 @@ import {
   CreateActionPayload,
   ApiCtx,
   Next,
-  LoaderCtxPayload,
 } from './types';
 import { isObject, createAction } from './util';
 import {
@@ -105,28 +104,20 @@ export function loadingMonitor<Ctx extends ApiCtx = ApiCtx>(
 ) {
   return function* trackLoading(ctx: Ctx, next: Next) {
     const id = ctx.name;
-    if (!ctx.loader) ctx.loader = {} as LoaderCtxPayload;
-    const { loading = {} } = ctx.loader;
-    ctx.loader.loading = { id, ...loading };
-    yield put(setLoaderStart(ctx.loader.loading));
+    yield put(setLoaderStart({ id }));
+    if (!ctx.loader) ctx.loader = {} as any;
 
     yield next();
 
-    const { success = {}, error = {} } = ctx.loader;
+    const payload = ctx.loader || {};
     if (!ctx.response.ok) {
-      ctx.loader.error = {
-        id,
-        message: errorFn(ctx),
-        ...error,
-      };
-      ctx.actions.push(setLoaderError(ctx.loader.error as any));
+      ctx.actions.push(
+        setLoaderError({ id, message: errorFn(ctx), ...payload }),
+      );
       return;
     }
 
-    if (!ctx.loader.success) {
-      ctx.loader.success = { id, ...success };
-    }
-    ctx.actions.push(setLoaderSuccess(ctx.loader.success as any));
+    ctx.actions.push(setLoaderSuccess({ id, ...payload }));
   };
 }
 

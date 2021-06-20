@@ -1,6 +1,6 @@
 import test from 'ava';
-import createSagaMiddleware from 'redux-saga';
-import { takeLatest, put } from 'redux-saga/effects';
+import createSagaMiddleware, { SagaIterator } from 'redux-saga';
+import { takeLatest, put, select } from 'redux-saga/effects';
 import {
   createReducerMap,
   MapEntity,
@@ -18,7 +18,12 @@ import {
 } from './middleware';
 import { FetchCtx } from './fetch';
 import { setupStore } from './util';
-import { DATA_NAME, LOADERS_NAME, createQueryState } from './slice';
+import {
+  DATA_NAME,
+  LOADERS_NAME,
+  createQueryState,
+  selectLoaderById,
+} from './slice';
 
 interface User {
   id: string;
@@ -192,61 +197,6 @@ test('middleware - with POST', (t) => {
   store.dispatch(createUser({ email: mockUser.email }));
 });
 
-test('overriding default loader behavior', (t) => {
-  const users = createTable<User>({ name: 'users' });
-
-  const api = createApi<FetchCtx>();
-  api.use(requestMonitor());
-  api.use(api.routes());
-  api.use(requestParser());
-
-  api.use(function* fetchApi(ctx, next) {
-    ctx.response = {
-      status: 200,
-      ok: true,
-      data: {
-        users: [mockUser],
-      },
-    };
-    yield next();
-  });
-
-  const fetchUsers = api.create(
-    `/users`,
-    function* processUsers(ctx: FetchCtx<{ users: User[] }>, next) {
-      const id = ctx.name;
-      yield next();
-      if (!ctx.response.ok) {
-        ctx.loader.error = { id, message: 'boo' };
-        return;
-      }
-      const { data } = ctx.response;
-      const curUsers = data.users.reduce<MapEntity<User>>((acc, u) => {
-        acc[u.id] = u;
-        return acc;
-      }, {});
-
-      ctx.loader.success = { id, message: 'yes', meta: { wow: true } };
-      ctx.actions.push(users.actions.add(curUsers));
-    },
-  );
-
-  const reducers = createReducerMap(users);
-  const store = setupStore(api.saga(), reducers);
-
-  store.dispatch(fetchUsers());
-  t.like(store.getState(), {
-    [users.name]: { [mockUser.id]: mockUser },
-    [LOADERS_NAME]: {
-      [`${fetchUsers}`]: {
-        status: 'success',
-        message: 'yes',
-        meta: { wow: true },
-      },
-    },
-  });
-});
-
 test('quickSave', (t) => {
   const api = createApi<FetchCtx>();
   api.use(requestMonitor());
@@ -275,6 +225,60 @@ test('quickSave', (t) => {
     [LOADERS_NAME]: {
       [`${fetchUsers}`]: {
         status: 'success',
+      },
+    },
+  });
+});
+
+test('overriding default loader behavior', (t) => {
+  const users = createTable<User>({ name: 'users' });
+
+  const api = createApi<FetchCtx>();
+  api.use(requestMonitor());
+  api.use(api.routes());
+  api.use(requestParser());
+
+  api.use(function* fetchApi(ctx, next) {
+    ctx.response = {
+      status: 200,
+      ok: true,
+      data: {
+        users: [mockUser],
+      },
+    };
+    yield next();
+  });
+
+  const fetchUsers = api.create(
+    `/users`,
+    function* processUsers(ctx: FetchCtx<{ users: User[] }>, next) {
+      const id = ctx.name;
+      yield next();
+      if (!ctx.response.ok) {
+        return;
+      }
+      const { data } = ctx.response;
+      const curUsers = data.users.reduce<MapEntity<User>>((acc, u) => {
+        acc[u.id] = u;
+        return acc;
+      }, {});
+
+      ctx.loader = { id, message: 'yes', meta: { wow: true } };
+      ctx.actions.push(users.actions.add(curUsers));
+    },
+  );
+
+  const reducers = createReducerMap(users);
+  const store = setupStore(api.saga(), reducers);
+
+  store.dispatch(fetchUsers());
+  t.like(store.getState(), {
+    [users.name]: { [mockUser.id]: mockUser },
+    [LOADERS_NAME]: {
+      [`${fetchUsers}`]: {
+        status: 'success',
+        message: 'yes',
+        meta: { wow: true },
       },
     },
   });
