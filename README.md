@@ -2,9 +2,8 @@
 
 [![ci](https://github.com/neurosnap/saga-query/actions/workflows/test.yml/badge.svg)](https://github.com/neurosnap/saga-query/actions/workflows/test.yml)
 
-Data fetching and caching using a middleware system.  
-Use our saga middleware system to quickly build data loading within your 
-redux application and reduce boilderplate.
+Data fetching and caching using a robust middleware system.
+Quickly build data loading within your redux application and reduce boilderplate.
 
 **This library is undergoing active development. Consider this in a beta
 state.**
@@ -32,12 +31,11 @@ state.**
 - Write middleware to handle fetching, synchronizing, and caching API requests
   on the front-end
 - A familiar middleware system that node.js developers are familiar with
-  (e.g. express, koa)
-- Handle any async flow control use-case
-- Full control over the data fetching and caching layers in your application
-- Fine tune selectors for your specific needs
+  (e.g. koa)
 - Simple recipes to handle complex use-cases like cancellation, polling,
   optimistic updates, loading states, undo, react
+- Full control over the data fetching and caching layers in your application
+- Fine tune selectors for your specific needs
 
 ## Why?
 
@@ -47,14 +45,13 @@ Libraries like [react-query](https://react-query.tanstack.com/),
 easier than ever to fetch and cache data from an API server.  All of them
 have their unique attributes and I encourage everyone to check them out.
 
-I find that the async flow control of `redux-saga` is one of the most robust
-and powerful declaractive side-effect systems I have used.  Treating
+There's no better async flow control system than `redux-saga`.  Treating
 side-effects as data makes testing dead simple and provides a powerful effect
-handling system to accomodate any use-case.  Features like polling, data
-loading states, cancellation, racing, parallelization, optimistic updates,
-and undo are at your disposal when using `redux-saga`.  Other
-libraries and paradigms can also accomplish the same tasks, but I think nothing
-rivals the readability and maintainability of redux/redux-saga.
+handling system to accomodate any use-case.  Features like polling, data loading
+states, cancellation, racing, parallelization, optimistic updates, and undo are
+at your disposal when using `redux-saga`.  Other libraries and paradigms can
+also accomplish the same tasks, but I think nothing rivals the readability and
+maintainability of redux/redux-saga.
 
 All three libraries above are reinventing async flow control and hiding them
 from the end-developer.  For the happy path, this works beautifully.  Why learn
@@ -178,7 +175,7 @@ export const fetchUsers = api.get(
 
 const reducers = createReducerMap(users);
 const prepared = prepareStore({
-  reducers, 
+  reducers,
   sagas: { api: api.saga() },
 });
 const store = createStore(
@@ -389,7 +386,7 @@ const reducers = createReducerMap(users);
 //   - Setup redux-batched-actions
 //   - Setup a couple of reducers that saga-query will use: loaders and data
 const prepared = prepareStore({
-  reducers, 
+  reducers,
   sagas: { api: api.saga() }
 });
 const store = createStore(
@@ -446,9 +443,9 @@ each endpoint.
 
 The following code will mimick what a library like `react-query` is doing
 behind-the-scenes.  I want to make it clear that `react-query` is doing a lot
-more than this so I don't want to understate its usefuless.  However, you can 
+more than this so I don't want to understate its usefuless.  However, you can
 see that not only can we get a core chunk of the functionality `react-query`
-provides with a little over 100 lines of code but we also have full control 
+provides with a little over 100 lines of code but we also have full control
 over fetching, querying, and caching data with the ability to customize it
 using middleware.  This provides the end-developer with the tools to customize
 their experience without submitting PRs to add configuration options to an
@@ -456,7 +453,7 @@ upstream library.
 
 ```ts
 // api.ts
-import { 
+import {
   createApi,
   dispatchActions,
   requestParser,
@@ -477,14 +474,14 @@ api.use(apiFetch);
 // this will only activate the endpoint at most once every 5 minutes.
 const cacheTimer = timer(5 * 60 * 1000);
 export const fetchUsers = api.get(
-  '/users', 
-  { saga: cacheTimer }, 
-  // set `save=true` to have quickSave middleware cache response data 
+  '/users',
+  { saga: cacheTimer },
+  // set `save=true` to have quickSave middleware cache response data
   // automatically
-  api.request({ save: true }), 
+  api.request({ save: true }),
 );
 
-const prepared = prepareStore({ 
+const prepared = prepareStore({
   sagas: { api: api.saga() },
 });
 const store = createStore(
@@ -994,7 +991,7 @@ The middleware accepts three properties:
 
 - `doItType` (default: `${doIt}`) => action type
 - `undoType` (default: `${undo}`) => action type
-- `timeout` (default: 30 * 1000) => time in milliseconds before the endpoint 
+- `timeout` (default: 30 * 1000) => time in milliseconds before the endpoint
   get cancelled automatically
 
 ```ts
@@ -1084,10 +1081,10 @@ response data.
 ```ts
 import { createStore } from 'redux';
 import { createReducerMap } from 'robodux';
-import { 
-  prepareStore, 
-  createApi, 
-  dispatchAction, 
+import {
+  prepareStore,
+  createApi,
+  dispatchAction,
   requestParser,
   loadingMonitor,
 } from 'saga-query';

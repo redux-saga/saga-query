@@ -1,5 +1,4 @@
-import { ApiCtx, RequestData } from './types';
-import { LoadingCtx } from './middleware';
+import { ApiCtx, RequestData, LoadingCtx } from './types';
 
 export interface FetchApiOpts extends RequestInit {
   url: string;

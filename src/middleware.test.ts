@@ -12,11 +12,9 @@ import { Next } from './types';
 import { createApi } from './api';
 import {
   urlParser,
-  loadingMonitor,
   queryCtx,
-  LoadingCtx,
-  dispatchActions,
   requestParser,
+  requestMonitor,
 } from './middleware';
 import { FetchCtx } from './fetch';
 import { setupStore } from './util';
@@ -106,11 +104,9 @@ test('middleware - with loader', (t) => {
   const users = createTable<User>({ name: 'users' });
 
   const api = createApi<FetchCtx>();
-  api.use(dispatchActions);
-  api.use(loadingMonitor());
+  api.use(requestMonitor());
   api.use(api.routes());
-  api.use(queryCtx);
-  api.use(urlParser);
+  api.use(requestParser());
   api.use(function* fetchApi(ctx, next) {
     ctx.response = {
       status: 200,
@@ -200,8 +196,7 @@ test('overriding default loader behavior', (t) => {
   const users = createTable<User>({ name: 'users' });
 
   const api = createApi<FetchCtx>();
-  api.use(dispatchActions);
-  api.use(loadingMonitor());
+  api.use(requestMonitor());
   api.use(api.routes());
   api.use(requestParser());
 
@@ -254,8 +249,7 @@ test('overriding default loader behavior', (t) => {
 
 test('quickSave', (t) => {
   const api = createApi<FetchCtx>();
-  api.use(dispatchActions);
-  api.use(loadingMonitor());
+  api.use(requestMonitor());
   api.use(api.routes());
   api.use(requestParser());
   api.use(function* fetchApi(ctx, next) {

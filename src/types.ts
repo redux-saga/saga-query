@@ -31,6 +31,22 @@ export interface CreateActionWithPayload<Ctx, P> {
   run: (a: ActionWithPayload<CreateActionPayload<P>>) => SagaIterator<Ctx>;
 }
 
+interface LoaderPayload {
+  id: string;
+  message?: string;
+  meta?: { [key: string]: any };
+}
+
+export interface LoaderCtxPayload {
+  loading: LoaderPayload;
+  success: LoaderPayload;
+  error: LoaderPayload;
+}
+
+export interface LoadingCtx {
+  loader: LoaderCtxPayload;
+}
+
 export interface RequestData {
   [key: string]: any;
 }
@@ -43,7 +59,7 @@ export interface RequestCtx {
   simpleCache: boolean;
 }
 
-export interface ApiCtx<P = any, R = any> extends PipeCtx<P> {
+export interface ApiCtx<P = any, R = any> extends PipeCtx<P>, LoadingCtx {
   request: Partial<RequestCtx>;
   response: R;
   actions: Action[];

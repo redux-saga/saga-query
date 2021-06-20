@@ -17,6 +17,7 @@ import {
   CreateActionPayload,
   ApiCtx,
   Next,
+  LoaderCtxPayload,
 } from './types';
 import { isObject, createAction } from './util';
 import {
@@ -98,23 +99,7 @@ export function* dispatchActions<Ctx extends ApiCtx = ApiCtx>(
   yield put(batchActions(ctx.actions));
 }
 
-interface LoaderPayload {
-  id: string;
-  message?: string;
-  meta?: { [key: string]: any };
-}
-
-interface LoaderCtxPayload {
-  loading: LoaderPayload;
-  success: LoaderPayload;
-  error: LoaderPayload;
-}
-
-export interface LoadingCtx<P = any, R = any> extends ApiCtx<P, R> {
-  loader: LoaderCtxPayload;
-}
-
-export function loadingMonitor<Ctx extends LoadingCtx = LoadingCtx>(
+export function loadingMonitor<Ctx extends ApiCtx = ApiCtx>(
   errorFn: (ctx: Ctx) => string = (ctx) => ctx.response.data.message,
 ) {
   return function* trackLoading(ctx: Ctx, next: Next) {
@@ -261,4 +246,8 @@ export function* simpleCache<Ctx extends ApiCtx = ApiCtx>(
 
 export function requestParser<Ctx extends ApiCtx = ApiCtx>() {
   return compose<Ctx>([queryCtx, urlParser, simpleCache]);
+}
+
+export function requestMonitor<Ctx extends ApiCtx = ApiCtx>() {
+  return compose<Ctx>([dispatchActions, loadingMonitor()]);
 }
