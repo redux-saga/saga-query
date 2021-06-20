@@ -129,6 +129,7 @@ import { createTable, createReducerMap } from 'robodux';
 import {
   createApi,
   requestParser,
+  loadingMonitor,
   dispatchActions,
   prepareStore,
   FetchCtx,
@@ -149,6 +150,7 @@ export const { selectTableAsList: selectUsersAsList } = selectors;
 
 const api = createApi<FetchCtx>();
 api.use(dispatchActions);
+api.use(loadingMonitor());
 api.use(api.routes());
 api.use(requestParser());
 api.use(function* onFetch(ctx, next) {
@@ -301,8 +303,14 @@ const api = createApi<FetchCtx>();
 
 // This middleware leverages `redux-batched-actions` to dispatch all the
 // actions stored within `ctx.actions` which get added by other middleware
-// during the lifecycle of the request.
+// during the lifecycle of the request.  This middleware should almost always
+// preceed `api.routes()`
 api.use(dispatchActions);
+
+// This middleware will monitor the lifecycle of a request and attach the
+// appropriate loading states to the loader associated with the endpoint.
+// This middleware should almost always preceed `api.routes()`
+api.use(loadingMonitor());
 
 // This is where all the endpoints (e.g. `.get()`, `.put()`, etc.) you created
 // get added to the middleware stack.  It is recommended to put this as close to
@@ -311,13 +319,13 @@ api.use(dispatchActions);
 api.use(api.routes());
 
 // This middleware is composed of other middleware: queryCtx, urlParser, and
-// loadingMonitor.
+// simpleCache
 // [queryCtx] sets up the ctx object with `ctx.request` and `ctx.response`
 //  required for `createApi` to function properly.
 // [urlParser] is a middleware that will take the name of `api.create(name)` and
 //  replace it with the values passed into the action.
-// [loadingMonitor] is a middleware that will handle loading state for all
-//  endpoints.
+// [simpleCache] is a middleware that will automatically store the response of
+//  endpoints if the endpoint has request.simpleCache = true
 api.use(requestParser());
 
 // this is where you defined your core fetching logic
@@ -452,12 +460,14 @@ import {
   createApi,
   dispatchActions,
   requestParser,
+  loadingMonitor,
   timer,
   prepareStore,
 } from 'saga-query';
 
 const api = createApi();
 api.use(dispatchActions);
+api.use(loadingMonitor());
 api.use(api.routes());
 api.use(requestParser());
 
@@ -1079,6 +1089,7 @@ import {
   createApi, 
   dispatchAction, 
   requestParser,
+  loadingMonitor,
 } from 'saga-query';
 import { createSlice } from 'redux-toolkit';
 
@@ -1096,6 +1107,7 @@ const users = createSlice({
 
 const api = createApi();
 api.use(dispatchActions);
+api.use(loadingMonitor());
 api.use(api.routes());
 api.use(requestParser());
 // made up window.fetch logic

@@ -246,7 +246,10 @@ export function* optimistic<
   }
 }
 
-export function* quickCache<Ctx extends ApiCtx = ApiCtx>(ctx: Ctx, next: Next) {
+export function* simpleCache<Ctx extends ApiCtx = ApiCtx>(
+  ctx: Ctx,
+  next: Next,
+) {
   yield next();
   if (!ctx.request.simpleCache) return;
   const { ok, data } = ctx.response;
@@ -257,5 +260,5 @@ export function* quickCache<Ctx extends ApiCtx = ApiCtx>(ctx: Ctx, next: Next) {
 }
 
 export function requestParser<Ctx extends ApiCtx = ApiCtx>() {
-  return compose<Ctx>([queryCtx, urlParser, quickCache]);
+  return compose<Ctx>([queryCtx, urlParser, simpleCache]);
 }
