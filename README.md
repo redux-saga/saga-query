@@ -125,9 +125,8 @@ import { put, call } from 'redux-saga/effects';
 import { createTable, createReducerMap } from 'robodux';
 import {
   createApi,
+  requestMonitor,
   requestParser,
-  loadingMonitor,
-  dispatchActions,
   prepareStore,
   FetchCtx,
 } from 'saga-query';
@@ -146,8 +145,7 @@ const selectors = users.getSelectors((s: AppState) => s[users.name]);
 export const { selectTableAsList: selectUsersAsList } = selectors;
 
 const api = createApi<FetchCtx>();
-api.use(dispatchActions);
-api.use(loadingMonitor());
+api.use(requestMonitor());
 api.use(api.routes());
 api.use(requestParser());
 api.use(function* onFetch(ctx, next) {
@@ -281,7 +279,7 @@ import { put, call } from 'redux-saga/effects';
 import { createTable, createReducerMap } from 'robodux';
 import {
   createApi,
-  dispatchActions,
+  requestMonitor,
   requestParser,
   // FetchCtx is an interface that's built around using window.fetch
   // You don't have to use it if you don't want to.
@@ -298,16 +296,16 @@ const users = createTable<User>({ name: 'users' });
 // The generic passed to `createApi` must extend `ApiCtx` to be accepted.
 const api = createApi<FetchCtx>();
 
-// This middleware leverages `redux-batched-actions` to dispatch all the
-// actions stored within `ctx.actions` which get added by other middleware
-// during the lifecycle of the request.  This middleware should almost always
-// preceed `api.routes()`
-api.use(dispatchActions);
-
-// This middleware will monitor the lifecycle of a request and attach the
-// appropriate loading states to the loader associated with the endpoint.
-// This middleware should almost always preceed `api.routes()`
-api.use(loadingMonitor());
+// This middleware monitors the lifecycle of the request.  It needs to be
+// loaded before `.routes()` because it needs to be around after everything
+// else. It is composed of other middleware: dispatchActions and loadingMonitor.
+// [dispatchActions]  This middleware leverages `redux-batched-actions` to
+//  dispatch all the actions stored within `ctx.actions` which get added by
+//  other middleware during the lifecycle of the request.
+// [loadingMonitor] This middleware will monitor the lifecycle of a request and
+//  attach the appropriate loading states to the loader associated with the
+//  endpoint.
+api.use(requestMonitor());
 
 // This is where all the endpoints (e.g. `.get()`, `.put()`, etc.) you created
 // get added to the middleware stack.  It is recommended to put this as close to
@@ -322,10 +320,10 @@ api.use(api.routes());
 // [urlParser] is a middleware that will take the name of `api.create(name)` and
 //  replace it with the values passed into the action.
 // [simpleCache] is a middleware that will automatically store the response of
-//  endpoints if the endpoint has request.simpleCache = true
+//  endpoints if the endpoint has `request.simpleCache = true`
 api.use(requestParser());
 
-// this is where you defined your core fetching logic
+// this is where you define your core fetching logic
 api.use(function* onFetch(ctx, next) {
   // ctx.request is the object used to make a fetch request when using
   // `queryCtx` and `urlParser`
@@ -455,16 +453,14 @@ upstream library.
 // api.ts
 import {
   createApi,
-  dispatchActions,
+  requestMonitor,
   requestParser,
-  loadingMonitor,
   timer,
   prepareStore,
 } from 'saga-query';
 
 const api = createApi();
-api.use(dispatchActions);
-api.use(loadingMonitor());
+api.use(requestMonitor());
 api.use(api.routes());
 api.use(requestParser());
 
@@ -999,8 +995,7 @@ import { delay, put, race } from 'redux-saga/effects';
 import { createAction } from 'robodux';
 import {
   createApi,
-  queryCtx,
-  urlParser,
+  requestParser,
   undoer,
   undo,
   doIt,
@@ -1015,8 +1010,7 @@ interface Message {
 const messages = createTable<Message>({ name: 'messages' });
 const api = createApi<UndoCtx>();
 api.use(api.routes());
-api.use(queryCtx);
-api.use(urlParser);
+api.use(requestParser());
 api.use(undoer());
 
 const archiveMessage = api.patch<{ id: string; }>(
@@ -1084,9 +1078,8 @@ import { createReducerMap } from 'robodux';
 import {
   prepareStore,
   createApi,
-  dispatchAction,
+  requestMonitor,
   requestParser,
-  loadingMonitor,
 } from 'saga-query';
 import { createSlice } from 'redux-toolkit';
 
@@ -1103,8 +1096,7 @@ const users = createSlice({
 });
 
 const api = createApi();
-api.use(dispatchActions);
-api.use(loadingMonitor());
+api.use(requestMonitor());
 api.use(api.routes());
 api.use(requestParser());
 // made up window.fetch logic
