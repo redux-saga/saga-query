@@ -202,7 +202,7 @@ export function createApi<Ctx extends ApiCtx = ApiCtx>(
     patch: (name: string, ...args: any[]) =>
       (api.create as any)(`${name} [PATCH]`, ...args),
     delete: (name: string, ...args: any[]) =>
-      (api.create as any)(`${name} [PATCH]`, ...args),
+      (api.create as any)(`${name} [DELETE]`, ...args),
     options: (name: string, ...args: any[]) =>
       (api.create as any)(`${name} [OPTIONS]`, ...args),
     head: (name: string, ...args: any[]) =>
