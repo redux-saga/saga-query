@@ -1,7 +1,7 @@
 {
   "name": "saga-query",
   "version": "0.0.0",
-  "description": "Data synchronization using redux-saga",
+  "description": "Data fetching and caching using a middleware system",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "repository": "https://github.com/neurosnap/saga-query.git",

@@ -2,7 +2,7 @@
 
 [![ci](https://github.com/neurosnap/saga-query/actions/workflows/test.yml/badge.svg)](https://github.com/neurosnap/saga-query/actions/workflows/test.yml)
 
-Data fetching and caching using a middleware system for the browser.  
+Data fetching and caching using a middleware system.  
 Use our saga middleware system to quickly build data loading within your 
 redux application and reduce boilderplate.
 
