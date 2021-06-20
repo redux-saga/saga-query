@@ -70,6 +70,7 @@ export function* urlParser<Ctx extends ApiCtx = ApiCtx>(ctx: Ctx, next: Next) {
     ctx.request.url = url;
   }
 
+  // TODO: should this be a separate middleware?
   if (!ctx.request.body && ctx.request.data) {
     ctx.request.body = {
       body: JSON.stringify(ctx.request.data),
