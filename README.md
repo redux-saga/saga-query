@@ -128,7 +128,7 @@ import { put, call } from 'redux-saga/effects';
 import { createTable, createReducerMap } from 'robodux';
 import {
   createApi,
-  fetchMiddleware,
+  requestParser,
   dispatchActions,
   prepareStore,
   FetchCtx,
@@ -150,7 +150,7 @@ export const { selectTableAsList: selectUsersAsList } = selectors;
 const api = createApi<FetchCtx>();
 api.use(dispatchActions);
 api.use(api.routes());
-api.use(fetchMiddleware());
+api.use(requestParser());
 api.use(function* onFetch(ctx, next) {
   const { url = '', ...options } = ctx.request;
   const resp = yield call(fetch, url, options);
@@ -283,7 +283,7 @@ import { createTable, createReducerMap } from 'robodux';
 import {
   createApi,
   dispatchActions,
-  fetchMiddleware,
+  requestParser,
   // FetchCtx is an interface that's built around using window.fetch
   // You don't have to use it if you don't want to.
   FetchCtx
@@ -311,14 +311,14 @@ api.use(dispatchActions);
 api.use(api.routes());
 
 // This middleware is composed of other middleware: queryCtx, urlParser, and
-// loadingTracker.
+// loadingMonitor.
 // [queryCtx] sets up the ctx object with `ctx.request` and `ctx.response`
 //  required for `createApi` to function properly.
 // [urlParser] is a middleware that will take the name of `api.create(name)` and
 //  replace it with the values passed into the action.
-// [loadingTracker] is a middleware that will handle loading state for all
+// [loadingMonitor] is a middleware that will handle loading state for all
 //  endpoints.
-api.use(fetchMiddleware());
+api.use(requestParser());
 
 // this is where you defined your core fetching logic
 api.use(function* onFetch(ctx, next) {
@@ -451,7 +451,7 @@ upstream library.
 import { 
   createApi,
   dispatchActions,
-  fetchMiddleware,
+  requestParser,
   timer,
   prepareStore,
 } from 'saga-query';
@@ -459,7 +459,7 @@ import {
 const api = createApi();
 api.use(dispatchActions);
 api.use(api.routes());
-api.use(fetchMiddleware());
+api.use(requestParser());
 
 // made up api fetch
 api.use(apiFetch);
@@ -690,8 +690,9 @@ store.dispatch(action());
 
 ### Loading state
 
-When using `prepareStore` in conjunction with `dispatchActions` and
-`fetchMiddleware` (or `trackLoading`) the loading state will automatically be
+When using `prepareStore` in conjunction with `dispatchActions`,
+`loadingMonitor`, and
+`requestParser` the loading state will automatically be
 added to all of your endpoints.  We also export `QueryState` which is the
 interface that contains all the state types that `saga-query` provides.
 
@@ -1077,7 +1078,7 @@ import {
   prepareStore, 
   createApi, 
   dispatchAction, 
-  fetchMiddleware,
+  requestParser,
 } from 'saga-query';
 import { createSlice } from 'redux-toolkit';
 
@@ -1096,7 +1097,7 @@ const users = createSlice({
 const api = createApi();
 api.use(dispatchActions);
 api.use(api.routes());
-api.use(fetchMiddleware);
+api.use(requestParser());
 // made up window.fetch logic
 api.use(apiFetch);
 

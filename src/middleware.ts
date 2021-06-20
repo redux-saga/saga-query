@@ -114,7 +114,7 @@ export interface LoadingCtx<P = any, R = any> extends ApiCtx<P, R> {
   loader: LoaderCtxPayload;
 }
 
-export function loadingTracker<Ctx extends LoadingCtx = LoadingCtx>(
+export function loadingMonitor<Ctx extends LoadingCtx = LoadingCtx>(
   errorFn: (ctx: Ctx) => string = (ctx) => ctx.response.data.message,
 ) {
   return function* trackLoading(ctx: Ctx, next: Next) {
@@ -246,12 +246,16 @@ export function* optimistic<
   }
 }
 
-export function* quickSave<Ctx extends ApiCtx = ApiCtx>(ctx: Ctx, next: Next) {
+export function* quickCache<Ctx extends ApiCtx = ApiCtx>(ctx: Ctx, next: Next) {
   yield next();
-  if (!ctx.request.save) return;
+  if (!ctx.request.simpleCache) return;
   const { ok, data } = ctx.response;
   if (!ok) return;
 
   const key = JSON.stringify(ctx.action);
   ctx.actions.push(addData({ [key]: data }));
+}
+
+export function requestParser<Ctx extends ApiCtx = ApiCtx>() {
+  return compose<Ctx>([queryCtx, urlParser, quickCache]);
 }

@@ -12,14 +12,15 @@ import { Next } from './types';
 import { createApi } from './api';
 import {
   urlParser,
-  loadingTracker,
+  loadingMonitor,
   queryCtx,
   LoadingCtx,
   dispatchActions,
+  requestParser,
 } from './middleware';
 import { FetchCtx } from './fetch';
 import { setupStore } from './util';
-import { LOADERS_NAME, createQueryState } from './slice';
+import { DATA_NAME, LOADERS_NAME, createQueryState } from './slice';
 
 interface User {
   id: string;
@@ -106,7 +107,7 @@ test('middleware - with loader', (t) => {
 
   const api = createApi<FetchCtx>();
   api.use(dispatchActions);
-  api.use(loadingTracker());
+  api.use(loadingMonitor());
   api.use(api.routes());
   api.use(queryCtx);
   api.use(urlParser);
@@ -200,10 +201,10 @@ test('overriding default loader behavior', (t) => {
 
   const api = createApi<FetchCtx>();
   api.use(dispatchActions);
-  api.use(loadingTracker());
+  api.use(loadingMonitor());
   api.use(api.routes());
-  api.use(queryCtx);
-  api.use(urlParser);
+  api.use(requestParser());
+
   api.use(function* fetchApi(ctx, next) {
     ctx.response = {
       status: 200,
@@ -242,10 +243,44 @@ test('overriding default loader behavior', (t) => {
   t.like(store.getState(), {
     [users.name]: { [mockUser.id]: mockUser },
     [LOADERS_NAME]: {
-      '/users': {
+      [`${fetchUsers}`]: {
         status: 'success',
         message: 'yes',
         meta: { wow: true },
+      },
+    },
+  });
+});
+
+test('quickSave', (t) => {
+  const api = createApi<FetchCtx>();
+  api.use(dispatchActions);
+  api.use(loadingMonitor());
+  api.use(api.routes());
+  api.use(requestParser());
+  api.use(function* fetchApi(ctx, next) {
+    ctx.response = {
+      status: 200,
+      ok: true,
+      data: {
+        users: [mockUser],
+      },
+    };
+    yield next();
+  });
+
+  const fetchUsers = api.get('/users', api.request({ simpleCache: true }));
+  const store = setupStore(api.saga());
+
+  const action = fetchUsers();
+  store.dispatch(action);
+  t.like(store.getState(), {
+    [DATA_NAME]: {
+      [JSON.stringify(action)]: { users: [mockUser] },
+    },
+    [LOADERS_NAME]: {
+      [`${fetchUsers}`]: {
+        status: 'success',
       },
     },
   });

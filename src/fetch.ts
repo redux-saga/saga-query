@@ -1,18 +1,10 @@
-import { call } from 'redux-saga/effects';
-
-import { ApiCtx, CreateActionPayload, Next, RequestData } from './types';
-import {
-  queryCtx,
-  urlParser,
-  LoadingCtx,
-  loadingTracker,
-  quickSave,
-} from './middleware';
-import { compose } from './pipe';
+import { ApiCtx, RequestData } from './types';
+import { LoadingCtx } from './middleware';
 
 export interface FetchApiOpts extends RequestInit {
   url: string;
   data: RequestData;
+  simpleCache: boolean;
 }
 
 export interface ApiFetchSuccess<Data = any> {
@@ -37,10 +29,4 @@ export interface FetchCtx<D = any, E = any, P = any>
   payload: P;
   request: Partial<FetchApiOpts>;
   response: ApiFetchResponse<D, E>;
-}
-
-export function fetchMiddleware<Ctx extends FetchCtx = FetchCtx>(
-  err: (ctx: Ctx) => any,
-) {
-  return compose<Ctx>([queryCtx, urlParser, loadingTracker(err), quickSave]);
 }
