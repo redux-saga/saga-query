@@ -95,7 +95,7 @@ for using redux and a flexible middleware to handle all business logic.
 ### Examples
 
 - [Simple](https://codesandbox.io/s/saga-query-simple-ifcwf)
-- [Basic](https://codesandbox.io/s/saga-query-basic-jtceo)
+- [With Loader](https://codesandbox.io/s/saga-query-basic-jtceo)
 - [Simple cache](https://codesandbox.io/s/saga-query-simple-cache-0ge33)
 - [Polling](https://codesandbox.io/s/saga-query-polling-1fwfo)
 - [Optimistic update](https://codesandbox.io/s/saga-query-optimistic-xwzz2)
