@@ -1,11 +1,12 @@
 import test from 'ava';
 import createSagaMiddleware, { SagaIterator } from 'redux-saga';
-import { takeLatest, put, select } from 'redux-saga/effects';
+import { takeLatest, put, select, delay } from 'redux-saga/effects';
 import {
   createReducerMap,
   MapEntity,
   createTable,
   createLoaderTable,
+  defaultLoadingItem,
 } from 'robodux';
 
 import { Next } from './types';
@@ -15,6 +16,9 @@ import {
   queryCtx,
   requestParser,
   requestMonitor,
+  UndoCtx,
+  doIt,
+  undo,
 } from './middleware';
 import { FetchCtx } from './fetch';
 import { setupStore } from './util';
@@ -24,6 +28,7 @@ import {
   createQueryState,
   selectLoaderById,
 } from './slice';
+import { undoer } from './';
 
 interface User {
   id: string;
@@ -281,5 +286,41 @@ test('overriding default loader behavior', (t) => {
         meta: { wow: true },
       },
     },
+  });
+});
+
+test('undo', (t) => {
+  const users = createTable<User>({ name: 'users' });
+
+  const api = createApi<UndoCtx>();
+  api.use(requestMonitor());
+  api.use(api.routes());
+  api.use(requestParser());
+  api.use(undoer());
+
+  api.use(function* fetchApi(ctx, next) {
+    yield delay(500);
+    ctx.response = {
+      status: 200,
+      ok: true,
+      data: {
+        users: [mockUser],
+      },
+    };
+    yield next();
+  });
+
+  const createUser = api.post('/users', function* (ctx, next) {
+    ctx.undoable = true;
+    yield next();
+  });
+
+  const store = setupStore(api.saga());
+  store.dispatch(createUser());
+  store.dispatch(undo());
+  t.deepEqual(store.getState(), {
+    ...createQueryState({
+      [LOADERS_NAME]: { [`${createUser}`]: defaultLoadingItem() },
+    }),
   });
 });

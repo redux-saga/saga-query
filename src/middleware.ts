@@ -23,6 +23,7 @@ import {
   setLoaderStart,
   setLoaderError,
   setLoaderSuccess,
+  resetLoaderById,
   addData,
 } from './slice';
 
@@ -100,7 +101,7 @@ export function* dispatchActions<Ctx extends ApiCtx = ApiCtx>(
 }
 
 export function loadingMonitor<Ctx extends ApiCtx = ApiCtx>(
-  errorFn: (ctx: Ctx) => string = (ctx) => ctx.response.data.message,
+  errorFn: (ctx: Ctx) => string = (ctx) => ctx.response?.data?.message || '',
 ) {
   return function* trackLoading(ctx: Ctx, next: Next) {
     const id = ctx.name;
@@ -108,6 +109,11 @@ export function loadingMonitor<Ctx extends ApiCtx = ApiCtx>(
     if (!ctx.loader) ctx.loader = {} as any;
 
     yield next();
+
+    if (typeof ctx.response.ok === 'undefined') {
+      ctx.actions.push(resetLoaderById(id));
+      return;
+    }
 
     const payload = ctx.loader || {};
     if (!ctx.response.ok) {
@@ -121,7 +127,7 @@ export function loadingMonitor<Ctx extends ApiCtx = ApiCtx>(
   };
 }
 
-interface UndoCtx<R = any, P = any> extends ApiCtx {
+export interface UndoCtx<R = any, P = any> extends ApiCtx {
   undoable: boolean;
 }
 
@@ -237,9 +243,11 @@ export function* simpleCache<Ctx extends ApiCtx = ApiCtx>(
 }
 
 export function requestParser<Ctx extends ApiCtx = ApiCtx>() {
-  return compose<Ctx>([queryCtx, urlParser, simpleCache]);
+  return compose<Ctx>([urlParser, simpleCache]);
 }
 
-export function requestMonitor<Ctx extends ApiCtx = ApiCtx>() {
-  return compose<Ctx>([dispatchActions, loadingMonitor()]);
+export function requestMonitor<Ctx extends ApiCtx = ApiCtx>(
+  errorFn?: (ctx: Ctx) => string,
+) {
+  return compose<Ctx>([queryCtx, dispatchActions, loadingMonitor(errorFn)]);
 }

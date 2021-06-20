@@ -1866,10 +1866,10 @@ rimraf@^3.0.2:
   dependencies:
     glob "^7.1.3"
 
-robodux@^11.0.2:
-  version "11.0.2"
-  resolved "https://registry.yarnpkg.com/robodux/-/robodux-11.0.2.tgz#91b4407a8881be102641f65a6038537adb963c16"
-  integrity sha512-bZYTlCCCz8CHeczBg13vqiz7pjnINp5PdoUMORLlndxXZzS6xVatrzLat+v0amFWp0eERs1k1yCg9lkQjRLZRQ==
+robodux@^11.0.3:
+  version "11.0.3"
+  resolved "https://registry.yarnpkg.com/robodux/-/robodux-11.0.3.tgz#0ff6a8f0afa7e8499562f09b9f6dec9bd1ef5873"
+  integrity sha512-Xg91iUR0yos2QHNXvpN0H4IkZNptjeIyKknx6UY4Js4zkXwunb9eNXBVyrw9NTrKeIyb4jxFUODMmc2Y11NUrg==
   dependencies:
     immer "^8.0.1"
 
