@@ -150,7 +150,7 @@ api.use(api.routes());
 api.use(requestParser());
 api.use(function* onFetch(ctx, next) {
   const { url = '', ...options } = ctx.request;
-  const resp = yield call(fetch, url, options);
+  const resp = yield call(fetch, `https://api.com${url}`, options);
   const data = yield call([resp, 'json']);
   ctx.response = { status: resp.status, ok: resp.ok, data };
   yield next();
@@ -160,9 +160,9 @@ export const fetchUsers = api.get(
   `/users`,
   function* processUsers(ctx: FetchCtx<{ users: User[] }>, next) {
     yield next();
-    const { ok, data } = ctx.response;
-    if (!ok) return;
+    if (!ctx.response.ok) return;
 
+    const { data } = ctx.response;
     const curUsers = data.users.reduce<MapEntity<User>>((acc, u) => {
       acc[u.id] = u;
       return acc;
@@ -217,7 +217,7 @@ const App = () => {
 method used (e.g. `get`, `post`, `put`).  Let's call them endpoints.  Each
 endpoint gets their own action and linked saga.  When you call `api.saga()` it
 loops through all the endpoints and creates a root saga that is fault tolerant
-(one saga won't crash all the other sagas).  The default for each saga is to
+(one saga won't crash all the other sagas).  The default for each endpoint is to
 use `takeEvery` from `redux-saga` but as you'll see in other recipes, this can
 be easily overriden.
 
@@ -328,7 +328,7 @@ api.use(function* onFetch(ctx, next) {
   // ctx.request is the object used to make a fetch request when using
   // `queryCtx` and `urlParser`
   const { url = '', ...options } = ctx.request;
-  const resp = yield call(fetch, url, options);
+  const resp = yield call(fetch, `https://api.com${url}`, options);
   const data = yield call([resp, 'json']);
 
   // with `FetchCtx` we want to set the `ctx.response` so other middleware can
@@ -357,13 +357,12 @@ const fetchUsers = api.get(
     // anything after the above line happens *after* the middleware gets called and
     // and a fetch has been made.
 
-    const { ok, data } = ctx.response;
-
     // using FetchCtx `ctx.response` is a discriminated union based on the
     // boolean `ctx.response.ok`.
-    if (!ok) return;
+    if (!ctx.response.ok) return;
 
     // data = { users: User[] };
+    const { data } = ctx.response;
     const curUsers = data.users.reduce<MapEntity<User>>((acc, u) => {
       acc[u.id] = u;
       return acc;
@@ -435,19 +434,16 @@ provides.
 ### Simple cache
 
 If you want to have a cache that doesn't enforce strict types and is more of a
-dumb cache that fetches and stores data for you, you could build a redux slice
-that can do that and then a simple react hook to provide the correct types for
-each endpoint.
+dumb cache that fetches and stores data for you, then `simpleCache` will
+provide that functionality for you.
 
 The following code will mimick what a library like `react-query` is doing
 behind-the-scenes.  I want to make it clear that `react-query` is doing a lot
-more than this so I don't want to understate its usefuless.  However, you can
+more than this so I don't want to understate what it does.  However, you can
 see that not only can we get a core chunk of the functionality `react-query`
 provides with a little over 100 lines of code but we also have full control
 over fetching, querying, and caching data with the ability to customize it
-using middleware.  This provides the end-developer with the tools to customize
-their experience without submitting PRs to add configuration options to an
-upstream library.
+using middleware.
 
 ```ts
 // api.ts
@@ -472,9 +468,9 @@ const cacheTimer = timer(5 * 60 * 1000);
 export const fetchUsers = api.get(
   '/users',
   { saga: cacheTimer },
-  // set `save=true` to have quickSave middleware cache response data
+  // set `simpleCache=true` to have simpleCache middleware cache response data
   // automatically
-  api.request({ save: true }),
+  api.request({ simpleCache: true }),
 );
 
 const prepared = prepareStore({
@@ -694,8 +690,7 @@ store.dispatch(action());
 ### Loading state
 
 When using `prepareStore` in conjunction with `dispatchActions`,
-`loadingMonitor`, and
-`requestParser` the loading state will automatically be
+`loadingMonitor`, and `requestParser` the loading state will automatically be
 added to all of your endpoints.  We also export `QueryState` which is the
 interface that contains all the state types that `saga-query` provides.
 
@@ -725,7 +720,7 @@ const App = () => {
     dispatch(fetchUsers());
   }, []);
 
-  if (loader.isLoading) {
+  if (loader.isInitialLoading) {
     return <div>Loading ...</div>
   }
 
@@ -995,6 +990,7 @@ import { delay, put, race } from 'redux-saga/effects';
 import { createAction } from 'robodux';
 import {
   createApi,
+  requestMonitor,
   requestParser,
   undoer,
   undo,
@@ -1009,6 +1005,7 @@ interface Message {
 
 const messages = createTable<Message>({ name: 'messages' });
 const api = createApi<UndoCtx>();
+api.use(requestMonitor());
 api.use(api.routes());
 api.use(requestParser());
 api.use(undoer());
