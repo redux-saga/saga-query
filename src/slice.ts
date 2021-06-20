@@ -23,9 +23,10 @@ export const { selectTable: selectLoaders, selectById: selectLoaderById } =
   loaders.getSelectors((state: any) => state[LOADERS_NAME] || {});
 
 const DATA_NAME = `@@saga-query/data`;
-const data = createTable<any>({ name: DATA_NAME });
+export const data = createTable<any>({ name: DATA_NAME });
 export const { selectTable: selectData, selectById: selectDataById } =
   data.getSelectors((s: any) => s[DATA_NAME] || {});
+export const { add: addData } = data.actions;
 
 export const reducers = createReducerMap(loaders, data);
 

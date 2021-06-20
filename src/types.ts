@@ -40,6 +40,7 @@ export interface RequestCtx {
   method: string;
   body: any;
   data: RequestData;
+  save: boolean;
 }
 
 export interface ApiCtx<P = any, R = any> extends PipeCtx<P> {

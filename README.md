@@ -448,45 +448,38 @@ upstream library.
 
 ```ts
 // api.ts
-import { put } from 'redux-saga/effects';
 import { 
-  createLoaderTable, 
-  createTable, 
-  createReducerMap,
-  LoadingItemState,
-} from 'robodux';
-import { 
-  FetchApiOpts,
   createApi,
   dispatchActions,
   fetchMiddleware,
   timer,
-  QueryState,
+  prepareStore,
 } from 'saga-query';
 
 const api = createApi();
 api.use(dispatchActions);
 api.use(api.routes());
 api.use(fetchMiddleware());
-// this middleware will automatically save data for you keyed by the action.
-api.use(function* (ctx, next) {
-  yield next();
-  if (!ctx.response.ok) return;
-  const key = JSON.stringify(ctx.action);
-  yield put(data.actions.add({ [key]: ctx.response.data }));
-});
+
 // made up api fetch
 api.use(apiFetch);
 
 // this will only activate the endpoint at most once every 5 minutes.
 const cacheTimer = timer(5 * 60 * 1000);
-export const fetchUsers = api.get('/users', { saga: cacheTimer });
+export const fetchUsers = api.get(
+  '/users', 
+  { saga: cacheTimer }, 
+  // set `save=true` to have quickSave middleware cache response data 
+  // automatically
+  api.request({ save: true }), 
+);
 
 const prepared = prepareStore({ 
   sagas: { api: api.saga() },
 });
 const store = createStore(
   prepared.reducer,
+  undefined,
   applyMiddleware(...prepared.middleware),
 );
 // This runs the sagas
@@ -544,9 +537,9 @@ const useUsers = () => {
 }
 
 export const App = () => {
-  const { users, isLoading, isError, message } = useUsers();
+  const { users, isInitialLoading, isError, message } = useUsers();
 
-  if (isLoading) return <div>Loading ...</div>;
+  if (isInitialLoading) return <div>Loading ...</div>;
   if (isError) return <div>Error: {message}</div>;
 
   return (
@@ -767,6 +760,7 @@ state](#loading-state))
 // use-query.ts
 import { useEffect } from 'react';
 import { Action } from 'redux';
+import { LoadingItemState } from 'robodux';
 import { useSelector, useDispatch } from 'react-redux';
 import { selectLoaderById } from 'saga-query';
 

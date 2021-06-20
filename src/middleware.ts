@@ -19,7 +19,12 @@ import {
   Next,
 } from './types';
 import { isObject, createAction } from './util';
-import { setLoaderStart, setLoaderError, setLoaderSuccess } from './slice';
+import {
+  setLoaderStart,
+  setLoaderError,
+  setLoaderSuccess,
+  addData,
+} from './slice';
 
 export function* queryCtx<Ctx extends ApiCtx = ApiCtx>(ctx: Ctx, next: Next) {
   if (!ctx.request) ctx.request = { url: '', method: 'GET' };
@@ -239,4 +244,14 @@ export function* optimistic<
   if (!ctx.response.ok) {
     yield put(revert);
   }
+}
+
+export function* quickSave<Ctx extends ApiCtx = ApiCtx>(ctx: Ctx, next: Next) {
+  yield next();
+  if (!ctx.request.save) return;
+  const { ok, data } = ctx.response;
+  if (!ok) return;
+
+  const key = JSON.stringify(ctx.action);
+  ctx.actions.push(addData({ [key]: data }));
 }

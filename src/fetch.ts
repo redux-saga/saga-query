@@ -1,7 +1,13 @@
 import { call } from 'redux-saga/effects';
 
 import { ApiCtx, CreateActionPayload, Next, RequestData } from './types';
-import { queryCtx, urlParser, LoadingCtx, loadingTracker } from './middleware';
+import {
+  queryCtx,
+  urlParser,
+  LoadingCtx,
+  loadingTracker,
+  quickSave,
+} from './middleware';
 import { compose } from './pipe';
 
 export interface FetchApiOpts extends RequestInit {
@@ -36,5 +42,5 @@ export interface FetchCtx<D = any, E = any, P = any>
 export function fetchMiddleware<Ctx extends FetchCtx = FetchCtx>(
   err: (ctx: Ctx) => any,
 ) {
-  return compose<Ctx>([queryCtx, urlParser, loadingTracker(err)]);
+  return compose<Ctx>([queryCtx, urlParser, loadingTracker(err), quickSave]);
 }
