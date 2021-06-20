@@ -46,7 +46,11 @@ interface Props<S extends { [key: string]: any } = { [key: string]: any }> {
  */
 export function prepareStore<
   S extends { [key: string]: any } = { [key: string]: any },
->({ reducers, sagas, onError = console.error }: Props<S>): PrepareStore<S> {
+>({
+  reducers = {} as any,
+  sagas,
+  onError = console.error,
+}: Props<S>): PrepareStore<S> {
   const middleware: Middleware<any, S, any>[] = [];
 
   const channel = stdChannel();

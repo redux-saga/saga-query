@@ -2,8 +2,9 @@
 
 [![ci](https://github.com/neurosnap/saga-query/actions/workflows/test.yml/badge.svg)](https://github.com/neurosnap/saga-query/actions/workflows/test.yml)
 
-Data fetching and caching using redux-saga.  Use our saga middleware system to
-quickly build data loading within your redux application.
+Data fetching and caching using a middleware system for the browser.  
+Use our saga middleware system to quickly build data loading within your 
+redux application and reduce boilderplate.
 
 **This library is undergoing active development. Consider this in a beta
 state.**
@@ -32,16 +33,11 @@ state.**
   on the front-end
 - A familiar middleware system that node.js developers are familiar with
   (e.g. express, koa)
-- Unleash the power of redux-saga to handle any async flow control use-cases
+- Handle any async flow control use-case
 - Full control over the data fetching and caching layers in your application
-- Fine tune queries and caching for your specific needs
-- Pre-built middleware to cut out boilerplate for interacting with redux and
-  redux-saga
+- Fine tune selectors for your specific needs
 - Simple recipes to handle complex use-cases like cancellation, polling,
   optimistic updates, loading states, undo, react
-- Progressively add it to your codebase: all we do is add sagas and action
-  creators to your system
-- Use it with any other redux libraries
 
 ## Why?
 
@@ -132,10 +128,15 @@ import { put, call } from 'redux-saga/effects';
 import { createTable, createReducerMap } from 'robodux';
 import {
   createApi,
-  queryCtx,
-  urlParser,
-  FetchCtx
+  fetchMiddleware,
+  dispatchActions,
+  prepareStore,
+  FetchCtx,
 } from 'saga-query';
+
+export interface AppState extends QueryState {
+  users: MapEntity<User>;
+}
 
 interface User {
   id: string;
@@ -143,54 +144,69 @@ interface User {
 }
 
 const users = createTable<User>({ name: 'users' });
-const selectors = users.getSelectors((s) => s[users.name]);
+const selectors = users.getSelectors((s: AppState) => s[users.name]);
 export const { selectTableAsList: selectUsersAsList } = selectors;
 
 const api = createApi<FetchCtx>();
+api.use(dispatchActions);
 api.use(api.routes());
-api.use(queryCtx);
-api.use(urlParser);
+api.use(fetchMiddleware());
 api.use(function* onFetch(ctx, next) {
   const { url = '', ...options } = ctx.request;
   const resp = yield call(fetch, url, options);
   const data = yield call([resp, 'json']);
-
   ctx.response = { status: resp.status, ok: resp.ok, data };
   yield next();
 });
 
-const fetchUsers = api.get(
+export const fetchUsers = api.get(
   `/users`,
   function* processUsers(ctx: FetchCtx<{ users: User[] }>, next) {
     yield next();
-    if (!ctx.response.ok) return;
+    const { ok, data } = ctx.response;
+    if (!ok) return;
 
-    const { data } = ctx.response;
     const curUsers = data.users.reduce<MapEntity<User>>((acc, u) => {
       acc[u.id] = u;
       return acc;
     }, {});
-    yield put(users.actions.add(curUsers));
+    ctx.actions.push(users.actions.add(curUsers));
   },
 );
 
 const reducers = createReducerMap(users);
-const store = setupStore(reducers, api.saga());
+const prepared = prepareStore({
+  reducers, 
+  sagas: { api: api.saga() },
+});
+const store = createStore(
+  prepared.reducer,
+  undefined,
+  applyMiddleware(...prepared.middleware),
+);
+prepared.run();
 ```
 
 ```tsx
 // app.tsx
 import React from 'react';
 import { useSelector, useDispatch } from 'react-redux';
+import { selectLoaderById } from 'saga-query';
 import { fetchUsers, selectUsersAsList } from './api';
 
 const App = () => {
   const dispatch = useDispatch();
   const users = useSelector(selectUsersAsList);
+  const { isInitialLoading, isError, message } = useSelector(
+    (s: AppState) => selectLoaderById(s, { id: `${fetchUsers}` })
+  );
 
   useEffect(() => {
     dispatch(fetchUsers());
   }, []);
+
+  if (isInitialLoading) return <div>Loading ...</div>
+  if (isError) return <div>{message}</div>
 
   return (
     <div>{users.map((user) => <div key={user.id}>{user.email}</div>)}</div>
@@ -266,8 +282,8 @@ import { put, call } from 'redux-saga/effects';
 import { createTable, createReducerMap } from 'robodux';
 import {
   createApi,
-  queryCtx,
-  urlParser,
+  dispatchActions,
+  fetchMiddleware,
   // FetchCtx is an interface that's built around using window.fetch
   // You don't have to use it if you don't want to.
   FetchCtx
@@ -283,19 +299,26 @@ const users = createTable<User>({ name: 'users' });
 // The generic passed to `createApi` must extend `ApiCtx` to be accepted.
 const api = createApi<FetchCtx>();
 
+// This middleware leverages `redux-batched-actions` to dispatch all the
+// actions stored within `ctx.actions` which get added by other middleware
+// during the lifecycle of the request.
+api.use(dispatchActions);
+
 // This is where all the endpoints (e.g. `.get()`, `.put()`, etc.) you created
 // get added to the middleware stack.  It is recommended to put this as close to
 // the beginning of the stack so everything after `yield next()`
 // happens at the end of the effect.
 api.use(api.routes());
 
-// queryCtx sets up the ctx object with `ctx.request` and `ctx.response`
-// required for `createApi` to function properly.
-api.use(queryCtx);
-
-// urlParser is a middleware that will take the name of `api.create(name)` and
-// replace it with the values passed into the action
-api.use(urlParser);
+// This middleware is composed of other middleware: queryCtx, urlParser, and
+// loadingTracker.
+// [queryCtx] sets up the ctx object with `ctx.request` and `ctx.response`
+//  required for `createApi` to function properly.
+// [urlParser] is a middleware that will take the name of `api.create(name)` and
+//  replace it with the values passed into the action.
+// [loadingTracker] is a middleware that will handle loading state for all
+//  endpoints.
+api.use(fetchMiddleware());
 
 // this is where you defined your core fetching logic
 api.use(function* onFetch(ctx, next) {
@@ -331,12 +354,13 @@ const fetchUsers = api.get(
     // anything after the above line happens *after* the middleware gets called and
     // and a fetch has been made.
 
+    const { ok, data } = ctx.response;
+
     // using FetchCtx `ctx.response` is a discriminated union based on the
     // boolean `ctx.response.ok`.
-    if (!ctx.response.ok) return;
+    if (!ok) return;
 
     // data = { users: User[] };
-    const { data } = ctx.response;
     const curUsers = data.users.reduce<MapEntity<User>>((acc, u) => {
       acc[u.id] = u;
       return acc;
@@ -347,34 +371,28 @@ const fetchUsers = api.get(
   },
 );
 
-// BONUS: POST request to create a user
-const createUser = api.post<{ email: string }>(
-  `/users`,
-  function* createUser(ctx: FetchCtx<User>, next) {
-    // since this middleware is the first one that gets called after the action
-    // is dispatched, we can set the `ctx.request` to whatever we want.  The
-    // middleware we setup for `createApi` will then use the `ctx` to fill in
-    // the other details like `url` and `method`
-    ctx.request = {
-      body: JSON.stringify({ email: ctx.payload.email }),
-    };
-    yield next();
-    if (!ctx.response.ok) return;
-
-    const curUser = ctx.response.data;
-    const curUsers = { [curUser.id]: curUser };
-
-    yield put(users.actions.add(curUsers));
-  },
-);
-
+// This is a helper function, all id does is iterate through all the objects
+// looking for a `.reducer` property and create a big object containing all
+// the reducers which will then have `combineReducers` applied to it.
 const reducers = createReducerMap(users);
-// this is a fake function `setupStore`
-// pretend that it sets up your redux store and runs the saga middleware
-const store = setupStore(reducers, api.saga());
+// This is a helper function that does a bunch of stuff to prepare redux for
+// saga-query.  In particular, it will:
+//   - Setup redux-saga
+//   - Setup redux-batched-actions
+//   - Setup a couple of reducers that saga-query will use: loaders and data
+const prepared = prepareStore({
+  reducers, 
+  sagas: { api: api.saga() }
+});
+const store = createStore(
+  prepared.reducer,
+  undefined,
+  applyMiddleware(...prepared.middleware),
+);
+// This runs the sagas
+prepared.run();
 
 store.dispatch(fetchUsers());
-store.dispatch(createUser({ email: 'change.me@saga.com' }));
 ```
 
 ## Recipes
@@ -440,36 +458,16 @@ import {
 import { 
   FetchApiOpts,
   createApi,
-  urlParser,
-  queryCtx,
-  loadingTracker,
+  dispatchActions,
+  fetchMiddleware,
   timer,
+  QueryState,
 } from 'saga-query';
 
-export interface AppState {
-  data: MapEntity<any>;
-  loaders: { [key: string]: LoadingItemState };
-}
-
-const name = 'data';
-const data = createTable<any>({ name });
-export const { selectById: selectDataById } = data.getSelectors((s) => s[name]);
-
-const LOADING_NAME = 'loaders';
-const loaders = createLoaderTable({ name: LOADING_NAME });
-const { selectById: selectLoaderById } = data.getSelectors(
-  (s) => s[LOADING_NAME]
-);
-export const selectLoader = (id: string) => (state: AppState) =>
-  selectLoaderById(state, { id });
-
-export const reducers = createReducerMap(data, loaders);
-
 const api = createApi();
-api.use(loadingTracker(loaders));
+api.use(dispatchActions);
 api.use(api.routes());
-api.use(queryCtx);
-api.use(urlParser);
+api.use(fetchMiddleware());
 // this middleware will automatically save data for you keyed by the action.
 api.use(function* (ctx, next) {
   yield next();
@@ -483,6 +481,16 @@ api.use(apiFetch);
 // this will only activate the endpoint at most once every 5 minutes.
 const cacheTimer = timer(5 * 60 * 1000);
 export const fetchUsers = api.get('/users', { saga: cacheTimer });
+
+const prepared = prepareStore({ 
+  sagas: { api: api.saga() },
+});
+const store = createStore(
+  prepared.reducer,
+  applyMiddleware(...prepared.middleware),
+);
+// This runs the sagas
+prepared.run();
 ```
 
 ```tsx
@@ -490,8 +498,7 @@ export const fetchUsers = api.get('/users', { saga: cacheTimer });
 import { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { LoadingState } from 'robodux';
-
-import { AppState, selectLoader, selectDataById } from './api';
+import { QueryState, selectLoaderById, selectDataById } from 'saga-query';
 
 type Data<D = any> = LoadingState & { data: D };
 
@@ -503,8 +510,10 @@ export function useQuery<D = any>(
   const { name } = action.payload;
   const id = JSON.stringify(action);
   const dispatch = useDispatch();
-  const loader = useSelector(selectLoader(name));
-  const data = useSelector((s: AppState) => selectDataById(s, { id }));
+  const loader = useSelector(
+    (s: QueryState) => selectLoaderById(s, { id: name }),
+  );
+  const data = useSelector((s: QueryState) => selectDataById(s, { id }));
 
   useEffect(() => {
     if (!name) return;
@@ -552,126 +561,10 @@ export const App = () => {
 
 Sometimes we need to dispatch a bunch of actions for an endpoint.  From loading
 states to making multiple requests in a single saga, there can be a lot of
-actions being dispatched.  My recommendation is:
-
-- Use a library like `redux-batched-actions` to dispatch many actions at once
-  and only have the reducers hit once.
-- Leverage `ctx.actions` (which is a required property to use `createApi`) in
-  your middleware.
-- Build a middleware that will use `redux-batched-actions` with `ctx.actions`
-  and put it at the beginning of the middleware stack.
-
-```ts
-// api.ts
-import { batchActions } from 'redux-batched-actions';
-import { createApi, urlParser, queryCtx } from 'saga-query';
-
-export const api = createApi();
-// we want to put this at the beginning of the middleware stack so all
-// middleware is done once `yield next()` gets called.
-api.use(function* (ctx, next) {
-  // activate all middleware after this middleware in the stack
-  yield next();
-  if (ctx.actions.length === 0) return;
-  yield put(batchActions(ctx.actions));
-});
-
-// this creates `ctx.actions` for us
-api.use(queryCtx);
-api.use(urlParser);
-
-// example loader
-api.use(function* loader(ctx, next) {
-  yield put(setLoaderStart());
-  yield next();
-
-  if (!ctx.response.ok) {
-    ctx.actions.push(setLoaderError({ message: ctx.response.data.message }));
-    return;
-  }
-
-  ctx.actions.push(setLoaderSucces());
-});
-
-api.use(function* onFetch(ctx, next) {
-  const { url = '', options } = ctx.request;
-  const resp = yield call(fetch, url, options);
-  const data = yield call([resp, 'json']);
-
-  ctx.response = { status: resp.status, ok: resp.ok, data };
-  yield next();
-});
-
-api.get<{ id: string }>('/user/:id', function* (ctx, next) {
-  yield next();
-  const { id } = ctx.payload;
-  if (!ctx.response.ok) {
-    yield next();
-    return;
-  }
-
-  ctx.actions.push(addUsers({ [id]: ctx.repsonse.data }));
-  yield next();
-});
-```
-
-```ts
-// store.ts
-import {
-  createStore,
-  applyMiddleware,
-  Middleware,
-  Store,
-  Reducer,
-  AnyAction,
-} from 'redux';
-import createSagaMiddleware, { Saga, stdChannel } from 'redux-saga';
-import { enableBatching, BATCH } from 'redux-batched-actions';
-
-interface AppState {}
-
-interface Props {
-  initState?: Partial<AppState>;
-  rootReducer: Reducer<AppState, AnyAction>;
-  rootSaga: Saga<any>;
-}
-
-interface AppStore<State> {
-  store: Store<State>;
-}
-
-export function setupStore({
-  initState,
-  rootReducer,
-  rootSaga,
-}: Props): AppStore<AppState> {
-  const middleware: Middleware[] = [];
-
-  // this is important for redux-batched-actions to work with redux-saga
-  const channel = stdChannel();
-  const rawPut = channel.put;
-  channel.put = (action: { type: string, payload: any }) => {
-    if (action.type === BATCH) {
-      action.payload.forEach(rawPut);
-      return;
-    }
-    rawPut(action);
-  };
-
-  const sagaMiddleware = createSagaMiddleware({ channel } as any);
-  middleware.push(sagaMiddleware);
-
-  const store = createStore(
-    enableBatching(rootReducer),
-    initState as AppState,
-    applyMiddleware(...middleware),
-  );
-
-  sagaMiddleware.run(rootSaga);
-
-  return { store };
-}
-```
+actions being dispatched.  When using `prepareStore` we automatically setup
+`redux-batched-actions` so you don't have to.  Anything that gets added to
+`ctx.actions` will be automatically dispatched by the `dispatchActions`
+middleware.
 
 ### Dependent queries
 
@@ -804,97 +697,32 @@ store.dispatch(action());
 
 ### Loading state
 
-```ts
-// api.ts
-import { put, call } from 'redux-saga/effects';
-import {
-  createTable,
-  createLoaderTable,
-  createReducerMap,
-} from 'robodux';
-import {
-  createApi,
-  FetchCtx,
-  queryCtx,
-  urlParser,
-  loadingTracker,
-  leading,
-} from 'saga-query';
-
-interface User {
-  id: string;
-  email: string;
-}
-
-export const loaders = createLoaderTable({ name: 'loaders' });
-export const {
-  selectById: selectLoaderById
-} = loaders.getSelectors((s) => s[loaders.name]);
-
-export const users = createTable<User>({ name: 'users' });
-export const {
-  selectTableAsList: selectUsersAsList
-} = users.getSelectors((s) => s[users.name]);
-
-export const api = createApi<FetchCtx>();
-// This is one case where we want the middleware to be before the router
-// middleware.  Since with `robodux` loaders are decoupled from the data that
-// it is tracking we can get into weird race conditions where the success or
-// error action for the loader gets saved before the data gets saved.  So here
-// we ensure that all the other middleware get called before setting the
-// loading state to success or failure.
-api.use(loadingTracker(loaders));
-api.use(api.routes());
-api.use(queryCtx);
-api.use(urlParser);
-
-api.use(function* onFetch(ctx, next) {
-  const { url = '', ...options } = ctx.request;
-  const resp = yield call(fetch, url, options);
-  const data = yield call([resp, 'json']);
-
-  ctx.response = { status: resp.status, ok: true, data };
-  yield next();
-});
-
-const fetchUsers = api.get(
-  `/users`,
-  { saga: leading },
-  function* processUsers(ctx: FetchCtx<{ users: User[] }>, next) {
-    yield next();
-    if (!ctx.response.ok) return;
-
-    const { data } = ctx.response;
-    const curUsers = data.users.reduce<MapEntity<User>>((acc, u) => {
-      acc[u.id] = u;
-      return acc;
-    }, {});
-
-    yield put(users.actions.add(curUsers));
-  },
-);
-
-const reducers = createReducerMap(users, loaders);
-const store = setupStore(reducers, api.saga());
-```
+When using `prepareStore` in conjunction with `dispatchActions` and
+`fetchMiddleware` (or `trackLoading`) the loading state will automatically be
+added to all of your endpoints.  We also export `QueryState` which is the
+interface that contains all the state types that `saga-query` provides.
 
 ```tsx
 // app.tsx
 import React, { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
+import { selectLoaderById, QueryState } from 'saga-query';
+import { MapEntity } from 'robodux';
+
 import {
-  loaders,
-  users,
   fetchUsers,
   selectUsersAsList,
-  selectLoaderById
 } from './api';
+
+interface AppState extends QueryState {
+  users: MapEntity<User>;
+}
 
 const App = () => {
   const dispatch = useDispatch();
   const users = useSelector(selectUsersAsList);
   const loader = useSelector(
-    (s) => selectLoaderById(s, { id: `${fetchUsers}` })
+    (s: AppState) => selectLoaderById(s, { id: `${fetchUsers}` })
   );
   useEffect(() => {
     dispatch(fetchUsers());
@@ -940,10 +768,10 @@ state](#loading-state))
 import { useEffect } from 'react';
 import { Action } from 'redux';
 import { useSelector, useDispatch } from 'react-redux';
+import { selectLoaderById } from 'saga-query';
 
 import {
   fetchUsers,
-  selectLoaderById,
   selectUsersAsList,
 } from './api';
 import { AppState } from './types';
@@ -977,9 +805,9 @@ import React from 'react';
 import { useQueryUsers } from './use-query';
 
 const App = () => {
-  const { data, isLoading, isError, message } = useQueryUsers();
+  const { data, isInitialLoading, isError, message } = useQueryUsers();
 
-  if (isLoading) {
+  if (isInitialLoading) {
     return <div>Loading ...</div>
   }
 
@@ -1249,6 +1077,14 @@ for is setting up the redux slice where we want to cache the API endpoint
 response data.
 
 ```ts
+import { createStore } from 'redux';
+import { createReducerMap } from 'robodux';
+import { 
+  prepareStore, 
+  createApi, 
+  dispatchAction, 
+  fetchMiddleware,
+} from 'saga-query';
 import { createSlice } from 'redux-toolkit';
 
 const users = createSlice({
@@ -1264,9 +1100,9 @@ const users = createSlice({
 });
 
 const api = createApi();
+api.use(dispatchActions);
 api.use(api.routes());
-api.use(queryCtx);
-api.use(urlParser);
+api.use(fetchMiddleware);
 // made up window.fetch logic
 api.use(apiFetch);
 
@@ -1277,7 +1113,16 @@ const fetchUsers = api.get<{ users: User[] }>('/users', function* (ctx, next) {
 });
 
 const reducers = createReducerMap(users);
-const store = setupStore(api.saga(), reducers);
+const prepared = prepareStore({
+  reducers,
+  sagas: { api: api.saga() },
+});
+const store = createStore(
+  prepared.reducer,
+  {},
+  applyMiddleware(...prepared.middleware),
+);
+prepared.run();
 
 store.dispatch(fetchUsers());
 ```
