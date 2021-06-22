@@ -358,3 +358,33 @@ test('middleware order of execution', async (t) => {
   await sleep(100);
   t.assert(acc === 'abcdefg');
 });
+
+test('using an async/await function', (t) => {
+  const api = createPipe<RoboCtx>();
+  api.use(api.routes());
+  api.use(async (ctx, next) => {
+    const url = ctx.url;
+    let json = {};
+    if (url === '/users') {
+      json = {
+        users: [mockUser],
+      };
+    }
+
+    if (url === '/tickets') {
+      json = {
+        tickets: [mockTicket],
+      };
+    }
+
+    ctx.response = json;
+    await next();
+  });
+
+  api.create('users', async (ctx, next) => {
+    await next();
+    if (!ctx.response.ok) return;
+    const state = ctx.getState();
+    ctx.dispatch({ type: 'any' });
+  });
+});

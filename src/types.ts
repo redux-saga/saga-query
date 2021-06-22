@@ -1,3 +1,4 @@
+import { Action } from 'redux';
 import { SagaIterator } from 'redux-saga';
 import { LoadingMapPayload } from 'robodux';
 
@@ -17,10 +18,12 @@ export interface CreateActionPayload<P = any> {
   options: P;
 }
 
-export interface PipeCtx<P = any> {
+export interface PipeCtx<P = any, S = any> {
   name: string;
   payload: P;
   action: ActionWithPayload<CreateActionPayload<P>>;
+  dispatch: (a: Action) => any;
+  getState: () => S;
 }
 
 export interface CreateAction<Ctx> {
