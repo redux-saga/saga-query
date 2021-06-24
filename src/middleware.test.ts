@@ -324,3 +324,29 @@ test('undo', (t) => {
     }),
   });
 });
+
+test('requestMonitor - error handler', (t) => {
+  t.plan(1);
+  const orgErr = console.error;
+  let err = false;
+  console.error = (msg: string) => {
+    if (err) return;
+    t.deepEqual(msg, 'Error: something happened.  Check the endpoint [/users]');
+    err = true;
+  };
+  const name = 'users';
+  const cache = createTable<User>({ name });
+  const query = createApi<FetchCtx>();
+
+  query.use(requestMonitor());
+  query.use(query.routes());
+  query.use(function* () {
+    throw new Error('something happened');
+  });
+
+  const fetchUsers = query.create(`/users`);
+
+  const reducers = createReducerMap(cache);
+  const store = setupStore(query.saga(), reducers);
+  store.dispatch(fetchUsers());
+});
