@@ -27,6 +27,21 @@ import {
   addData,
 } from './slice';
 
+export function* errorHandler<Ctx extends ApiCtx = ApiCtx>(
+  ctx: Ctx,
+  next: Next,
+) {
+  try {
+    yield next();
+  } catch (err) {
+    console.error(
+      `Error: ${err.message}.  Check the endpoint [${ctx.name}]`,
+      ctx,
+    );
+    throw err;
+  }
+}
+
 export function* queryCtx<Ctx extends ApiCtx = ApiCtx>(ctx: Ctx, next: Next) {
   if (!ctx.request) ctx.request = { url: '', method: 'GET' };
   if (!ctx.response) ctx.response = {};
@@ -242,12 +257,17 @@ export function* simpleCache<Ctx extends ApiCtx = ApiCtx>(
   ctx.actions.push(addData({ [key]: data }));
 }
 
-export function requestParser<Ctx extends ApiCtx = ApiCtx>() {
-  return compose<Ctx>([urlParser, simpleCache]);
-}
-
 export function requestMonitor<Ctx extends ApiCtx = ApiCtx>(
   errorFn?: (ctx: Ctx) => string,
 ) {
-  return compose<Ctx>([queryCtx, dispatchActions, loadingMonitor(errorFn)]);
+  return compose<Ctx>([
+    errorHandler,
+    queryCtx,
+    dispatchActions,
+    loadingMonitor(errorFn),
+  ]);
+}
+
+export function requestParser<Ctx extends ApiCtx = ApiCtx>() {
+  return compose<Ctx>([urlParser, simpleCache]);
 }
