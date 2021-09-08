@@ -1,35 +1,52 @@
-import { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import type { LoadingState } from 'robodux';
-import type { Action } from 'redux';
 
 import type { QueryState } from './slice';
 import { selectLoaderById, selectDataById } from './slice';
 
-type Data<D = any> = LoadingState & { data: D | null };
+type Data<D = any> = LoadingState & { data: D | null; trigger: () => any };
+type DataPayload<D = any, P = any> = LoadingState & {
+  data: D | null;
+  trigger: (p: P) => any;
+};
 
-interface QueryProps<D = any, P = any, S = any> {
-  actionFn: (p: P) => Action;
-  payload: P;
-  selector?: (state: S) => D;
+export function useQuery<D = any, S = any, P = any>(
+  actionFn: (p: P) => { type: string },
+  selector: (s: S) => D,
+): DataPayload<D>;
+export function useQuery<D = any, S = any>(
+  actionFn: () => { type: string },
+  selector: (s: S) => D,
+): Data<D>;
+export function useQuery<D = any, S = any, P = any>(
+  actionFn: (p?: P) => { type: string },
+  selector: (s: S) => D,
+): DataPayload<D> {
+  const dispatch = useDispatch();
+  const data = useSelector(selector);
+  const loader = useSelector((s: QueryState) =>
+    selectLoaderById(s, { id: `${actionFn}` }),
+  );
+  const trigger = (p?: P) => {
+    dispatch(actionFn(p));
+  };
+
+  return { ...loader, trigger, data: data || null };
 }
 
-export function useQuery<D = any, P = any, S = any>({
-  actionFn,
-  payload,
-  selector,
-}: QueryProps<D, P, S>): Data<D> {
+export function useSimpleCache<D = any, S = any>(action: {
+  payload: { name: string };
+}): Data<D> {
   const dispatch = useDispatch();
-  const id = `${actionFn}`;
-  const defaultSelectorFn = (s: S) => selectDataById(s, { id });
-  const selectorFn = selector || defaultSelectorFn;
-  const loader = useSelector((s: QueryState) => selectLoaderById(s, { id }));
-  const data = useSelector(selectorFn);
+  const id = JSON.stringify(action);
+  const data = useSelector((s: S) => selectDataById(s, { id }));
+  const { name } = action.payload;
+  const loader = useSelector((s: QueryState) =>
+    selectLoaderById(s, { id: name }),
+  );
+  const trigger = () => {
+    dispatch(action);
+  };
 
-  useEffect(() => {
-    if (!id) return;
-    dispatch(actionFn(payload));
-  }, [id, payload]);
-
-  return { ...loader, data: data || null };
+  return { ...loader, trigger, data: data || null };
 }
