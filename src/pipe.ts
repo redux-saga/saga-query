@@ -1,14 +1,12 @@
 import { call, takeEvery } from 'redux-saga/effects';
-import { SagaIterator } from 'redux-saga';
+import type { SagaIterator } from 'redux-saga';
 import sagaCreator from 'redux-saga-creator';
 
 import { isFn, isObject } from './util';
-import {
+import type {
   Middleware,
   Next,
-  Action,
   ActionWithPayload,
-  CreateActionPayload,
   CreateAction,
   CreateActionWithPayload,
   PipeCtx,

@@ -1,20 +1,13 @@
-import {
-  createStore as createReduxStore,
-  applyMiddleware,
-  Reducer,
-  Middleware,
-  combineReducers,
-} from 'redux';
+import type { Reducer, Middleware } from 'redux';
+import { combineReducers } from 'redux';
+import type { Saga, Task } from 'redux-saga';
+import createSagaMiddleware, { stdChannel } from 'redux-saga';
 import sagaCreator from 'redux-saga-creator';
-import createSagaMiddleware, {
-  stdChannel,
-  Saga,
-  Task,
-  SagaIterator,
-} from 'redux-saga';
 import { enableBatching, BATCH } from 'redux-batched-actions';
-import { ActionWithPayload } from './types';
-import { reducers as sagaQueryReducers, QueryState } from './slice';
+
+import type { ActionWithPayload } from './types';
+import type { QueryState } from './slice';
+import { reducers as sagaQueryReducers } from './slice';
 
 export interface PrepareStore<
   S extends { [key: string]: any } = { [key: string]: any },

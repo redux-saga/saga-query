@@ -1,4 +1,4 @@
-import { ApiCtx, RequestData } from './types';
+import type { ApiCtx, RequestData } from './types';
 
 export interface FetchApiOpts extends RequestInit {
   url: string;
