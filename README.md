@@ -3,7 +3,7 @@
 [![ci](https://github.com/neurosnap/saga-query/actions/workflows/test.yml/badge.svg)](https://github.com/neurosnap/saga-query/actions/workflows/test.yml)
 
 Data fetching and caching using a robust middleware system.
-Quickly build data loading within your redux application and reduce boilderplate.
+Quickly build data loading within your redux application and reduce boilerplate.
 
 **This library is undergoing active development. Consider this in a beta
 state.**
@@ -47,7 +47,7 @@ have their unique attributes and I encourage everyone to check them out.
 
 There's no better async flow control system than `redux-saga`.  Treating
 side-effects as data makes testing dead simple and provides a powerful effect
-handling system to accomodate any use-case.  Features like polling, data loading
+handling system to accommodate any use-case.  Features like polling, data loading
 states, cancellation, racing, parallelization, optimistic updates, and undo are
 at your disposal when using `redux-saga`.  Other libraries and paradigms can
 also accomplish the same tasks, but I think nothing rivals the readability and
@@ -90,7 +90,7 @@ for using redux and a flexible middleware to handle all business logic.
 - A DSL wrapped around data fetching and caching logic
 - A one-line solution to fetch and cache server data automatically
 - Going to accommodate all use-cases
-- Going to erradicate all boilerplate
+- Going to eradicate all boilerplate
 
 ### Examples
 
@@ -219,7 +219,7 @@ endpoint gets their own action and linked saga.  When you call `api.saga()` it
 loops through all the endpoints and creates a root saga that is fault tolerant
 (one saga won't crash all the other sagas).  The default for each endpoint is to
 use `takeEvery` from `redux-saga` but as you'll see in other recipes, this can
-be easily overriden.
+be easily overridden.
 
 The middleware that is loaded into the query via `.use(...)` gets added to an
 array.  This array becomes a pipeline that each endpoint calls in order.  When
@@ -437,7 +437,7 @@ If you want to have a cache that doesn't enforce strict types and is more of a
 dumb cache that fetches and stores data for you, then `simpleCache` will
 provide that functionality for you.
 
-The following code will mimick what a library like `react-query` is doing
+The following code will mimic what a library like `react-query` is doing
 behind-the-scenes.  I want to make it clear that `react-query` is doing a lot
 more than this so I don't want to understate what it does.  However, you can
 see that not only can we get a core chunk of the functionality `react-query`
@@ -818,7 +818,7 @@ const App = () => {
 
 Only call the endpoint at most on an interval.  We can call the endpoint
 as many times as we want but it will only get activated once every X
-miliseconds.  This effectively updates the cache on an interval.
+milliseconds.  This effectively updates the cache on an interval.
 
 ```ts
 import { timer } from 'saga-query';
@@ -838,7 +838,7 @@ If two requests are made:
 - (A) request; then
 - (B) request
 
-While (A) request is still in flight, (B) request would be cancelled.
+While (A) request is still in flight, (B) request would be canceled.
 
 ```ts
 import { takeLeading } from 'redux-saga/effects';
@@ -983,7 +983,7 @@ The middleware accepts three properties:
 - `doItType` (default: `${doIt}`) => action type
 - `undoType` (default: `${undo}`) => action type
 - `timeout` (default: 30 * 1000) => time in milliseconds before the endpoint
-  get cancelled automatically
+  get canceled automatically
 
 ```ts
 import { delay, put, race } from 'redux-saga/effects';
