@@ -1,17 +1,11 @@
 import test from 'ava';
-import createSagaMiddleware, { SagaIterator } from 'redux-saga';
+import type { SagaIterator } from 'redux-saga';
 import { takeEvery, put, call } from 'redux-saga/effects';
-import {
-  createAction,
-  createReducerMap,
-  MapEntity,
-  createTable,
-} from 'robodux';
-import { createStore, combineReducers, applyMiddleware } from 'redux';
-import sagaCreator from 'redux-saga-creator';
+import { createAction, createReducerMap, createTable } from 'robodux';
+import type { MapEntity } from 'robodux';
 
 import { urlParser, queryCtx } from './middleware';
-import { FetchCtx } from './fetch';
+import type { FetchCtx } from './fetch';
 import { createApi } from './api';
 import { setupStore } from './util';
 
@@ -22,7 +16,6 @@ interface User {
 }
 
 const mockUser: User = { id: '1', name: 'test', email: 'test@test.com' };
-const mockUser2: User = { id: '2', name: 'two', email: 'two@test.com' };
 
 test('createApi - POST', (t) => {
   t.plan(1);

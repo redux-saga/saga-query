@@ -1,11 +1,11 @@
 import test from 'ava';
-import { createStore, combineReducers, applyMiddleware } from 'redux';
-import createSagaMiddleware, { SagaIterator } from 'redux-saga';
+import type { SagaIterator } from 'redux-saga';
 import { put, call, delay } from 'redux-saga/effects';
-import { createTable, Action, MapEntity, createReducerMap } from 'robodux';
+import { createTable, createReducerMap } from 'robodux';
+import type { Action, MapEntity } from 'robodux';
 
 import { createPipe } from './pipe';
-import { CreateActionPayload, PipeCtx, Middleware, Next } from './types';
+import type { PipeCtx, Next } from './types';
 import { setupStore as prepStore } from './util';
 import { createQueryState } from './slice';
 

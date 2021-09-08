@@ -1,4 +1,5 @@
-import { Reducer, combineReducers, createStore, applyMiddleware } from 'redux';
+import { createStore, applyMiddleware } from 'redux';
+import type { Reducer } from 'redux';
 import { prepareStore } from './store';
 
 import { API_ACTION_PREFIX } from './constants';
@@ -12,7 +13,7 @@ export const createAction = (curType: string) => {
   return action;
 };
 
-export function setupStore<S = any>(
+export function setupStore(
   saga: any,
   reducers: { [key: string]: Reducer } = {},
 ) {

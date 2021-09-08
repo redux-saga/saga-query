@@ -1,33 +1,20 @@
 import test from 'ava';
-import createSagaMiddleware, { SagaIterator } from 'redux-saga';
-import { takeLatest, put, select, delay } from 'redux-saga/effects';
-import {
-  createReducerMap,
-  MapEntity,
-  createTable,
-  createLoaderTable,
-  defaultLoadingItem,
-} from 'robodux';
+import { takeLatest, put, delay } from 'redux-saga/effects';
+import { createReducerMap, createTable, defaultLoadingItem } from 'robodux';
+import type { MapEntity } from 'robodux';
 
-import { Next } from './types';
 import { createApi } from './api';
 import {
   urlParser,
   queryCtx,
   requestParser,
   requestMonitor,
-  UndoCtx,
-  doIt,
   undo,
 } from './middleware';
-import { FetchCtx } from './fetch';
+import type { UndoCtx } from './middleware';
+import type { FetchCtx } from './fetch';
 import { setupStore } from './util';
-import {
-  DATA_NAME,
-  LOADERS_NAME,
-  createQueryState,
-  selectLoaderById,
-} from './slice';
+import { DATA_NAME, LOADERS_NAME, createQueryState } from './slice';
 import { undoer } from './';
 
 interface User {

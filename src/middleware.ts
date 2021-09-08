@@ -8,16 +8,10 @@ import {
   take,
   call,
 } from 'redux-saga/effects';
-import { SagaIterator } from 'redux-saga';
+import type { SagaIterator } from 'redux-saga';
 
+import type { Action, ApiCtx, Next } from './types';
 import { compose } from './pipe';
-import {
-  Action,
-  ActionWithPayload,
-  CreateActionPayload,
-  ApiCtx,
-  Next,
-} from './types';
 import { isObject, createAction } from './util';
 import {
   setLoaderStart,
@@ -142,7 +136,7 @@ export function loadingMonitor<Ctx extends ApiCtx = ApiCtx>(
   };
 }
 
-export interface UndoCtx<R = any, P = any> extends ApiCtx {
+export interface UndoCtx<R = any, P = any> extends ApiCtx<R, P> {
   undoable: boolean;
 }
 
@@ -250,9 +244,7 @@ export function* simpleCache<Ctx extends ApiCtx = ApiCtx>(
 ) {
   yield next();
   if (!ctx.request.simpleCache) return;
-  const { ok, data } = ctx.response;
-  if (!ok) return;
-
+  const { data } = ctx.response;
   const key = JSON.stringify(ctx.action);
   ctx.actions.push(addData({ [key]: data }));
 }

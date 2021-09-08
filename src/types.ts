@@ -1,5 +1,5 @@
-import { SagaIterator } from 'redux-saga';
-import { LoadingMapPayload } from 'robodux';
+import type { SagaIterator } from 'redux-saga';
+import type { LoadingMapPayload } from 'robodux';
 
 export type Middleware<Ctx = any> = (ctx: Ctx, next: Next) => any;
 export type Next = () => any;

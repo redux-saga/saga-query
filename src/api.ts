@@ -1,12 +1,13 @@
-import { SagaIterator } from 'redux-saga';
-import {
+import type { SagaIterator } from 'redux-saga';
+import type {
   CreateAction,
   CreateActionWithPayload,
   ApiCtx,
   Middleware,
   Next,
 } from './types';
-import { SagaApi, createPipe } from './pipe';
+import { createPipe } from './pipe';
+import type { SagaApi } from './pipe';
 
 export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
   extends SagaApi<Ctx> {
