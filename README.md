@@ -11,7 +11,7 @@ Quickly build data loading within your redux application and reduce boilerplate.
 state.**
 
 - [Examples](#examples)
-- [How does it work?](#how-does-it-work?)
+- [Control your data cache](#control-your-data-cache)
 - [Manipulating the request](#manipulating-the-request)
 - [Simple cache](#simple-cache)
 - [Dispatching many actions](#dispatching-many-actions)
