@@ -2,6 +2,8 @@
 
 [![ci](https://github.com/neurosnap/saga-query/actions/workflows/test.yml/badge.svg)](https://github.com/neurosnap/saga-query/actions/workflows/test.yml)
 
+Control your data cache on the front-end.
+
 Data fetching and caching using a robust middleware system.
 Quickly build data loading within your redux application and reduce boilerplate.
 
@@ -9,7 +11,6 @@ Quickly build data loading within your redux application and reduce boilerplate.
 state.**
 
 - [Examples](#examples)
-- [Simple fetch](#show-me-the-way)
 - [How does it work?](#how-does-it-work?)
 - [Manipulating the request](#manipulating-the-request)
 - [Simple cache](#simple-cache)
@@ -36,6 +37,55 @@ state.**
   optimistic updates, loading states, undo, react
 - Full control over the data fetching and caching layers in your application
 - Fine tune selectors for your specific needs
+
+```ts
+// api.ts
+import { createApi, requestMonitor, requestParser } from 'saga-query';
+
+const api = createApi();
+api.use(requestMonitor());
+api.use(api.routes());
+api.use(requestParser());
+
+api.use(function* onFetch(ctx, next) {
+  const { url = "", ...options } = ctx.request;
+  const apiUrl = `https://api.github.com${url}`;
+  const resp: Response = yield call(fetch, apiUrl, options);
+  const data = yield call([resp, "json"]);
+  ctx.response = { status: resp.status, ok: resp.ok, data };
+  yield next();
+});
+
+export const fetchRepo = api.get(
+  `/repos/neurosnap/saga-query`,
+  api.request({ simpleCache: true })
+);
+```
+
+```tsx
+// app.tsx
+import React from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { useSimpleCache } from 'saga-query';
+import { fetchUsers } from './api';
+
+const App = () => {
+  const cache = useSimpleCache(fetchUsers());
+
+  useEffect(() => {
+    cache.trigger();
+  }, []);
+
+  if (cache.isInitialLoading) return <div>Loading ...</div>
+  if (cache.isError) return <div>{cache.message}</div>
+
+  return (
+    <div>
+      {cache.data.map((user) => <div key={user.id}>{user.email}</div>)}
+    </div>
+  );
+}
+```
 
 ## Why?
 
@@ -101,116 +151,6 @@ for using redux and a flexible middleware to handle all business logic.
 - [Optimistic update](https://codesandbox.io/s/saga-query-optimistic-xwzz2)
 - [Undo](https://codesandbox.io/s/saga-query-undo-nn7fn)
 
-## A note on `robodux`
-
-The docs heavily use [robodux](https://github.com/neurosnap/robodux) and is
-recommended for usage with `saga-query`.  **It is not required to use
-`saga-query`.**  At this point in time `saga-query` works fine with other
-libraries like `redux-toolkit` and I didn't want to impose `robodux` on other
-developers.
-
-Having said that, I use it for most of my production applications and it will
-make caching data simple and straight-forward.  Even for large scale applications,
-100% of my redux state is composed of `robodux` slice helpers.
-
-I also wrote a
-[redux-saga style-guide](https://erock.io/2020/01/01/redux-saga-style-guide.html) that
-is also heavily encouraged.
-
-## Show me the way
-
-```ts
-// api.ts
-import { put, call } from 'redux-saga/effects';
-import { createTable, createReducerMap } from 'robodux';
-import {
-  createApi,
-  requestMonitor,
-  requestParser,
-  prepareStore,
-  FetchCtx,
-} from 'saga-query';
-
-export interface AppState extends QueryState {
-  users: MapEntity<User>;
-}
-
-interface User {
-  id: string;
-  email: string;
-}
-
-const users = createTable<User>({ name: 'users' });
-const selectors = users.getSelectors((s: AppState) => s[users.name]);
-export const { selectTableAsList: selectUsersAsList } = selectors;
-
-const api = createApi<FetchCtx>();
-api.use(requestMonitor());
-api.use(api.routes());
-api.use(requestParser());
-api.use(function* onFetch(ctx, next) {
-  const { url = '', ...options } = ctx.request;
-  const resp = yield call(fetch, `https://api.com${url}`, options);
-  const data = yield call([resp, 'json']);
-  ctx.response = { status: resp.status, ok: resp.ok, data };
-  yield next();
-});
-
-export const fetchUsers = api.get(
-  `/users`,
-  function* processUsers(ctx: FetchCtx<{ users: User[] }>, next) {
-    yield next();
-    if (!ctx.response.ok) return;
-
-    const { data } = ctx.response;
-    const curUsers = data.users.reduce<MapEntity<User>>((acc, u) => {
-      acc[u.id] = u;
-      return acc;
-    }, {});
-    ctx.actions.push(users.actions.add(curUsers));
-  },
-);
-
-const reducers = createReducerMap(users);
-const prepared = prepareStore({
-  reducers,
-  sagas: { api: api.saga() },
-});
-const store = createStore(
-  prepared.reducer,
-  undefined,
-  applyMiddleware(...prepared.middleware),
-);
-prepared.run();
-```
-
-```tsx
-// app.tsx
-import React from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { selectLoaderById } from 'saga-query';
-import { fetchUsers, selectUsersAsList } from './api';
-
-const App = () => {
-  const dispatch = useDispatch();
-  const users = useSelector(selectUsersAsList);
-  const { isInitialLoading, isError, message } = useSelector(
-    (s: AppState) => selectLoaderById(s, { id: `${fetchUsers}` })
-  );
-
-  useEffect(() => {
-    dispatch(fetchUsers());
-  }, []);
-
-  if (isInitialLoading) return <div>Loading ...</div>
-  if (isError) return <div>{message}</div>
-
-  return (
-    <div>{users.map((user) => <div key={user.id}>{user.email}</div>)}</div>
-  );
-}
-```
-
 ## How does it work?
 
 `createApi` will build a set of actions and sagas for each `create` or http
@@ -272,7 +212,7 @@ passing middleware functions through our actions.  This is a design decision to
 support things like [inter-process
 communication](https://www.electronjs.org/docs/api/ipc-main).
 
-## Break it down for me
+## Control your data cache
 
 ```ts
 import { put, call } from 'redux-saga/effects';
@@ -736,21 +676,9 @@ const App = () => {
 
 ### React
 
-Creating a hook that "hooks" into your redux state and how you handle loaders
-should be fairly straight-forward.
-
-We could build an API that does this automatically for you but it would quickly
-turn into a DSL with a bunch of configuration objects (e.g. fetch immediately
-or lazy load?) which is less than ideal.
-
-Furthermore, if you are calling `window.fetch` directly in your react component
-instead of building a hook that calls fetch for libraries like `react-query`
-then you're asking for pain in the future when you need to refactor that API
-call.
-
-Instead, we strive to make it as easy as possible build your own purpose-built
-hooks that give you full control over how it functions.  More code, but more
-control.
+We built a couple of simple hooks `useQuery` and `useSimpleCache` to make
+interacting with `saga-query` easier.  Having said that, it would be trivial to
+build your own custom hooks to do exactly what you want.
 
 Let's rewrite the react code used in the previous example ([loading
 state](#loading-state))
@@ -758,38 +686,17 @@ state](#loading-state))
 ```ts
 // use-query.ts
 import { useEffect } from 'react';
-import { Action } from 'redux';
-import { LoadingItemState } from 'robodux';
-import { useSelector, useDispatch } from 'react-redux';
-import { selectLoaderById } from 'saga-query';
+import { useQuery } from 'saga-query';
 
-import {
-  fetchUsers,
-  selectUsersAsList,
-} from './api';
-import { AppState } from './types';
+import { fetchUsers, selectUsersAsList } from './api';
 
-export const useQuery = <Ctx, R = any>(
-  action: { payload: { name: string } },
-  selector: (state: AppState) => R
-): LoadingItemState & { data: R } => {
-  const dispatch = useDispatch();
-  const props = { id: action.payload.name };
-  const loader = useSelector(
-    (state: AppState) => selectLoaderById(state, props)
-  );
-  const data = useSelector(selector);
-
-  // since we are using `takeLeading` if this action gets dispatched multiple
-  // times it will cancel all actions before the first one dispatched
+export const useQueryUsers = () => {
+  const cache = useQuery(fetchUsers, selectUsersAsList);
   useEffect(() => {
-    dispatch(action);
+    cache.trigger();
   }, []);
-
-  return { ...loader, data };
+  return cache;
 }
-
-export const useQueryUsers = () => useQuery(fetchUsers(), selectUsersAsList);
 ```
 
 ```tsx
@@ -1062,7 +969,23 @@ function* undoer<Ctx extends UndoCtx = UndoCtx>() {
 }
 ```
 
-### Redux-toolkit
+## A note on `robodux`
+
+The docs heavily use [robodux](https://github.com/neurosnap/robodux) and is
+recommended for usage with `saga-query`.  **It is not required to use
+`saga-query`.**  At this point in time `saga-query` works fine with other
+libraries like `redux-toolkit` and I didn't want to impose `robodux` on other
+developers.
+
+Having said that, I use it for most of my production applications and it will
+make caching data simple and straight-forward.  Even for large scale applications,
+100% of my redux state is composed of `robodux` slice helpers.
+
+I also wrote a
+[redux-saga style-guide](https://erock.io/2020/01/01/redux-saga-style-guide.html) that
+is also heavily encouraged.
+
+## Redux-toolkit
 
 `redux-toolkit` is a very popular redux library officially supported by the
 `redux` team.  When using it with `saga-query` the main thing it is responsible
