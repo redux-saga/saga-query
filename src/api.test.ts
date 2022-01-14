@@ -62,6 +62,52 @@ test('createApi - POST', (t) => {
   store.dispatch(createUser({ email: mockUser.email }));
 });
 
+test('createApi - POST with uri', (t) => {
+  t.plan(1);
+  const name = 'users';
+  const cache = createTable<User>({ name });
+  const query = createApi<FetchCtx>();
+
+  query.use(query.routes());
+  query.use(queryCtx);
+  query.use(urlParser);
+  query.use(function* fetchApi(ctx, next) {
+    t.deepEqual(ctx.request, {
+      url: '/users',
+      method: 'POST',
+      body: JSON.stringify({ email: mockUser.email }),
+    });
+    const data = {
+      users: [mockUser],
+    };
+    ctx.response = { status: 200, ok: true, data };
+    yield next();
+  });
+
+  const userApi = query.uri('/users');
+  const createUser = userApi.post<{ email: string }>(function* processUsers(
+    ctx: FetchCtx<{ users: User[] }>,
+    next,
+  ) {
+    ctx.request = {
+      method: 'POST',
+      body: JSON.stringify({ email: ctx.payload.email }),
+    };
+    yield next();
+    if (!ctx.response.ok) return;
+    const { users } = ctx.response.data;
+    const curUsers = users.reduce<MapEntity<User>>((acc, u) => {
+      acc[u.id] = u;
+      return acc;
+    }, {});
+    yield put(cache.actions.add(curUsers));
+  });
+
+  const reducers = createReducerMap(cache);
+  const store = setupStore(query.saga(), reducers);
+  store.dispatch(createUser({ email: mockUser.email }));
+});
+
 test('middleware - with request fn', (t) => {
   t.plan(1);
   const query = createApi();

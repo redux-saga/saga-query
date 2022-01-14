@@ -5,6 +5,7 @@ import sagaCreator from 'redux-saga-creator';
 import { isFn, isObject } from './util';
 import type {
   Middleware,
+  MiddlewareCo,
   Next,
   ActionWithPayload,
   CreateAction,
@@ -13,7 +14,9 @@ import type {
 } from './types';
 import { API_ACTION_PREFIX } from './constants';
 
-export function compose<Ctx = any>(middleware: Middleware<Ctx>[]) {
+export function compose<Ctx extends PipeCtx = PipeCtx>(
+  middleware: Middleware<Ctx>[],
+) {
   if (!Array.isArray(middleware)) {
     throw new TypeError('Middleware stack must be an array!');
   }
@@ -50,23 +53,20 @@ export interface SagaApi<Ctx extends PipeCtx> {
   create<P>(name: string): CreateActionWithPayload<Ctx, P>;
   create(name: string, req: { saga?: any }): CreateAction<Ctx>;
   create<P>(name: string, req: { saga?: any }): CreateActionWithPayload<Ctx, P>;
-  create(
-    name: string,
-    fn: Middleware<Ctx> | Middleware<Ctx>[],
-  ): CreateAction<Ctx>;
+  create(name: string, fn: MiddlewareCo<Ctx>): CreateAction<Ctx>;
   create<P>(
     name: string,
-    fn: Middleware<Ctx> | Middleware<Ctx>[],
+    fn: MiddlewareCo<Ctx>,
   ): CreateActionWithPayload<Ctx, P>;
   create(
     name: string,
     req: { saga?: any },
-    fn: Middleware<Ctx> | Middleware<Ctx>[],
+    fn: MiddlewareCo<Ctx>,
   ): CreateAction<Ctx>;
   create<P>(
     name: string,
     req: { saga?: any },
-    fn: Middleware<Ctx> | Middleware<Ctx>[],
+    fn: MiddlewareCo<Ctx>,
   ): CreateActionWithPayload<Ctx, P>;
 }
 

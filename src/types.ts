@@ -1,7 +1,19 @@
 import type { SagaIterator } from 'redux-saga';
 import type { LoadingMapPayload } from 'robodux';
 
-export type Middleware<Ctx = any> = (ctx: Ctx, next: Next) => any;
+export interface PipeCtx<P = any> {
+  name: string;
+  payload: P;
+  action: ActionWithPayload<CreateActionPayload<P>>;
+}
+
+export type Middleware<Ctx extends PipeCtx = PipeCtx> = (
+  ctx: Ctx,
+  next: Next,
+) => any;
+export type MiddlewareCo<Ctx extends PipeCtx = PipeCtx> =
+  | Middleware<Ctx>
+  | Middleware<Ctx>[];
 export type Next = () => any;
 
 export interface Action {
@@ -15,12 +27,6 @@ export interface ActionWithPayload<P> extends Action {
 export interface CreateActionPayload<P = any> {
   name: string;
   options: P;
-}
-
-export interface PipeCtx<P = any> {
-  name: string;
-  payload: P;
-  action: ActionWithPayload<CreateActionPayload<P>>;
 }
 
 export interface CreateAction<Ctx> {

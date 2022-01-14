@@ -10,7 +10,7 @@ import {
 } from 'redux-saga/effects';
 import type { SagaIterator } from 'redux-saga';
 
-import type { Action, ApiCtx, Next } from './types';
+import type { Action, ApiCtx, Next, PipeCtx } from './types';
 import { compose } from './pipe';
 import { isObject, createAction } from './util';
 import {
@@ -21,7 +21,7 @@ import {
   addData,
 } from './slice';
 
-export function* errorHandler<Ctx extends ApiCtx = ApiCtx>(
+export function* errorHandler<Ctx extends PipeCtx = PipeCtx>(
   ctx: Ctx,
   next: Next,
 ) {
@@ -100,10 +100,7 @@ export function* urlParser<Ctx extends ApiCtx = ApiCtx>(ctx: Ctx, next: Next) {
   yield next();
 }
 
-export function* dispatchActions<Ctx extends ApiCtx = ApiCtx>(
-  ctx: Ctx,
-  next: Next,
-) {
+export function* dispatchActions(ctx: { actions: Action[] }, next: Next) {
   yield next();
   if (ctx.actions.length === 0) return;
   yield put(batchActions(ctx.actions));
