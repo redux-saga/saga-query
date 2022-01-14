@@ -1,4 +1,5 @@
 import { useSelector, useDispatch } from 'react-redux';
+import { useState, useEffect } from 'react';
 import type { LoadingState } from 'robodux';
 
 import type { QueryState } from './slice';
@@ -35,11 +36,12 @@ export function useQuery<D = any, S = any, P = any>(
 }
 
 export function useSimpleCache<D = any, S = any>(action: {
-  payload: { name: string };
+  payload: { name: string; key: string };
 }): Data<D> {
   const dispatch = useDispatch();
-  const id = JSON.stringify(action);
-  const data = useSelector((s: S) => selectDataById(s, { id }));
+  const data = useSelector((s: S) =>
+    selectDataById(s, { id: action.payload.key }),
+  );
   const { name } = action.payload;
   const loader = useSelector((s: QueryState) =>
     selectLoaderById(s, { id: name }),
@@ -49,4 +51,13 @@ export function useSimpleCache<D = any, S = any>(action: {
   };
 
   return { ...loader, trigger, data: data || null };
+}
+
+export function useLoaderSuccess(cur: LoadingState, success: () => any) {
+  const [prev, setPrev] = useState(cur);
+  useEffect(() => {
+    const curSuccess = !cur.isLoading && cur.isSuccess;
+    if (prev.isLoading && curSuccess) success();
+    setPrev(cur);
+  }, [cur.isSuccess, cur.isLoading]);
 }

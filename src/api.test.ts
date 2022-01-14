@@ -155,7 +155,7 @@ test('run() from a normal saga', (t) => {
   function* onAction(): SagaIterator {
     const ctx = yield call(action1.run, action1({ id: '1' }));
     const payload = { name: '/users/:id [GET]', options: { id: '1' } };
-    t.deepEqual(ctx, {
+    t.like(ctx, {
       action: {
         type: '@@saga-query/users/:id [GET]',
         payload,

@@ -242,7 +242,7 @@ export function* simpleCache<Ctx extends ApiCtx = ApiCtx>(
   yield next();
   if (!ctx.request.simpleCache) return;
   const { data } = ctx.response;
-  const key = JSON.stringify(ctx.action);
+  const key = ctx.key;
   ctx.actions.push(addData({ [key]: data }));
 }
 

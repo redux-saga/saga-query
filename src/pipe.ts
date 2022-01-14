@@ -13,6 +13,7 @@ import type {
   PipeCtx,
 } from './types';
 import { API_ACTION_PREFIX } from './constants';
+import { encodeBase64 } from './encoding';
 
 export function compose<Ctx extends PipeCtx = PipeCtx>(
   middleware: Middleware<Ctx>[],
@@ -83,16 +84,17 @@ export function createPipe<Ctx extends PipeCtx = PipeCtx<any>>({
   const sagas: { [key: string]: any } = {};
   const middlewareMap: { [key: string]: Middleware<Ctx> } = {};
 
-  function* defaultMiddleware(ctx: Ctx, next: Next): SagaIterator<void> {
+  function* defaultMiddleware(_: Ctx, next: Next): SagaIterator<void> {
     yield next();
   }
 
   const createType = (post: string) => `${API_ACTION_PREFIX}${post}`;
   function* onApi(action: ActionWithPayload<any>): SagaIterator<Ctx> {
-    const { name, options } = action.payload;
+    const { name, key, options } = action.payload;
     const ctx: any = {
       action,
       name,
+      key,
       payload: options,
     };
     const fn = compose(middleware);
@@ -140,7 +142,10 @@ export function createPipe<Ctx extends PipeCtx = PipeCtx<any>>({
       yield tt(`${action}`, onApi);
     }
     sagas[`${createName}`] = curSaga;
-    const actionFn = (options?: any) => action({ name: createName, options });
+    const actionFn = (options?: any) => {
+      const key = encodeBase64(JSON.stringify({ name: createName, options }));
+      return action({ name: createName, key, options });
+    };
     actionFn.run = onApi as any;
     actionFn.toString = () => createName;
     return actionFn;

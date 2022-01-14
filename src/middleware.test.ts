@@ -212,7 +212,7 @@ test('quickSave', (t) => {
   store.dispatch(action);
   t.like(store.getState(), {
     [DATA_NAME]: {
-      [JSON.stringify(action)]: { users: [mockUser] },
+      [action.payload.key]: { users: [mockUser] },
     },
     [LOADERS_NAME]: {
       [`${fetchUsers}`]: {

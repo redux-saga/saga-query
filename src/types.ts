@@ -3,6 +3,7 @@ import type { LoadingMapPayload } from 'robodux';
 
 export interface PipeCtx<P = any> {
   name: string;
+  key: string;
   payload: P;
   action: ActionWithPayload<CreateActionPayload<P>>;
 }
@@ -26,6 +27,7 @@ export interface ActionWithPayload<P> extends Action {
 
 export interface CreateActionPayload<P = any> {
   name: string;
+  key: string;
   options: P;
 }
 

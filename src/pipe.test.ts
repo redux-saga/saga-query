@@ -298,16 +298,14 @@ test('run() on endpoint action - should run the effect', (t) => {
       const curCtx = yield call(action1.run, action1());
       acc += 'b';
       t.assert(acc === 'ab');
-      t.deepEqual(curCtx, {
+      t.like(curCtx, {
         action: {
           type: '@@saga-query/users',
           payload: {
             name: '/users',
-            options: undefined,
           },
         },
         name: '/users',
-        payload: undefined,
         request: 'expect this',
       });
     },
