@@ -18,11 +18,11 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "module": "./dist/index.js"
+      "default": "./dist/index.js"
     },
     "./react": {
       "types": "./dist/react.d.ts",
-      "module": "./dist/react.js"
+      "default": "./dist/react.js"
     }
   },
   "devDependencies": {
