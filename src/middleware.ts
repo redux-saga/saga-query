@@ -27,7 +27,7 @@ export function* errorHandler<Ctx extends PipeCtx = PipeCtx>(
 ) {
   try {
     yield next();
-  } catch (err) {
+  } catch (err: any) {
     console.error(
       `Error: ${err.message}.  Check the endpoint [${ctx.name}]`,
       ctx,
