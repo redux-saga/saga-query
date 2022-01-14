@@ -15,6 +15,16 @@
     "build": "tsc",
     "prepublish": "yarn build"
   },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "module": "./dist/index.js"
+    },
+    "./react": {
+      "types": "./dist/react.d.ts",
+      "module": "./dist/react.js"
+    }
+  },
   "devDependencies": {
     "@types/node": "^15.3.0",
     "ava": "^3.15.0",
