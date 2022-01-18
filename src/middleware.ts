@@ -101,6 +101,7 @@ export function* urlParser<Ctx extends ApiCtx = ApiCtx>(ctx: Ctx, next: Next) {
 }
 
 export function* dispatchActions(ctx: { actions: Action[] }, next: Next) {
+  if (!ctx.actions) ctx.actions = [];
   yield next();
   if (ctx.actions.length === 0) return;
   yield put(batchActions(ctx.actions));
