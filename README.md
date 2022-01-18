@@ -4,8 +4,8 @@
 
 Control your data cache on the front-end.
 
-Data fetching and caching using a robust middleware system.
-Quickly build data loading within your redux application and reduce boilerplate.
+Data fetching and caching using a robust middleware system. Quickly build data loading within your 
+redux application and reduce boilerplate.
 
 **This library is undergoing active development. Consider this in a beta
 state.**
@@ -32,7 +32,7 @@ state.**
 - Write middleware to handle fetching, synchronizing, and caching API requests
   on the front-end
 - A familiar middleware system that node.js developers are familiar with
-  (e.g. koa)
+  (e.g. express.js)
 - Simple recipes to handle complex use-cases like cancellation, polling,
   optimistic updates, loading states, undo, react
 - Full control over the data fetching and caching layers in your application
@@ -41,6 +41,7 @@ state.**
 ```ts
 // api.ts
 import { createApi, requestMonitor, requestParser } from 'saga-query';
+import { call } from 'redux-saga/effects';
 
 const api = createApi();
 api.use(requestMonitor());
@@ -50,9 +51,12 @@ api.use(requestParser());
 api.use(function* onFetch(ctx, next) {
   const { url = "", ...options } = ctx.request;
   const apiUrl = `https://api.github.com${url}`;
+
   const resp: Response = yield call(fetch, apiUrl, options);
   const data = yield call([resp, "json"]);
+
   ctx.response = { status: resp.status, ok: resp.ok, data };
+
   yield next();
 });
 
@@ -64,17 +68,20 @@ export const fetchRepo = api.get(
 
 ```tsx
 // app.tsx
-import React from 'react';
-import { useSelector, useDispatch } from 'react-redux';
+import React, { useEffect } from 'react';
 import { useSimpleCache } from 'saga-query';
 import { fetchUsers } from './api';
 
-const App = () => {
+const useUsers = () => {
   const cache = useSimpleCache(fetchUsers());
 
   useEffect(() => {
     cache.trigger();
   }, []);
+}
+
+const App = () => {
+  const cache = useUsers();
 
   if (cache.isInitialLoading) return <div>Loading ...</div>
   if (cache.isError) return <div>{cache.message}</div>
@@ -116,12 +123,7 @@ how to cache API data when a library can do it for you?  However:
 - What happens when you want to reuse your business logic for another platform
 (e.g. a cli) and can't use `react`?
 
-If you've never needed to performance tune selector queries on the
-front-end, then this library might not be for you.  If you just need to make
-some API requests with loading states and not much else, then those other
-libraries are probably a better fit for you.
-
-This library is intended for large scale, complex flow control applications
+This library is built to support both small and large scale, complex flow control applications
 that need full control over the data cache layer while setting good standards
 for using redux and a flexible middleware to handle all business logic.
 
@@ -139,8 +141,6 @@ for using redux and a flexible middleware to handle all business logic.
 
 - A DSL wrapped around data fetching and caching logic
 - A one-line solution to fetch and cache server data automatically
-- Going to accommodate all use-cases
-- Going to eradicate all boilerplate
 
 ### Examples
 
@@ -426,42 +426,11 @@ prepared.run();
 ```
 
 ```tsx
-// use-query.ts
-import { useEffect } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { LoadingState } from 'robodux';
-import { QueryState, selectLoaderById, selectDataById } from 'saga-query';
-
-type Data<D = any> = LoadingState & { data: D };
-
-export function useQuery<D = any>(
-  action: {
-    payload: { name: string };
-  },
-): Data<D> {
-  const { name } = action.payload;
-  const id = JSON.stringify(action);
-  const dispatch = useDispatch();
-  const loader = useSelector(
-    (s: QueryState) => selectLoaderById(s, { id: name }),
-  );
-  const data = useSelector((s: QueryState) => selectDataById(s, { id }));
-
-  useEffect(() => {
-    if (!name) return;
-    dispatch(action);
-  }, [id, name]);
-
-  return { ...loader, data };
-}
-```
-
-```tsx
 // app.tsx
 import React from 'react';
+import { useQuery } from 'saga-query';
 
 import { fetchUsers } from './api';
-import { useQuery } from './use-query';
 
 interface User {
   id: string;
