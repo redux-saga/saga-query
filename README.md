@@ -946,11 +946,11 @@ import { delay } from 'redux-saga/effects';
 import { performanceMonitor, createPipe, wrap, PerfCtx } from 'saga-query';
 
 const thunks = createPipe<PerfCtx>();
-thunks.use(performanceMonitor);
 thunks.use(function* (ctx, next) {
   yield next();
   console.log(`calling ${ctx.name} took ${ctx.performance} ms`);
 });
+thunks.use(performanceMonitor);
 thunks.use(thunks.routes());
 
 function* slowSaga() {

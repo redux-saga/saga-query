@@ -270,11 +270,6 @@ export function* performanceMonitor<Ctx extends PerfCtx = PerfCtx>(
   ctx: Ctx,
   next: Next,
 ) {
-  if (!performance) {
-    yield next();
-    return;
-  }
-
   const t0 = performance.now();
   yield next();
   const t1 = performance.now();
