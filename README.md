@@ -41,8 +41,7 @@ state.**
 
 ```ts
 // api.ts
-import { createApi, requestMonitor, requestParser } from 'saga-query';
-import { call } from 'redux-saga/effects';
+import { createApi, requestMonitor, requestParser, call } from 'saga-query';
 
 const api = createApi();
 api.use(requestMonitor());
@@ -216,7 +215,6 @@ communication](https://www.electronjs.org/docs/api/ipc-main).
 ## Control your data cache
 
 ```ts
-import { put, call } from 'redux-saga/effects';
 import { createTable, createReducerMap } from 'robodux';
 import {
   createApi,
@@ -224,7 +222,9 @@ import {
   requestParser,
   // FetchCtx is an interface that's built around using window.fetch
   // You don't have to use it if you don't want to.
-  FetchCtx
+  FetchCtx,
+  put,
+  call
 } from 'saga-query';
 
 // create a reducer that acts like a SQL database table
@@ -718,7 +718,7 @@ If two requests are made:
 While (A) request is still in flight, (B) request would be canceled.
 
 ```ts
-import { takeLeading } from 'redux-saga/effects';
+import { takeLeading } from 'saga-query';
 
 // this is for demonstration purposes, you can import it using
 // import { leading } from 'saga-query';
@@ -785,7 +785,7 @@ const App = () => {
 Here is the manual, one-off way to handle optimistic ui:
 
 ```ts
-import { put, select } from 'redux-saga/effects';
+import { put, select } from 'saga-query';
 
 const updateUser = api.patch<Partial<User> & { id: string }>(
   `/users/:id`,
@@ -863,7 +863,6 @@ The middleware accepts three properties:
   get canceled automatically
 
 ```ts
-import { delay, put, race } from 'redux-saga/effects';
 import { createAction } from 'robodux';
 import {
   createApi,
@@ -873,6 +872,9 @@ import {
   undo,
   doIt,
   UndoCtx,
+  delay,
+  put,
+  race
 } from 'saga-query';
 
 interface Message {
@@ -920,7 +922,7 @@ For example, if you want the endpoint to be called automatically after some
 timer, you could build a middleware to do that for you:
 
 ```ts
-import { race, delay } from 'redux-saga/effects';
+import { race, delay } from 'saga-query';
 
 const undo = createAction('UNDO');
 function* undoer<Ctx extends UndoCtx = UndoCtx>() {
@@ -942,8 +944,7 @@ function* undoer<Ctx extends UndoCtx = UndoCtx>() {
 # Performance monitor
 
 ```ts
-import { delay } from 'redux-saga/effects';
-import { performanceMonitor, createPipe, wrap, PerfCtx } from 'saga-query';
+import { performanceMonitor, createPipe, wrap, PerfCtx, delay } from 'saga-query';
 
 const thunks = createPipe<PerfCtx>();
 thunks.use(function* (ctx, next) {
