@@ -57,11 +57,6 @@ const users = createTable<User>({ name: 'USER' });
 const tickets = createTable<Ticket>({ name: 'TICKET' });
 const reducers = createReducerMap(users, tickets);
 
-interface FetchApiOpts {
-  url: RequestInfo;
-  options?: RequestInit;
-}
-
 const mockUser = { id: '1', name: 'test', email_address: 'test@test.com' };
 const mockTicket = { id: '2', name: 'test-ticket' };
 
@@ -242,7 +237,7 @@ test('error handling - error handler', (t) => {
     onError: (err: Error) => t.assert(err.message === 'failure'),
   });
   api.use(api.routes());
-  api.use(function* upstream(ctx, next) {
+  api.use(function* upstream() {
     throw new Error('failure');
   });
 

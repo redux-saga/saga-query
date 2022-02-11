@@ -1,4 +1,6 @@
 export { BATCH, batchActions } from 'redux-batched-actions';
+export * from 'redux-saga/effects';
+
 export * from './pipe';
 export * from './api';
 export * from './types';

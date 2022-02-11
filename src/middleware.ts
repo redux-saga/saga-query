@@ -261,3 +261,31 @@ export function requestMonitor<Ctx extends ApiCtx = ApiCtx>(
 export function requestParser<Ctx extends ApiCtx = ApiCtx>() {
   return compose<Ctx>([urlParser, simpleCache]);
 }
+
+export interface PerfCtx<P = any> extends PipeCtx<P> {
+  performance: number;
+}
+
+export function* performanceMonitor<Ctx extends PerfCtx = PerfCtx>(
+  ctx: Ctx,
+  next: Next,
+) {
+  if (!performance) {
+    yield next();
+    return;
+  }
+
+  const t0 = performance.now();
+  yield next();
+  const t1 = performance.now();
+  ctx.performance = t1 - t0;
+}
+
+export function wrap<Ctx extends PipeCtx = PipeCtx>(
+  saga: (...args: any[]) => any,
+) {
+  return function* (ctx: Ctx, next: Next) {
+    yield call(saga, ctx.action);
+    yield next();
+  };
+}

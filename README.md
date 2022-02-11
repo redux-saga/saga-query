@@ -25,6 +25,7 @@ state.**
 - [Polling](#polling)
 - [Optimistic UI](#optimistic-ui)
 - [Undo](#undo)
+- [Performance monitor](#performance-monitor)
 - [redux-toolkit](#redux-toolkit)
 
 ## Features
@@ -936,6 +937,30 @@ function* undoer<Ctx extends UndoCtx = UndoCtx>() {
   if (winner.undo) return;
   yield next();
 }
+```
+
+# Performance monitor
+
+```ts
+import { delay } from 'redux-saga/effects';
+import { performanceMonitor, createPipe, wrap, PerfCtx } from 'saga-query';
+
+const thunks = createPipe<PerfCtx>();
+thunks.use(performanceMonitor);
+thunks.use(function* (ctx, next) {
+  yield next();
+  console.log(`calling ${ctx.name} took ${ctx.performance} ms`);
+});
+thunks.use(thunks.routes());
+
+function* slowSaga() {
+  yield delay(10 * 1000);
+}
+
+const slow = thunks.create('something-slow', wrap(slowSaga));
+
+store.dispatch(slow());
+// calling something-slow took 10000 ms
 ```
 
 ## A note on `robodux`
