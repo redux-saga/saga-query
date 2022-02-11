@@ -25,7 +25,7 @@ state.**
 - [Polling](#polling)
 - [Optimistic UI](#optimistic-ui)
 - [Undo](#undo)
-- [Performance Tracking](#performance-tracking)
+- [Performance monitor](#performance-monitor)
 - [redux-toolkit](#redux-toolkit)
 
 ## Features
