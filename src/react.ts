@@ -61,3 +61,9 @@ export function useLoaderSuccess(cur: LoadingState, success: () => any) {
     setPrev(cur);
   }, [cur.isSuccess, cur.isLoading]);
 }
+
+export function useLoader<S extends QueryState = QueryState>(action: {
+  toString: () => string;
+}) {
+  return useSelector((s: S) => selectLoaderById(s, { id: `${action}` }));
+}
