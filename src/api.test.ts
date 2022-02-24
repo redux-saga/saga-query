@@ -3,11 +3,12 @@ import type { SagaIterator } from 'redux-saga';
 import { takeEvery, put, call } from 'redux-saga/effects';
 import { createAction, createReducerMap, createTable } from 'robodux';
 import type { MapEntity } from 'robodux';
+import { Buffer } from 'buffer';
 
 import { urlParser, queryCtx } from './middleware';
-import type { FetchCtx } from './fetch';
 import { createApi } from './api';
 import { setupStore } from './util';
+import { ApiCtx } from '.';
 
 interface User {
   id: string;
@@ -17,38 +18,41 @@ interface User {
 
 const mockUser: User = { id: '1', name: 'test', email: 'test@test.com' };
 
+const jsonBlob = (data: any) => {
+  return Buffer.from(JSON.stringify(data));
+};
+
 test('createApi - POST', (t) => {
   t.plan(1);
   const name = 'users';
   const cache = createTable<User>({ name });
-  const query = createApi<FetchCtx>();
+  const query = createApi();
 
   query.use(query.routes());
   query.use(queryCtx);
   query.use(urlParser);
-  query.use(function* fetchApi(ctx, next) {
-    t.deepEqual(ctx.request, {
-      url: '/users',
-      method: 'POST',
-      body: JSON.stringify({ email: mockUser.email }),
-    });
+  query.use(function* fetchApi(ctx, next): SagaIterator<any> {
+    t.deepEqual(ctx.request.url, '/users');
+    t.deepEqual(ctx.request.method, 'POST');
+    const json = yield call([ctx.request, 'json']);
+    t.deepEqual(json, JSON.stringify({ email: mockUser.email }));
     const data = {
       users: [mockUser],
     };
-    ctx.response = { status: 200, ok: true, data };
+    ctx.response = new Response(jsonBlob(data), { status: 200 });
     yield next();
   });
 
   const createUser = query.post<{ email: string }>(
     `/users`,
-    function* processUsers(ctx: FetchCtx<{ users: User[] }>, next) {
-      ctx.request = {
+    function* processUsers(ctx: ApiCtx<any, { users: User[] }>, next) {
+      ctx.request = new Request(ctx.request, {
         method: 'POST',
         body: JSON.stringify({ email: ctx.payload.email }),
-      };
+      });
       yield next();
-      if (!ctx.response.ok) return;
-      const { users } = ctx.response.data;
+      if (!ctx.json.ok) return;
+      const { users } = ctx.json.data;
       const curUsers = users.reduce<MapEntity<User>>((acc, u) => {
         acc[u.id] = u;
         return acc;
@@ -66,36 +70,37 @@ test('createApi - POST with uri', (t) => {
   t.plan(1);
   const name = 'users';
   const cache = createTable<User>({ name });
-  const query = createApi<FetchCtx>();
+  const query = createApi();
 
   query.use(query.routes());
   query.use(queryCtx);
   query.use(urlParser);
-  query.use(function* fetchApi(ctx, next) {
-    t.deepEqual(ctx.request, {
-      url: '/users',
-      method: 'POST',
-      body: JSON.stringify({ email: mockUser.email }),
-    });
+  query.use(function* fetchApi(ctx, next): SagaIterator<any> {
+    t.deepEqual(ctx.request.url, '/users');
+    t.deepEqual(ctx.request.method, 'POST');
+    const json = yield call([ctx.request, 'json']);
+    t.deepEqual(json, JSON.stringify({ email: mockUser.email }));
+
     const data = {
       users: [mockUser],
     };
-    ctx.response = { status: 200, ok: true, data };
+    ctx.response = new Response(jsonBlob(data), { status: 200 });
     yield next();
   });
 
   const userApi = query.uri('/users');
   const createUser = userApi.post<{ email: string }>(function* processUsers(
-    ctx: FetchCtx<{ users: User[] }>,
+    ctx: ApiCtx<{ email: string }, { users: User[] }>,
     next,
   ) {
-    ctx.request = {
+    ctx.request = new Request(ctx.request, {
       method: 'POST',
       body: JSON.stringify({ email: ctx.payload.email }),
-    };
+    });
+
     yield next();
-    if (!ctx.response.ok) return;
-    const { users } = ctx.response.data;
+    if (!ctx.json.ok) return;
+    const { users } = ctx.json.data;
     const curUsers = users.reduce<MapEntity<User>>((acc, u) => {
       acc[u.id] = u;
       return acc;
@@ -115,9 +120,13 @@ test('middleware - with request fn', (t) => {
   query.use(queryCtx);
   query.use(urlParser);
   query.use(function* (ctx, next) {
-    t.deepEqual(ctx.request, { method: 'POST', url: '/users' });
+    t.deepEqual(ctx.request.method, 'POST');
+    t.deepEqual(ctx.request.url, '/users');
   });
-  const createUser = query.create('/users', query.request({ method: 'POST' }));
+  const createUser = query.create(
+    '/users',
+    query.request(new Request('', { method: 'POST' })),
+  );
   const store = setupStore(query.saga());
   store.dispatch(createUser());
 });

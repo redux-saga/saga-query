@@ -37,8 +37,9 @@ export function* errorHandler<Ctx extends PipeCtx = PipeCtx>(
 }
 
 export function* queryCtx<Ctx extends ApiCtx = ApiCtx>(ctx: Ctx, next: Next) {
-  if (!ctx.request) ctx.request = { url: '', method: 'GET' };
-  if (!ctx.response) ctx.response = {};
+  if (!ctx.request) ctx.request = new Request('', { method: 'GET' });
+  if (!ctx.response) ctx.response = new Response();
+  if (!ctx.json) ctx.json = { ok: false, data: {} };
   if (!ctx.actions) ctx.actions = [];
   yield next();
 }
@@ -72,18 +73,13 @@ export function* urlParser<Ctx extends ApiCtx = ApiCtx>(ctx: Ctx, next: Next) {
       const pattern = new RegExp(`\\s*\\[` + method + `\\]\\s*`, 'i');
       const result = acc.replace(pattern, '');
       if (result.length !== acc.length) {
-        ctx.request.method = method.toLocaleUpperCase();
+        ctx.request = new Request(ctx.request, {
+          method: method.toLocaleUpperCase(),
+        });
       }
       return result;
     }, url);
-    ctx.request.url = url;
-  }
-
-  // TODO: should this be a separate middleware?
-  if (!ctx.request.body && ctx.request.data) {
-    ctx.request.body = {
-      body: JSON.stringify(ctx.request.data),
-    };
+    ctx.request = new Request(url, ctx.request);
   }
 
   if (!ctx.request.method) {
@@ -92,7 +88,9 @@ export function* urlParser<Ctx extends ApiCtx = ApiCtx>(ctx: Ctx, next: Next) {
       const pattern = new RegExp(`\\s*\\[` + method + `\\]\\s*`, 'i');
       const result = url.replace(pattern, '');
       if (result.length !== url.length) {
-        ctx.request.method = method.toLocaleUpperCase();
+        ctx.request = new Request(ctx.request, {
+          method: method.toLocaleUpperCase(),
+        });
       }
     });
   }
@@ -108,7 +106,7 @@ export function* dispatchActions(ctx: { actions: Action[] }, next: Next) {
 }
 
 export function loadingMonitor<Ctx extends ApiCtx = ApiCtx>(
-  errorFn: (ctx: Ctx) => string = (ctx) => ctx.response?.data?.message || '',
+  errorFn: (ctx: Ctx) => string = (ctx) => ctx.json?.data?.message || '',
 ) {
   return function* trackLoading(ctx: Ctx, next: Next) {
     const id = ctx.name;
@@ -134,7 +132,7 @@ export function loadingMonitor<Ctx extends ApiCtx = ApiCtx>(
   };
 }
 
-export interface UndoCtx<R = any, P = any> extends ApiCtx<R, P> {
+export interface UndoCtx<P = any, S = any, E = any> extends ApiCtx<P, S, E> {
   undoable: boolean;
 }
 
@@ -241,8 +239,8 @@ export function* simpleCache<Ctx extends ApiCtx = ApiCtx>(
   next: Next,
 ) {
   yield next();
-  if (!ctx.request.simpleCache) return;
-  const { data } = ctx.response;
+  if (!ctx.cache) return;
+  const { data } = ctx.json;
   const key = ctx.key;
   ctx.actions.push(addData({ [key]: data }));
 }

@@ -27,13 +27,15 @@ export interface FetchCtx<P = any> extends PipeCtx<P> {
   response: Response;
 }
 
-export interface FetchJsonCtx<S = any, E = any> extends FetchCtx {
+export interface FetchJsonCtx<P = any, S = any, E = any> extends FetchCtx<P> {
   json: ApiFetchResponse<S, E>;
 }
 
-export interface ApiCtx<P = any> extends FetchJsonCtx<P> {
+export interface ApiCtx<P = any, S = any, E = any>
+  extends FetchJsonCtx<P, S, E> {
   actions: Action[];
   loader: LoadingMapPayload<Record<string, any>> | null;
+  cache: boolean;
 }
 
 export type Middleware<Ctx extends PipeCtx = PipeCtx> = (
