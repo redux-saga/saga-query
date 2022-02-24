@@ -81,14 +81,14 @@ const useUsers = () => {
 }
 
 const App = () => {
-  const cache = useUsers();
+  const { isInitialLoading, isError, data, message } = useUsers();
 
-  if (cache.isInitialLoading) return <div>Loading ...</div>
-  if (cache.isError) return <div>{cache.message}</div>
+  if (isInitialLoading) return <div>Loading ...</div>
+  if (isError) return <div>{message}</div>
 
   return (
     <div>
-      {cache.data.map((user) => <div key={user.id}>{user.email}</div>)}
+      {data.map((user) => <div key={user.id}>{user.email}</div>)}
     </div>
   );
 }
@@ -146,7 +146,6 @@ for using redux and a flexible middleware to handle all business logic.
 
 - [Simple](https://codesandbox.io/s/saga-query-simple-ifcwf)
 - [With Loader](https://codesandbox.io/s/saga-query-basic-jtceo)
-- [Simple cache](https://codesandbox.io/s/saga-query-simple-cache-0ge33)
 - [Polling](https://codesandbox.io/s/saga-query-polling-1fwfo)
 - [Optimistic update](https://codesandbox.io/s/saga-query-optimistic-xwzz2)
 - [Undo](https://codesandbox.io/s/saga-query-undo-nn7fn)
