@@ -3,6 +3,7 @@ import type { Reducer } from 'redux';
 import { prepareStore } from './store';
 
 import { API_ACTION_PREFIX } from './constants';
+import { ApiRequest } from '.';
 export const isFn = (fn?: any) => fn && typeof fn === 'function';
 export const isObject = (obj?: any) => typeof obj === 'object' && obj !== null;
 export const createAction = (curType: string) => {
@@ -29,3 +30,13 @@ export function setupStore(
   prepared.run();
   return store;
 }
+
+export const mergeRequest = (
+  cur?: ApiRequest | null,
+  next?: ApiRequest | null,
+): ApiRequest => {
+  if (!cur && !next) return { url: '', method: 'GET' };
+  if (!cur && next) return next;
+  if (cur && !next) return cur;
+  return { ...cur, ...next };
+};

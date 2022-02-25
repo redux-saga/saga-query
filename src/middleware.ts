@@ -12,7 +12,7 @@ import type { SagaIterator } from 'redux-saga';
 
 import type { Action, ApiCtx, Next, PipeCtx } from './types';
 import { compose } from './pipe';
-import { isObject, createAction } from './util';
+import { isObject, createAction, mergeRequest } from './util';
 import {
   setLoaderStart,
   setLoaderError,
@@ -20,6 +20,7 @@ import {
   resetLoaderById,
   addData,
 } from './slice';
+import { ApiRequest } from '.';
 
 export function* errorHandler<Ctx extends PipeCtx = PipeCtx>(
   ctx: Ctx,
@@ -37,7 +38,10 @@ export function* errorHandler<Ctx extends PipeCtx = PipeCtx>(
 }
 
 export function* queryCtx<Ctx extends ApiCtx = ApiCtx>(ctx: Ctx, next: Next) {
-  if (!ctx.request) ctx.request = new Request('', { method: 'GET' });
+  if (!ctx.req) {
+    ctx.req = (r?: ApiRequest): ApiRequest => mergeRequest(ctx.request, r);
+  }
+  if (!ctx.request) ctx.request = ctx.req();
   if (!ctx.response) ctx.response = null;
   if (!ctx.json) ctx.json = { ok: false, data: {} };
   if (!ctx.actions) ctx.actions = [];
@@ -77,9 +81,9 @@ export function* urlParser<Ctx extends ApiCtx = ApiCtx>(ctx: Ctx, next: Next) {
     url = tmpUrl;
   }, url);
 
-  ctx.request = new Request(url, ctx.request);
+  ctx.request = ctx.req({ url });
   if (method) {
-    ctx.request = new Request(ctx.request, { method });
+    ctx.request = ctx.req({ method });
   }
 
   yield next();

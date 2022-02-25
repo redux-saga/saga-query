@@ -14,7 +14,7 @@ import {
 } from './middleware';
 import type { UndoCtx } from './middleware';
 import type { ApiCtx } from './types';
-import { setupStore } from './util';
+import { mergeRequest, setupStore } from './util';
 import { DATA_NAME, LOADERS_NAME, createQueryState } from './slice';
 import { SagaIterator } from 'redux-saga';
 
@@ -44,7 +44,7 @@ test('middleware - basic', (t) => {
   query.use(urlParser);
   query.use(query.routes());
   query.use(function* fetchApi(ctx, next) {
-    if (`${ctx.request.url}`.startsWith('/users/')) {
+    if (`${ctx.req()}`.startsWith('/users/')) {
       ctx.json = { ok: true, data: mockUser2 };
       yield next();
       return;
@@ -76,7 +76,7 @@ test('middleware - basic', (t) => {
       saga: latest,
     },
     function* processUser(ctx: ApiCtx<User>, next) {
-      ctx.request = new Request(ctx.request, { method: 'POST' });
+      ctx.request = ctx.req({ method: 'POST' });
       yield next();
       if (!ctx.json.ok) return;
       const curUser = ctx.json.data;
@@ -142,7 +142,7 @@ test('middleware - with loader', (t) => {
 });
 
 test('middleware - with POST', async (t) => {
-  t.plan(3);
+  t.plan(1);
   const name = 'users';
   const cache = createTable<User>({ name });
   const query = createApi();
@@ -151,10 +151,12 @@ test('middleware - with POST', async (t) => {
   query.use(urlParser);
   query.use(query.routes());
   query.use(function* fetchApi(ctx, next): SagaIterator<any> {
-    const json = yield call([ctx.request, 'json']);
-    t.deepEqual(ctx.request.url, '/users');
-    t.deepEqual(ctx.request.method, 'POST');
-    t.deepEqual(json, { email: 'test@test.com' });
+    const request = ctx.req();
+    t.deepEqual(request, {
+      url: '/users',
+      method: 'POST',
+      body: JSON.stringify({ email: 'test@test.com' }),
+    });
 
     const data = {
       users: [mockUser],
@@ -169,7 +171,7 @@ test('middleware - with POST', async (t) => {
       ctx: ApiCtx<{ email: string }, { users: User[] }>,
       next,
     ) {
-      ctx.request = new Request(ctx.request, {
+      ctx.request = ctx.req({
         method: 'POST',
         body: JSON.stringify({ email: ctx.payload.email }),
       });
