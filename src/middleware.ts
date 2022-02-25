@@ -63,36 +63,23 @@ export function* urlParser<Ctx extends ApiCtx = ApiCtx>(ctx: Ctx, next: Next) {
     return;
   }
 
-  if (!ctx.request) throw new Error('ctx.request does not exist');
-  if (!ctx.request.url) {
-    let url = Object.keys(options).reduce((acc, key) => {
-      return acc.replace(`:${key}`, options[key]);
-    }, ctx.name);
+  let url = Object.keys(options).reduce((acc, key) => {
+    return acc.replace(`:${key}`, options[key]);
+  }, ctx.name);
 
-    url = httpMethods.reduce((acc, method) => {
-      const pattern = new RegExp(`\\s*\\[` + method + `\\]\\s*`, 'i');
-      const result = acc.replace(pattern, '');
-      if (result.length !== acc.length) {
-        ctx.request = new Request(ctx.request, {
-          method: method.toLocaleUpperCase(),
-        });
-      }
-      return result;
-    }, url);
-    ctx.request = new Request(url, ctx.request);
-  }
+  let method = '';
+  httpMethods.forEach((curMethod) => {
+    const pattern = new RegExp(`\\s*\\[` + curMethod + `\\]\\s*`, 'i');
+    const tmpUrl = url.replace(pattern, '');
+    if (tmpUrl.length !== url.length) {
+      method = curMethod.toLocaleUpperCase();
+    }
+    url = tmpUrl;
+  }, url);
 
-  if (!ctx.request.method) {
-    httpMethods.forEach((method) => {
-      const url = ctx.request.url || '';
-      const pattern = new RegExp(`\\s*\\[` + method + `\\]\\s*`, 'i');
-      const result = url.replace(pattern, '');
-      if (result.length !== url.length) {
-        ctx.request = new Request(ctx.request, {
-          method: method.toLocaleUpperCase(),
-        });
-      }
-    });
+  ctx.request = new Request(url, ctx.request);
+  if (method) {
+    ctx.request = new Request(ctx.request, { method });
   }
 
   yield next();
