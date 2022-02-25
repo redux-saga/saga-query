@@ -12,8 +12,9 @@ export function* headersMdw<CurCtx extends FetchCtx = FetchCtx>(
     return;
   }
 
-  if (!ctx.request.headers.has('Content-Type')) {
-    ctx.request.headers.set('Content-Type', 'application/json');
+  const cur = ctx.req();
+  if (!cur.headers.hasOwnProperty('Content-Type')) {
+    ctx.req({ headers: { 'Content-Type': 'application/json' } });
   }
 
   yield next();
@@ -23,7 +24,9 @@ export function* fetchMdw<CurCtx extends FetchCtx = FetchCtx>(
   ctx: CurCtx,
   next: Next,
 ): SagaIterator<any> {
-  const response: Response = yield call(fetch, ctx.request);
+  const req = ctx.req();
+  const request = new Request(req.url || '', req);
+  const response: Response = yield call(fetch, request);
   ctx.response = response;
   yield next();
 }

@@ -23,7 +23,7 @@ const jsonBlob = (data: any) => {
 };
 
 test('createApi - POST', async (t) => {
-  t.plan(3);
+  t.plan(1);
   const name = 'users';
   const cache = createTable<User>({ name });
   const query = createApi();
@@ -32,10 +32,12 @@ test('createApi - POST', async (t) => {
   query.use(urlParser);
   query.use(query.routes());
   query.use(function* fetchApi(ctx, next): SagaIterator<any> {
-    const json = yield call([ctx.request, 'json']);
-    t.deepEqual(ctx.request.url, '/users');
-    t.deepEqual(ctx.request.method, 'POST');
-    t.deepEqual(json, { email: mockUser.email });
+    t.deepEqual(ctx.req(), {
+      url: '/users',
+      headers: {},
+      method: 'POST',
+      body: JSON.stringify({ email: mockUser.email }),
+    });
     const data = {
       users: [mockUser],
     };
@@ -46,7 +48,7 @@ test('createApi - POST', async (t) => {
   const createUser = query.post<{ email: string }>(
     `/users`,
     function* processUsers(ctx: ApiCtx<any, { users: User[] }>, next) {
-      ctx.request = new Request(ctx.request, {
+      ctx.request = ctx.req({
         method: 'POST',
         body: JSON.stringify({ email: ctx.payload.email }),
       });
@@ -67,7 +69,7 @@ test('createApi - POST', async (t) => {
 });
 
 test('createApi - POST with uri', async (t) => {
-  t.plan(3);
+  t.plan(1);
   const name = 'users';
   const cache = createTable<User>({ name });
   const query = createApi();
@@ -76,10 +78,12 @@ test('createApi - POST with uri', async (t) => {
   query.use(urlParser);
   query.use(query.routes());
   query.use(function* fetchApi(ctx, next): SagaIterator<any> {
-    const json = yield call([ctx.request, 'json']);
-    t.deepEqual(ctx.request.url, '/users');
-    t.deepEqual(ctx.request.method, 'POST');
-    t.deepEqual(json, { email: mockUser.email });
+    t.deepEqual(ctx.req(), {
+      url: '/users',
+      headers: {},
+      method: 'POST',
+      body: JSON.stringify({ email: mockUser.email }),
+    });
 
     const data = {
       users: [mockUser],
@@ -93,7 +97,7 @@ test('createApi - POST with uri', async (t) => {
     ctx: ApiCtx<{ email: string }, { users: User[] }>,
     next,
   ) {
-    ctx.request = new Request(ctx.request, {
+    ctx.request = ctx.req({
       body: JSON.stringify({ email: ctx.payload.email }),
     });
 
@@ -115,12 +119,12 @@ test('createApi - POST with uri', async (t) => {
 test('middleware - with request fn', (t) => {
   t.plan(2);
   const query = createApi();
-  query.use(query.routes());
   query.use(queryCtx);
   query.use(urlParser);
+  query.use(query.routes());
   query.use(function* (ctx, next) {
-    t.deepEqual(ctx.request.method, 'POST');
-    t.deepEqual(ctx.request.url, '/users');
+    t.deepEqual(ctx.req().method, 'POST');
+    t.deepEqual(ctx.req().url, '/users');
   });
   const createUser = query.create('/users', query.request({ method: 'POST' }));
   const store = setupStore(query.saga());

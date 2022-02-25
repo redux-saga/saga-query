@@ -23,10 +23,14 @@ export type ApiFetchResponse<S = any, E = any> =
   | ApiFetchError<E>;
 
 export type ApiRequest = Partial<{ url: string } & RequestInit>;
+export type RequiredApiRequest = {
+  url: string;
+  headers: HeadersInit;
+} & Partial<RequestInit>;
 
 export interface FetchCtx<P = any> extends PipeCtx<P> {
   request: ApiRequest | null;
-  req: (r?: ApiRequest) => ApiRequest;
+  req: (r?: ApiRequest) => RequiredApiRequest;
   response: Response | null;
 }
 

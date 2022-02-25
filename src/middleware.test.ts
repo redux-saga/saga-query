@@ -1,5 +1,5 @@
 import test from 'ava';
-import { call, takeLatest, put, delay } from 'redux-saga/effects';
+import { takeLatest, put, delay } from 'redux-saga/effects';
 import { createReducerMap, createTable, defaultLoadingItem } from 'robodux';
 import type { MapEntity } from 'robodux';
 import { Buffer } from 'buffer';
@@ -14,7 +14,7 @@ import {
 } from './middleware';
 import type { UndoCtx } from './middleware';
 import type { ApiCtx } from './types';
-import { mergeRequest, setupStore } from './util';
+import { setupStore } from './util';
 import { DATA_NAME, LOADERS_NAME, createQueryState } from './slice';
 import { SagaIterator } from 'redux-saga';
 
@@ -44,7 +44,7 @@ test('middleware - basic', (t) => {
   query.use(urlParser);
   query.use(query.routes());
   query.use(function* fetchApi(ctx, next) {
-    if (`${ctx.req()}`.startsWith('/users/')) {
+    if (`${ctx.req().url}`.startsWith('/users/')) {
       ctx.json = { ok: true, data: mockUser2 };
       yield next();
       return;
@@ -154,6 +154,7 @@ test('middleware - with POST', async (t) => {
     const request = ctx.req();
     t.deepEqual(request, {
       url: '/users',
+      headers: {},
       method: 'POST',
       body: JSON.stringify({ email: 'test@test.com' }),
     });

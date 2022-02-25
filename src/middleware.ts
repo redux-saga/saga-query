@@ -10,7 +10,14 @@ import {
 } from 'redux-saga/effects';
 import type { SagaIterator } from 'redux-saga';
 
-import type { Action, ApiCtx, Next, PipeCtx } from './types';
+import type {
+  Action,
+  ApiCtx,
+  Next,
+  PipeCtx,
+  ApiRequest,
+  RequiredApiRequest,
+} from './types';
 import { compose } from './pipe';
 import { isObject, createAction, mergeRequest } from './util';
 import {
@@ -20,7 +27,6 @@ import {
   resetLoaderById,
   addData,
 } from './slice';
-import { ApiRequest } from '.';
 
 export function* errorHandler<Ctx extends PipeCtx = PipeCtx>(
   ctx: Ctx,
@@ -39,7 +45,8 @@ export function* errorHandler<Ctx extends PipeCtx = PipeCtx>(
 
 export function* queryCtx<Ctx extends ApiCtx = ApiCtx>(ctx: Ctx, next: Next) {
   if (!ctx.req) {
-    ctx.req = (r?: ApiRequest): ApiRequest => mergeRequest(ctx.request, r);
+    ctx.req = (r?: ApiRequest): RequiredApiRequest =>
+      mergeRequest(ctx.request, r);
   }
   if (!ctx.request) ctx.request = ctx.req();
   if (!ctx.response) ctx.response = null;

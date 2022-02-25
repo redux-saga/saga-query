@@ -5,6 +5,7 @@ import type {
   ApiCtx,
   MiddlewareCo,
   Next,
+  ApiRequest,
 } from './types';
 import { createPipe } from './pipe';
 import type { SagaApi } from './pipe';
@@ -313,9 +314,9 @@ export function createApi<Ctx extends ApiCtx = ApiCtx>(
         yield next();
       };
     },
-    request: (req: Partial<RequestInit>) => {
+    request: (req: ApiRequest) => {
       return function* onRequest(ctx: Ctx, next: Next) {
-        ctx.request = new Request(ctx.request || '', req);
+        ctx.request = ctx.req(req);
         yield next();
       };
     },
