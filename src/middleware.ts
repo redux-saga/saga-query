@@ -251,13 +251,11 @@ export function requestMonitor<Ctx extends ApiCtx = ApiCtx>(
   return compose<Ctx>([
     errorHandler,
     queryCtx,
+    urlParser,
     dispatchActions,
     loadingMonitor(errorFn),
+    simpleCache,
   ]);
-}
-
-export function requestParser<Ctx extends ApiCtx = ApiCtx>() {
-  return compose<Ctx>([urlParser, simpleCache]);
 }
 
 export interface PerfCtx<P = any> extends PipeCtx<P> {

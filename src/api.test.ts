@@ -28,9 +28,9 @@ test('createApi - POST', async (t) => {
   const cache = createTable<User>({ name });
   const query = createApi();
 
-  query.use(query.routes());
   query.use(queryCtx);
   query.use(urlParser);
+  query.use(query.routes());
   query.use(function* fetchApi(ctx, next): SagaIterator<any> {
     const json = yield call([ctx.request, 'json']);
     t.deepEqual(ctx.request.url, '/users');
@@ -46,7 +46,7 @@ test('createApi - POST', async (t) => {
   const createUser = query.post<{ email: string }>(
     `/users`,
     function* processUsers(ctx: ApiCtx<any, { users: User[] }>, next) {
-      ctx.request = new Request('', {
+      ctx.request = new Request(ctx.request, {
         method: 'POST',
         body: JSON.stringify({ email: ctx.payload.email }),
       });
@@ -72,9 +72,9 @@ test('createApi - POST with uri', async (t) => {
   const cache = createTable<User>({ name });
   const query = createApi();
 
-  query.use(query.routes());
   query.use(queryCtx);
   query.use(urlParser);
+  query.use(query.routes());
   query.use(function* fetchApi(ctx, next): SagaIterator<any> {
     const json = yield call([ctx.request, 'json']);
     t.deepEqual(ctx.request.url, '/users');
@@ -93,8 +93,7 @@ test('createApi - POST with uri', async (t) => {
     ctx: ApiCtx<{ email: string }, { users: User[] }>,
     next,
   ) {
-    ctx.request = new Request('', {
-      method: 'POST',
+    ctx.request = new Request(ctx.request, {
       body: JSON.stringify({ email: ctx.payload.email }),
     });
 
@@ -123,10 +122,7 @@ test('middleware - with request fn', (t) => {
     t.deepEqual(ctx.request.method, 'POST');
     t.deepEqual(ctx.request.url, '/users');
   });
-  const createUser = query.create(
-    '/users',
-    query.request(new Request('', { method: 'POST' })),
-  );
+  const createUser = query.create('/users', query.request({ method: 'POST' }));
   const store = setupStore(query.saga());
   store.dispatch(createUser());
 });

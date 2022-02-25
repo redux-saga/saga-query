@@ -11,7 +11,9 @@ import type { SagaApi } from './pipe';
 
 export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
   extends SagaApi<Ctx> {
-  request: (r: Ctx['request']) => (ctx: Ctx, next: Next) => SagaIterator<any>;
+  request: (
+    r: Partial<RequestInit>,
+  ) => (ctx: Ctx, next: Next) => SagaIterator<any>;
 
   uri: (uri: string) => {
     get(req: { saga?: any }): CreateAction<Ctx>;
@@ -304,9 +306,9 @@ export function createApi<Ctx extends ApiCtx = ApiCtx>(
     saga: pipe.saga,
     create: pipe.create,
     routes: pipe.routes,
-    request: (req: Ctx['request']) => {
+    request: (req: Partial<RequestInit>) => {
       return function* onRequest(ctx: Ctx, next: Next) {
-        ctx.request = req;
+        ctx.request = new Request(ctx.request || '', req);
         yield next();
       };
     },
