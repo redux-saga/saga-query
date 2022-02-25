@@ -24,7 +24,7 @@ export type ApiFetchResponse<S = any, E = any> =
 
 export interface FetchCtx<P = any> extends PipeCtx<P> {
   request: Request;
-  response: Response;
+  response: Response | null;
 }
 
 export interface FetchJsonCtx<P = any, S = any, E = any> extends FetchCtx<P> {

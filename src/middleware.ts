@@ -38,7 +38,7 @@ export function* errorHandler<Ctx extends PipeCtx = PipeCtx>(
 
 export function* queryCtx<Ctx extends ApiCtx = ApiCtx>(ctx: Ctx, next: Next) {
   if (!ctx.request) ctx.request = new Request('', { method: 'GET' });
-  if (!ctx.response) ctx.response = new Response();
+  if (!ctx.response) ctx.response = null;
   if (!ctx.json) ctx.json = { ok: false, data: {} };
   if (!ctx.actions) ctx.actions = [];
   yield next();
@@ -115,7 +115,7 @@ export function loadingMonitor<Ctx extends ApiCtx = ApiCtx>(
 
     yield next();
 
-    if (typeof ctx.response.ok === 'undefined') {
+    if (!ctx.response) {
       ctx.actions.push(resetLoaderById(id));
       return;
     }
@@ -229,7 +229,7 @@ export function* optimistic<
 
   yield next();
 
-  if (!ctx.response.ok) {
+  if (!ctx.response || !ctx.response.ok) {
     yield put(revert);
   }
 }

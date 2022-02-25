@@ -3,7 +3,7 @@ import { call } from 'redux-saga/effects';
 import { compose } from './pipe';
 import type { FetchCtx, FetchJsonCtx, Next } from './types';
 
-function* headersMdw<CurCtx extends FetchCtx = FetchCtx>(
+export function* headersMdw<CurCtx extends FetchCtx = FetchCtx>(
   ctx: CurCtx,
   next: Next,
 ): SagaIterator<any> {
@@ -19,7 +19,7 @@ function* headersMdw<CurCtx extends FetchCtx = FetchCtx>(
   yield next();
 }
 
-function* fetchMdw<CurCtx extends FetchCtx = FetchCtx>(
+export function* fetchMdw<CurCtx extends FetchCtx = FetchCtx>(
   ctx: CurCtx,
   next: Next,
 ): SagaIterator<any> {
@@ -28,7 +28,7 @@ function* fetchMdw<CurCtx extends FetchCtx = FetchCtx>(
   yield next();
 }
 
-function* jsonMdw<CurCtx extends FetchJsonCtx = FetchJsonCtx>(
+export function* jsonMdw<CurCtx extends FetchJsonCtx = FetchJsonCtx>(
   ctx: CurCtx,
   next: Next,
 ): SagaIterator<any> {
