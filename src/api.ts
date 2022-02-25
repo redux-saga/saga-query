@@ -14,6 +14,7 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
   request: (
     r: Partial<RequestInit>,
   ) => (ctx: Ctx, next: Next) => SagaIterator<any>;
+  cache: () => (ctx: Ctx, next: Next) => SagaIterator<any>;
 
   uri: (uri: string) => {
     get(req: { saga?: any }): CreateAction<Ctx>;
@@ -306,6 +307,12 @@ export function createApi<Ctx extends ApiCtx = ApiCtx>(
     saga: pipe.saga,
     create: pipe.create,
     routes: pipe.routes,
+    cache: () => {
+      return function* onCache(ctx: Ctx, next: Next) {
+        ctx.cache = true;
+        yield next();
+      };
+    },
     request: (req: Partial<RequestInit>) => {
       return function* onRequest(ctx: Ctx, next: Next) {
         ctx.request = new Request(ctx.request || '', req);

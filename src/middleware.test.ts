@@ -203,10 +203,7 @@ test('simpleCache', (t) => {
     yield next();
   });
 
-  const fetchUsers = api.get('/users', function* (ctx, next) {
-    ctx.cache = true;
-    yield next();
-  });
+  const fetchUsers = api.get('/users', api.cache());
   const store = setupStore(api.saga());
 
   const action = fetchUsers();
