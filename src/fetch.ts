@@ -26,8 +26,8 @@ export function* fetchMdw<CurCtx extends FetchCtx = FetchCtx>(
   ctx: CurCtx,
   next: Next,
 ): SagaIterator<any> {
-  const req = ctx.req();
-  const request = new Request(req.url, req);
+  const { url, ...req } = ctx.req();
+  const request = new Request(url, req);
   const response: Response = yield call(fetch, request);
   ctx.response = response;
   yield next();
@@ -51,11 +51,18 @@ export function* jsonMdw<CurCtx extends FetchJsonCtx = FetchJsonCtx>(
     return;
   }
 
-  const data = yield call([ctx.response, 'json']);
-  ctx.json = {
-    ok: ctx.response.ok,
-    data,
-  };
+  try {
+    const data = yield call([ctx.response, 'json']);
+    ctx.json = {
+      ok: ctx.response.ok,
+      data,
+    };
+  } catch (err: any) {
+    ctx.json = {
+      ok: false,
+      data: { message: err.message },
+    };
+  }
 
   yield next();
 }
