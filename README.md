@@ -311,13 +311,18 @@ store.dispatch(fetchUsers());
 
 ### Manipulating the request
 
+Under the hood, `ctx.request` goes directly into `fetch`.  `ctx.response` is
+the `Response` object from `fetch`.  The `fetcher` middleware assumes you are
+dealing with JSON so it will automatically set the `Content-Type` and also try
+to convert the `Response` to JSON.
+
 We built a helper function that is baked into the `ctx` object called `ctx.req()`.
 
 The entire purpose of this function is to help make it easier to update the
 request object that will be sent directly into `fetch`.  It does a smart merge
 with the current `ctx.request` object and whatever you pass into it.
 
-We recommend **not** manipulating the `ctx.request` object directly and instead
+We recommend **not** updating properies on the `ctx.request` object directly and instead
 use `ctx.req` to assign the value of `ctx.request`.
 
 ```ts
@@ -760,9 +765,12 @@ Here is the manual, one-off way to handle optimistic ui:
 ```ts
 import { put, select } from 'saga-query';
 
-const updateUser = api.patch<Partial<User> & { id: string }>(
+interface UpdateUser { id: string; email: string };
+
+const updateUser = api.patch<UpdateUser>(
   `/users/:id`,
-  function* onUpdateUser(ctx: ApiCtx<User>, next) {
+  function* onUpdateUser(ctx: ApiCtx<User, UpdateUser>, next) {
+    // the payload gets typed to UpdateUser
     const { id, email } = ctx.payload;
     ctx.request = ctx.req({
       body: JSON.stringify(email),
