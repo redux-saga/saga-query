@@ -14,7 +14,9 @@ export function* headersMdw<CurCtx extends FetchCtx = FetchCtx>(
 
   const cur = ctx.req();
   if (!cur.headers.hasOwnProperty('Content-Type')) {
-    ctx.req({ headers: { 'Content-Type': 'application/json' } });
+    ctx.request = ctx.req({
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 
   yield next();
@@ -25,7 +27,7 @@ export function* fetchMdw<CurCtx extends FetchCtx = FetchCtx>(
   next: Next,
 ): SagaIterator<any> {
   const req = ctx.req();
-  const request = new Request(req.url || '', req);
+  const request = new Request(req.url, req);
   const response: Response = yield call(fetch, request);
   ctx.response = response;
   yield next();
