@@ -67,6 +67,22 @@ export function* jsonMdw<CurCtx extends FetchJsonCtx = FetchJsonCtx>(
   yield next();
 }
 
-export function fetcher<CurCtx extends FetchJsonCtx = FetchJsonCtx>() {
-  return compose<CurCtx>([headersMdw, fetchMdw, jsonMdw]);
+function apiUrlMdw<CurCtx extends FetchJsonCtx = FetchJsonCtx>(
+  baseUrl: string = '',
+) {
+  return function* (ctx: CurCtx, next: Next): SagaIterator<any> {
+    const req = ctx.req();
+    ctx.request = ctx.req({ url: `${baseUrl}${req.url}` });
+    yield next();
+  };
+}
+
+export function fetcher<CurCtx extends FetchJsonCtx = FetchJsonCtx>(
+  {
+    baseUrl = '',
+  }: {
+    baseUrl?: string;
+  } = { baseUrl: '' },
+) {
+  return compose<CurCtx>([headersMdw, apiUrlMdw(baseUrl), fetchMdw, jsonMdw]);
 }

@@ -13,7 +13,7 @@ state.**
 - [Examples](#examples)
 - [Control your data cache](#control-your-data-cache)
 - [Manipulating the request](#manipulating-the-request)
-- [Simple cache](#simple-cache)
+- [Auto caching](#auto-caching)
 - [Dispatching many actions](#dispatching-many-actions)
 - [Dependent queries](#dependent-queries)
 - [Dynamic endpoints](#dynamic-endpoints)
@@ -41,27 +41,16 @@ state.**
 
 ```ts
 // api.ts
-import { createApi, requestMonitor, call } from 'saga-query';
+import { createApi, requestMonitor, fetcher } from 'saga-query';
 
 const api = createApi();
 api.use(requestMonitor());
 api.use(api.routes());
-
-api.use(function* onFetch(ctx, next) {
-  const { url = "", ...options } = ctx.request;
-  const apiUrl = `https://api.github.com${url}`;
-
-  const resp: Response = yield call(fetch, apiUrl, options);
-  const data = yield call([resp, "json"]);
-
-  ctx.response = { status: resp.status, ok: resp.ok, data };
-
-  yield next();
-});
+api.use(fetcher({ baseUrl: 'https://api.github.com' }));
 
 export const fetchRepo = api.get(
   `/repos/neurosnap/saga-query`,
-  api.request({ simpleCache: true })
+  api.cache()
 );
 ```
 
@@ -217,9 +206,9 @@ import { createTable, createReducerMap } from 'robodux';
 import {
   createApi,
   requestMonitor,
-  // FetchCtx is an interface that's built around using window.fetch
+  // ApiCtx is an interface that's built around using window.fetch
   // You don't have to use it if you don't want to.
-  FetchCtx,
+  ApiCtx,
   put,
   call
 } from 'saga-query';
@@ -232,7 +221,7 @@ const users = createTable<User>({ name: 'users' });
 // The default generic value here is `ApiCtx` which includes a `payload`,
 // `request`, and `response`.
 // The generic passed to `createApi` must extend `ApiCtx` to be accepted.
-const api = createApi<FetchCtx>();
+const api = createApi<ApiCtx>();
 
 // This middleware monitors the lifecycle of the request.  It needs to be
 // loaded before `.routes()` because it needs to be around after everything
@@ -257,23 +246,10 @@ api.use(requestMonitor());
 // happens at the end of the effect.
 api.use(api.routes());
 
-// this is where you define your core fetching logic
-api.use(function* onFetch(ctx, next) {
-  // ctx.request is the object used to make a fetch request when using
-  // `queryCtx` and `urlParser`
-  const { url = '', ...options } = ctx.request;
-  const resp = yield call(fetch, `https://api.com${url}`, options);
-  const data = yield call([resp, 'json']);
-
-  // with `FetchCtx` we want to set the `ctx.response` so other middleware can
-  // use it.
-  ctx.response = { status: resp.status, ok: resp.ok, data };
-
-  // we almost *always* need to call `yield next()` that way other middleware will be
-  // called downstream of this middleware. The only time we don't call `next`
-  // is when we don't want to call any middleware after this one.
-  yield next();
-});
+// Under the hood this is a middleware that handles fetching
+// and endpoint using window.fetch.  It also automatically 
+// processes JSON and stores it in `ctx.json`.
+api.use(fetcher({ baseUrl: 'https://...' }))
 
 // This is how you create a function that will fetch an API endpoint.  The
 // first parameter is the name of the action type.  When using `urlParser` it
@@ -283,20 +259,20 @@ const fetchUsers = api.get(
   `/users`,
   // Since this middleware is first it has the unique benefit of being in full
   // control of when the other middleware get activated.
-  // The type inside of `FetchCtx` is the response object
-  function* processUsers(ctx: FetchCtx<{ users: User[] }>, next) {
+  // The type inside of `ApiCtx` is the response object
+  function* (ctx: ApiCtx<{ users: User[] }>, next) {
     // anything before this call can mutate the `ctx` object before it gets
     // sent to the other middleware
     yield next();
     // anything after the above line happens *after* the middleware gets called and
     // and a fetch has been made.
 
-    // using FetchCtx `ctx.response` is a discriminated union based on the
+    // using ApiCtx `ctx.json` is a discriminated union based on the
     // boolean `ctx.response.ok`.
-    if (!ctx.response.ok) return;
+    if (!ctx.json.ok) return;
 
     // data = { users: User[] };
-    const { data } = ctx.response;
+    const { data } = ctx.json;
     const curUsers = data.users.reduce<MapEntity<User>>((acc, u) => {
       acc[u.id] = u;
       return acc;
@@ -338,15 +314,15 @@ store.dispatch(fetchUsers());
 ```ts
 const createUser = api.post<{ id: string, email: string }>(
   `/users`,
-  function* onCreateUser(ctx: FetchCtx<User>, next) {
+  function* onCreateUser(ctx: ApiCtx<User>, next) {
     // here we manipulate the request before it gets sent to our middleware
     ctx.request = {
       body: JSON.stringify({ email: ctx.payload.email }),
     };
     yield next();
-    if (!ctx.response.ok) return;
+    if (!ctx.json.ok) return;
 
-    const curUser = ctx.response.data;
+    const curUser = ctx.json.data;
     const curUsers = { [curUser.id]: curUser };
 
     yield put(users.actions.add(curUsers));
@@ -365,7 +341,7 @@ const fetchUsers = api.get('/users', api.request({ credentials: 'include' }))
 `api.request()` accepts the request for the `Ctx` that the end-developer
 provides.
 
-### Simple cache
+### Auto caching
 
 If you want to have a cache that doesn't enforce strict types and is more of a
 dumb cache that fetches and stores data for you, then `simpleCache` will
@@ -384,6 +360,7 @@ using middleware.
 import {
   createApi,
   requestMonitor,
+  fetcher,
   timer,
   prepareStore,
 } from 'saga-query';
@@ -391,18 +368,16 @@ import {
 const api = createApi();
 api.use(requestMonitor());
 api.use(api.routes());
-
-// made up api fetch
-api.use(apiFetch);
+api.use(fetcher());
 
 // this will only activate the endpoint at most once every 5 minutes.
 const cacheTimer = timer(5 * 60 * 1000);
 export const fetchUsers = api.get(
   '/users',
   { saga: cacheTimer },
-  // set `simpleCache=true` to have simpleCache middleware cache response data
+  // set `ctx.cache=true` to have simpleCache middleware cache response data
   // automatically
-  api.request({ simpleCache: true }),
+  api.cache(),
 );
 
 const prepared = prepareStore({
@@ -420,7 +395,7 @@ prepared.run();
 ```tsx
 // app.tsx
 import React from 'react';
-import { useQuery } from 'saga-query';
+import { useQuery } from 'saga-query/react';
 
 import { fetchUsers } from './api';
 
@@ -430,21 +405,22 @@ interface User {
 }
 
 const useUsers = () => {
-  const { data: users = [], ...loader } = useQuery<{ users: User[] }>(
-    fetchUsers()
-  );
-  return { users, ...loader };
+  const query = useQuery<{ users: User[] }>(fetchUsers);
+  useEffect(() => {
+    query.trigger();
+  }, []);
+  return query;
 }
 
 export const App = () => {
-  const { users, isInitialLoading, isError, message } = useUsers();
+  const { data = [], isInitialLoading, isError, message } = useUsers();
 
   if (isInitialLoading) return <div>Loading ...</div>;
   if (isError) return <div>Error: {message}</div>;
 
   return (
     <div>
-      {users.map((user) => <div key={user.id}>{user.name}</div>)}
+      {data.map((user) => <div key={user.id}>{user.name}</div>)}
     </div>
   );
 }
@@ -477,13 +453,13 @@ const fetchMessages = api.get<{ id: string }>(
     // The return value of a `.run` is the entire `ctx` object.
     const mailCtx = yield call(fetchMailbox.run, fetchMailbox());
 
-    if (!mailCtx.response.ok) {
+    if (!mailCtx.json.ok) {
       yield next();
       return;
     }
 
     ctx.request = {
-      url: `/mailboxes/${mailCtx.response.id}/messages`
+      url: `/mailboxes/${mailCtx.json.id}/messages`
     };
 
     yield next();
@@ -590,8 +566,7 @@ store.dispatch(action());
 
 ### Loading state
 
-When using `prepareStore` in conjunction with `dispatchActions`
-and `loadingMonitor` the loading state will automatically be
+When using `prepareStore` in conjunction with `requestMonitor` the loading state will automatically be
 added to all of your endpoints.  We also export `QueryState` which is the
 interface that contains all the state types that `saga-query` provides.
 
@@ -599,8 +574,9 @@ interface that contains all the state types that `saga-query` provides.
 // app.tsx
 import React, { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { selectLoaderById, QueryState } from 'saga-query';
-import { MapEntity } from 'robodux';
+import type { QueryState } from 'saga-query';
+import { useLoader } from 'saga-query/react';
+import type { MapEntity } from 'robodux';
 
 import {
   fetchUsers,
@@ -614,9 +590,8 @@ interface AppState extends QueryState {
 const App = () => {
   const dispatch = useDispatch();
   const users = useSelector(selectUsersAsList);
-  const loader = useSelector(
-    (s: AppState) => selectLoaderById(s, { id: `${fetchUsers}` })
-  );
+  const loader = useLoader(fetchUsers);
+
   useEffect(() => {
     dispatch(fetchUsers());
   }, []);
@@ -780,7 +755,7 @@ import { put, select } from 'saga-query';
 
 const updateUser = api.patch<Partial<User> & { id: string }>(
   `/users/:id`,
-  function* onUpdateUser(ctx: FetchCtx<User>, next) {
+  function* onUpdateUser(ctx: ApiCtx<User>, next) {
     const { id, email } = ctx.payload;
     ctx.request = {
       body: JSON.stringify(email),
@@ -795,14 +770,14 @@ const updateUser = api.patch<Partial<User> & { id: string }>(
     yield next();
 
     // oops something went wrong, revert!
-    if (!ctx.response.ok) {
+    if (!ctx.json.ok) {
       yield put(users.actions.add({ [prevUser.id]: prevUser });
       return;
     }
 
     // even though we know what was updated, it's still a good habit to
     // update our local cache with what the server sent us
-    const nextUser = ctx.response.data;
+    const nextUser = ctx.json.data;
     yield put(users.actions.add({ [nextUser.id]: nextUser }));
   },
 )
@@ -983,6 +958,7 @@ import {
   prepareStore,
   createApi,
   requestMonitor,
+  fetcher,
 } from 'saga-query';
 import { createSlice } from 'redux-toolkit';
 
@@ -1001,12 +977,12 @@ const users = createSlice({
 const api = createApi();
 api.use(requestMonitor());
 api.use(api.routes());
-// made up window.fetch logic
-api.use(apiFetch);
+api.use(fetcher());
 
 const fetchUsers = api.get<{ users: User[] }>('/users', function* (ctx, next) {
   yield next();
-  const { data } = response.data;
+  if (!ctx.json.ok) return;
+  const { data } = ctx.json.data;
   yield put(users.actions.add(data.users));
 });
 

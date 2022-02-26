@@ -21,12 +21,7 @@ test('fetch - should be able to fetch a resource and save automatically', async 
   const api = createApi();
   api.use(requestMonitor());
   api.use(api.routes());
-  api.use(function* (ctx, next) {
-    const url = ctx.req().url;
-    ctx.request = ctx.req({ url: `${baseUrl}${url}` });
-    yield next();
-  });
-  api.use(fetcher());
+  api.use(fetcher({ baseUrl }));
 
   const fetchUsers = api.get('/users', function* (ctx, next) {
     ctx.cache = true;
