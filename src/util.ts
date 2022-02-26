@@ -3,6 +3,7 @@ import type { Reducer } from 'redux';
 import { prepareStore } from './store';
 
 import { API_ACTION_PREFIX } from './constants';
+import { ApiRequest, RequiredApiRequest } from '.';
 export const isFn = (fn?: any) => fn && typeof fn === 'function';
 export const isObject = (obj?: any) => typeof obj === 'object' && obj !== null;
 export const createAction = (curType: string) => {
@@ -29,3 +30,29 @@ export function setupStore(
   prepared.run();
   return store;
 }
+
+export const mergeHeaders = (
+  cur?: { [key: string]: string },
+  next?: { [key: string]: string },
+): HeadersInit => {
+  if (!cur && !next) return {};
+  if (!cur && next) return next;
+  if (cur && !next) return cur;
+  return { ...cur, ...next };
+};
+
+export const mergeRequest = (
+  cur?: ApiRequest | null,
+  next?: ApiRequest | null,
+): RequiredApiRequest => {
+  const defaultReq = { url: '', method: 'GET', headers: mergeHeaders() };
+  if (!cur && !next) return { ...defaultReq, headers: mergeHeaders() };
+  if (!cur && next) return { ...defaultReq, ...next };
+  if (cur && !next) return { ...defaultReq, ...cur };
+  return {
+    ...defaultReq,
+    ...cur,
+    ...next,
+    headers: mergeHeaders((cur as any).headers, (next as any).headers),
+  };
+};

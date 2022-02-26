@@ -41,12 +41,11 @@ state.**
 
 ```ts
 // api.ts
-import { createApi, requestMonitor, requestParser, call } from 'saga-query';
+import { createApi, requestMonitor, call } from 'saga-query';
 
 const api = createApi();
 api.use(requestMonitor());
 api.use(api.routes());
-api.use(requestParser());
 
 api.use(function* onFetch(ctx, next) {
   const { url = "", ...options } = ctx.request;
@@ -81,14 +80,14 @@ const useUsers = () => {
 }
 
 const App = () => {
-  const cache = useUsers();
+  const { isInitialLoading, isError, data, message } = useUsers();
 
-  if (cache.isInitialLoading) return <div>Loading ...</div>
-  if (cache.isError) return <div>{cache.message}</div>
+  if (isInitialLoading) return <div>Loading ...</div>
+  if (isError) return <div>{message}</div>
 
   return (
     <div>
-      {cache.data.map((user) => <div key={user.id}>{user.email}</div>)}
+      {data.map((user) => <div key={user.id}>{user.email}</div>)}
     </div>
   );
 }
@@ -146,7 +145,6 @@ for using redux and a flexible middleware to handle all business logic.
 
 - [Simple](https://codesandbox.io/s/saga-query-simple-ifcwf)
 - [With Loader](https://codesandbox.io/s/saga-query-basic-jtceo)
-- [Simple cache](https://codesandbox.io/s/saga-query-simple-cache-0ge33)
 - [Polling](https://codesandbox.io/s/saga-query-polling-1fwfo)
 - [Optimistic update](https://codesandbox.io/s/saga-query-optimistic-xwzz2)
 - [Undo](https://codesandbox.io/s/saga-query-undo-nn7fn)
@@ -219,7 +217,6 @@ import { createTable, createReducerMap } from 'robodux';
 import {
   createApi,
   requestMonitor,
-  requestParser,
   // FetchCtx is an interface that's built around using window.fetch
   // You don't have to use it if you don't want to.
   FetchCtx,
@@ -239,13 +236,19 @@ const api = createApi<FetchCtx>();
 
 // This middleware monitors the lifecycle of the request.  It needs to be
 // loaded before `.routes()` because it needs to be around after everything
-// else. It is composed of other middleware: dispatchActions and loadingMonitor.
+// else. 
 // [dispatchActions]  This middleware leverages `redux-batched-actions` to
 //  dispatch all the actions stored within `ctx.actions` which get added by
 //  other middleware during the lifecycle of the request.
 // [loadingMonitor] This middleware will monitor the lifecycle of a request and
 //  attach the appropriate loading states to the loader associated with the
 //  endpoint.
+// [queryCtx] sets up the ctx object with `ctx.request` and `ctx.response`
+//  required for `createApi` to function properly.
+// [urlParser] is a middleware that will take the name of `api.create(name)` and
+//  replace it with the values passed into the action.
+// [simpleCache] is a middleware that will automatically store the response of
+//  endpoints if the endpoint has `request.simpleCache = true`
 api.use(requestMonitor());
 
 // This is where all the endpoints (e.g. `.get()`, `.put()`, etc.) you created
@@ -253,16 +256,6 @@ api.use(requestMonitor());
 // the beginning of the stack so everything after `yield next()`
 // happens at the end of the effect.
 api.use(api.routes());
-
-// This middleware is composed of other middleware: queryCtx, urlParser, and
-// simpleCache
-// [queryCtx] sets up the ctx object with `ctx.request` and `ctx.response`
-//  required for `createApi` to function properly.
-// [urlParser] is a middleware that will take the name of `api.create(name)` and
-//  replace it with the values passed into the action.
-// [simpleCache] is a middleware that will automatically store the response of
-//  endpoints if the endpoint has `request.simpleCache = true`
-api.use(requestParser());
 
 // this is where you define your core fetching logic
 api.use(function* onFetch(ctx, next) {
@@ -391,7 +384,6 @@ using middleware.
 import {
   createApi,
   requestMonitor,
-  requestParser,
   timer,
   prepareStore,
 } from 'saga-query';
@@ -399,7 +391,6 @@ import {
 const api = createApi();
 api.use(requestMonitor());
 api.use(api.routes());
-api.use(requestParser());
 
 // made up api fetch
 api.use(apiFetch);
@@ -599,8 +590,8 @@ store.dispatch(action());
 
 ### Loading state
 
-When using `prepareStore` in conjunction with `dispatchActions`,
-`loadingMonitor`, and `requestParser` the loading state will automatically be
+When using `prepareStore` in conjunction with `dispatchActions`
+and `loadingMonitor` the loading state will automatically be
 added to all of your endpoints.  We also export `QueryState` which is the
 interface that contains all the state types that `saga-query` provides.
 
@@ -867,7 +858,6 @@ import { createAction } from 'robodux';
 import {
   createApi,
   requestMonitor,
-  requestParser,
   undoer,
   undo,
   doIt,
@@ -886,7 +876,6 @@ const messages = createTable<Message>({ name: 'messages' });
 const api = createApi<UndoCtx>();
 api.use(requestMonitor());
 api.use(api.routes());
-api.use(requestParser());
 api.use(undoer());
 
 const archiveMessage = api.patch<{ id: string; }>(
@@ -994,7 +983,6 @@ import {
   prepareStore,
   createApi,
   requestMonitor,
-  requestParser,
 } from 'saga-query';
 import { createSlice } from 'redux-toolkit';
 
@@ -1013,7 +1001,6 @@ const users = createSlice({
 const api = createApi();
 api.use(requestMonitor());
 api.use(api.routes());
-api.use(requestParser());
 // made up window.fetch logic
 api.use(apiFetch);
 

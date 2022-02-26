@@ -8,6 +8,43 @@ export interface PipeCtx<P = any> {
   action: ActionWithPayload<CreateActionPayload<P>>;
 }
 
+export interface ApiFetchSuccess<S = any> {
+  ok: true;
+  data: S;
+}
+
+export interface ApiFetchError<E = any> {
+  ok: false;
+  data: E;
+}
+
+export type ApiFetchResponse<S = any, E = any> =
+  | ApiFetchSuccess<S>
+  | ApiFetchError<E>;
+
+export type ApiRequest = Partial<{ url: string } & RequestInit>;
+export type RequiredApiRequest = {
+  url: string;
+  headers: HeadersInit;
+} & Partial<RequestInit>;
+
+export interface FetchCtx<P = any> extends PipeCtx<P> {
+  request: ApiRequest | null;
+  req: (r?: ApiRequest) => RequiredApiRequest;
+  response: Response | null;
+}
+
+export interface FetchJsonCtx<P = any, S = any, E = any> extends FetchCtx<P> {
+  json: ApiFetchResponse<S, E>;
+}
+
+export interface ApiCtx<P = any, S = any, E = any>
+  extends FetchJsonCtx<P, S, E> {
+  actions: Action[];
+  loader: LoadingMapPayload<Record<string, any>> | null;
+  cache: boolean;
+}
+
 export type Middleware<Ctx extends PipeCtx = PipeCtx> = (
   ctx: Ctx,
   next: Next,
@@ -15,6 +52,7 @@ export type Middleware<Ctx extends PipeCtx = PipeCtx> = (
 export type MiddlewareCo<Ctx extends PipeCtx = PipeCtx> =
   | Middleware<Ctx>
   | Middleware<Ctx>[];
+
 export type Next = () => any;
 
 export interface Action {
@@ -35,26 +73,8 @@ export interface CreateAction<Ctx> {
   (): ActionWithPayload<CreateActionPayload<{}>>;
   run: (p: ActionWithPayload<CreateActionPayload<{}>>) => SagaIterator<Ctx>;
 }
+
 export interface CreateActionWithPayload<Ctx, P> {
   (p: P): ActionWithPayload<CreateActionPayload<P>>;
   run: (a: ActionWithPayload<CreateActionPayload<P>>) => SagaIterator<Ctx>;
-}
-
-export interface RequestData {
-  [key: string]: any;
-}
-
-export interface RequestCtx {
-  url: string;
-  method: string;
-  body: any;
-  data: RequestData;
-  simpleCache: boolean;
-}
-
-export interface ApiCtx<P = any, R = any> extends PipeCtx<P> {
-  request: Partial<RequestCtx>;
-  response: R;
-  actions: Action[];
-  loader: LoadingMapPayload<Record<string, any>> | null;
 }

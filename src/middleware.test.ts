@@ -2,20 +2,21 @@ import test from 'ava';
 import { takeLatest, put, delay } from 'redux-saga/effects';
 import { createReducerMap, createTable, defaultLoadingItem } from 'robodux';
 import type { MapEntity } from 'robodux';
+import { Buffer } from 'buffer';
 
 import { createApi } from './api';
 import {
   urlParser,
   queryCtx,
-  requestParser,
   requestMonitor,
   undo,
+  undoer,
 } from './middleware';
 import type { UndoCtx } from './middleware';
-import type { FetchCtx } from './fetch';
+import type { ApiCtx } from './types';
 import { setupStore } from './util';
 import { DATA_NAME, LOADERS_NAME, createQueryState } from './slice';
-import { undoer } from './';
+import { SagaIterator } from 'redux-saga';
 
 interface User {
   id: string;
@@ -30,34 +31,37 @@ function* latest(action: string, saga: any, ...args: any[]) {
   yield takeLatest(`${action}`, saga, ...args);
 }
 
+const jsonBlob = (data: any) => {
+  return Buffer.from(JSON.stringify(data));
+};
+
 test('middleware - basic', (t) => {
   const name = 'users';
   const cache = createTable<User>({ name });
-  const query = createApi<FetchCtx>();
+  const query = createApi<ApiCtx>();
 
-  query.use(query.routes());
   query.use(queryCtx);
   query.use(urlParser);
+  query.use(query.routes());
   query.use(function* fetchApi(ctx, next) {
-    if (`${ctx.request.url}`.startsWith('/users/')) {
-      const data = mockUser2;
-      ctx.response = { status: 200, ok: true, data };
+    if (`${ctx.req().url}`.startsWith('/users/')) {
+      ctx.json = { ok: true, data: mockUser2 };
       yield next();
       return;
     }
     const data = {
       users: [mockUser],
     };
-    ctx.response = { status: 200, ok: true, data };
+    ctx.json = { ok: true, data };
     yield next();
   });
 
   const fetchUsers = query.create(
     `/users`,
-    function* processUsers(ctx: FetchCtx<{ users: User[] }>, next) {
+    function* processUsers(ctx: ApiCtx<any, { users: User[] }>, next) {
       yield next();
-      if (!ctx.response.ok) return;
-      const { users } = ctx.response.data;
+      if (!ctx.json.ok) return;
+      const { users } = ctx.json.data;
       const curUsers = users.reduce<MapEntity<User>>((acc, u) => {
         acc[u.id] = u;
         return acc;
@@ -71,13 +75,11 @@ test('middleware - basic', (t) => {
     {
       saga: latest,
     },
-    function* processUser(ctx: FetchCtx<User>, next) {
-      ctx.request = {
-        method: 'POST',
-      };
+    function* processUser(ctx: ApiCtx<User>, next) {
+      ctx.request = ctx.req({ method: 'POST' });
       yield next();
-      if (!ctx.response.ok) return;
-      const curUser = ctx.response.data;
+      if (!ctx.json.ok) return;
+      const curUser = ctx.json.data;
       const curUsers = { [curUser.id]: curUser };
       yield put(cache.actions.add(curUsers));
     },
@@ -100,27 +102,22 @@ test('middleware - basic', (t) => {
 test('middleware - with loader', (t) => {
   const users = createTable<User>({ name: 'users' });
 
-  const api = createApi<FetchCtx>();
+  const api = createApi<ApiCtx>();
   api.use(requestMonitor());
   api.use(api.routes());
-  api.use(requestParser());
   api.use(function* fetchApi(ctx, next) {
-    ctx.response = {
-      status: 200,
-      ok: true,
-      data: {
-        users: [mockUser],
-      },
-    };
+    ctx.response = new Response(jsonBlob(mockUser), { status: 200 });
+    ctx.json = { ok: true, data: { users: [mockUser] } };
     yield next();
   });
 
   const fetchUsers = api.create(
     `/users`,
-    function* processUsers(ctx: FetchCtx<{ users: User[] }>, next) {
+    function* processUsers(ctx: ApiCtx<any, { users: User[] }>, next) {
       yield next();
-      if (!ctx.response.ok) return;
-      const { data } = ctx.response;
+      if (!ctx.json.ok) return;
+
+      const { data } = ctx.json;
       const curUsers = data.users.reduce<MapEntity<User>>((acc, u) => {
         acc[u.id] = u;
         return acc;
@@ -144,38 +141,47 @@ test('middleware - with loader', (t) => {
   });
 });
 
-test('middleware - with POST', (t) => {
+test('middleware - with POST', async (t) => {
   t.plan(1);
   const name = 'users';
   const cache = createTable<User>({ name });
-  const query = createApi<FetchCtx>();
+  const query = createApi();
 
-  query.use(query.routes());
   query.use(queryCtx);
   query.use(urlParser);
-  query.use(function* fetchApi(ctx, next) {
-    t.deepEqual(ctx.request, {
+  query.use(query.routes());
+  query.use(function* fetchApi(ctx, next): SagaIterator<any> {
+    const request = ctx.req();
+    t.deepEqual(request, {
       url: '/users',
+      headers: {},
       method: 'POST',
-      body: JSON.stringify({ email: mockUser.email }),
+      body: JSON.stringify({ email: 'test@test.com' }),
     });
+
     const data = {
       users: [mockUser],
     };
-    ctx.response = { status: 200, ok: true, data };
+    ctx.response = new Response(jsonBlob(data), { status: 200 });
     yield next();
   });
 
   const createUser = query.create<{ email: string }>(
     `/users [POST]`,
-    function* processUsers(ctx: FetchCtx<{ users: User[] }>, next) {
-      ctx.request = {
+    function* processUsers(
+      ctx: ApiCtx<{ email: string }, { users: User[] }>,
+      next,
+    ) {
+      ctx.request = ctx.req({
         method: 'POST',
         body: JSON.stringify({ email: ctx.payload.email }),
-      };
+      });
+
       yield next();
-      if (!ctx.response.ok) return;
-      const { users } = ctx.response.data;
+
+      if (!ctx.json.ok) return;
+
+      const { users } = ctx.json.data;
       const curUsers = users.reduce<MapEntity<User>>((acc, u) => {
         acc[u.id] = u;
         return acc;
@@ -189,23 +195,18 @@ test('middleware - with POST', (t) => {
   store.dispatch(createUser({ email: mockUser.email }));
 });
 
-test('quickSave', (t) => {
-  const api = createApi<FetchCtx>();
+test('simpleCache', (t) => {
+  const api = createApi<ApiCtx>();
   api.use(requestMonitor());
   api.use(api.routes());
-  api.use(requestParser());
   api.use(function* fetchApi(ctx, next) {
-    ctx.response = {
-      status: 200,
-      ok: true,
-      data: {
-        users: [mockUser],
-      },
-    };
+    const data = { users: [mockUser] };
+    ctx.response = new Response(jsonBlob(data));
+    ctx.json = { ok: true, data };
     yield next();
   });
 
-  const fetchUsers = api.get('/users', api.request({ simpleCache: true }));
+  const fetchUsers = api.get('/users', api.cache());
   const store = setupStore(api.saga());
 
   const action = fetchUsers();
@@ -225,31 +226,26 @@ test('quickSave', (t) => {
 test('overriding default loader behavior', (t) => {
   const users = createTable<User>({ name: 'users' });
 
-  const api = createApi<FetchCtx>();
+  const api = createApi<ApiCtx>();
   api.use(requestMonitor());
   api.use(api.routes());
-  api.use(requestParser());
-
   api.use(function* fetchApi(ctx, next) {
-    ctx.response = {
-      status: 200,
-      ok: true,
-      data: {
-        users: [mockUser],
-      },
-    };
+    const data = { users: [mockUser] };
+    ctx.response = new Response(jsonBlob(data));
+    ctx.json = { ok: true, data };
     yield next();
   });
 
   const fetchUsers = api.create(
     `/users`,
-    function* processUsers(ctx: FetchCtx<{ users: User[] }>, next) {
+    function* (ctx: ApiCtx<any, { users: User[] }>, next) {
       const id = ctx.name;
       yield next();
-      if (!ctx.response.ok) {
+
+      if (!ctx.json.ok) {
         return;
       }
-      const { data } = ctx.response;
+      const { data } = ctx.json;
       const curUsers = data.users.reduce<MapEntity<User>>((acc, u) => {
         acc[u.id] = u;
         return acc;
@@ -277,23 +273,16 @@ test('overriding default loader behavior', (t) => {
 });
 
 test('undo', (t) => {
-  const users = createTable<User>({ name: 'users' });
-
   const api = createApi<UndoCtx>();
   api.use(requestMonitor());
   api.use(api.routes());
-  api.use(requestParser());
   api.use(undoer());
 
   api.use(function* fetchApi(ctx, next) {
     yield delay(500);
-    ctx.response = {
+    ctx.response = new Response(jsonBlob({ users: [mockUser] }), {
       status: 200,
-      ok: true,
-      data: {
-        users: [mockUser],
-      },
-    };
+    });
     yield next();
   });
 
@@ -314,7 +303,6 @@ test('undo', (t) => {
 
 test('requestMonitor - error handler', (t) => {
   t.plan(1);
-  const orgErr = console.error;
   let err = false;
   console.error = (msg: string) => {
     if (err) return;
@@ -323,7 +311,7 @@ test('requestMonitor - error handler', (t) => {
   };
   const name = 'users';
   const cache = createTable<User>({ name });
-  const query = createApi<FetchCtx>();
+  const query = createApi<ApiCtx>();
 
   query.use(requestMonitor());
   query.use(query.routes());

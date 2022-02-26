@@ -10,9 +10,16 @@ import {
 } from 'redux-saga/effects';
 import type { SagaIterator } from 'redux-saga';
 
-import type { Action, ApiCtx, Next, PipeCtx } from './types';
+import type {
+  Action,
+  ApiCtx,
+  Next,
+  PipeCtx,
+  ApiRequest,
+  RequiredApiRequest,
+} from './types';
 import { compose } from './pipe';
-import { isObject, createAction } from './util';
+import { isObject, createAction, mergeRequest } from './util';
 import {
   setLoaderStart,
   setLoaderError,
@@ -37,8 +44,13 @@ export function* errorHandler<Ctx extends PipeCtx = PipeCtx>(
 }
 
 export function* queryCtx<Ctx extends ApiCtx = ApiCtx>(ctx: Ctx, next: Next) {
-  if (!ctx.request) ctx.request = { url: '', method: 'GET' };
-  if (!ctx.response) ctx.response = {};
+  if (!ctx.req) {
+    ctx.req = (r?: ApiRequest): RequiredApiRequest =>
+      mergeRequest(ctx.request, r);
+  }
+  if (!ctx.request) ctx.request = ctx.req();
+  if (!ctx.response) ctx.response = null;
+  if (!ctx.json) ctx.json = { ok: false, data: {} };
   if (!ctx.actions) ctx.actions = [];
   yield next();
 }
@@ -62,39 +74,23 @@ export function* urlParser<Ctx extends ApiCtx = ApiCtx>(ctx: Ctx, next: Next) {
     return;
   }
 
-  if (!ctx.request) throw new Error('ctx.request does not exist');
-  if (!ctx.request.url) {
-    let url = Object.keys(options).reduce((acc, key) => {
-      return acc.replace(`:${key}`, options[key]);
-    }, ctx.name);
+  let url = Object.keys(options).reduce((acc, key) => {
+    return acc.replace(`:${key}`, options[key]);
+  }, ctx.name);
 
-    url = httpMethods.reduce((acc, method) => {
-      const pattern = new RegExp(`\\s*\\[` + method + `\\]\\s*`, 'i');
-      const result = acc.replace(pattern, '');
-      if (result.length !== acc.length) {
-        ctx.request.method = method.toLocaleUpperCase();
-      }
-      return result;
-    }, url);
-    ctx.request.url = url;
-  }
+  let method = '';
+  httpMethods.forEach((curMethod) => {
+    const pattern = new RegExp(`\\s*\\[` + curMethod + `\\]\\s*`, 'i');
+    const tmpUrl = url.replace(pattern, '');
+    if (tmpUrl.length !== url.length) {
+      method = curMethod.toLocaleUpperCase();
+    }
+    url = tmpUrl;
+  }, url);
 
-  // TODO: should this be a separate middleware?
-  if (!ctx.request.body && ctx.request.data) {
-    ctx.request.body = {
-      body: JSON.stringify(ctx.request.data),
-    };
-  }
-
-  if (!ctx.request.method) {
-    httpMethods.forEach((method) => {
-      const url = ctx.request.url || '';
-      const pattern = new RegExp(`\\s*\\[` + method + `\\]\\s*`, 'i');
-      const result = url.replace(pattern, '');
-      if (result.length !== url.length) {
-        ctx.request.method = method.toLocaleUpperCase();
-      }
-    });
+  ctx.request = ctx.req({ url });
+  if (method) {
+    ctx.request = ctx.req({ method });
   }
 
   yield next();
@@ -108,7 +104,7 @@ export function* dispatchActions(ctx: { actions: Action[] }, next: Next) {
 }
 
 export function loadingMonitor<Ctx extends ApiCtx = ApiCtx>(
-  errorFn: (ctx: Ctx) => string = (ctx) => ctx.response?.data?.message || '',
+  errorFn: (ctx: Ctx) => string = (ctx) => ctx.json?.data?.message || '',
 ) {
   return function* trackLoading(ctx: Ctx, next: Next) {
     const id = ctx.name;
@@ -117,7 +113,7 @@ export function loadingMonitor<Ctx extends ApiCtx = ApiCtx>(
 
     yield next();
 
-    if (typeof ctx.response.ok === 'undefined') {
+    if (!ctx.response) {
       ctx.actions.push(resetLoaderById(id));
       return;
     }
@@ -134,7 +130,7 @@ export function loadingMonitor<Ctx extends ApiCtx = ApiCtx>(
   };
 }
 
-export interface UndoCtx<R = any, P = any> extends ApiCtx<R, P> {
+export interface UndoCtx<P = any, S = any, E = any> extends ApiCtx<P, S, E> {
   undoable: boolean;
 }
 
@@ -231,7 +227,7 @@ export function* optimistic<
 
   yield next();
 
-  if (!ctx.response.ok) {
+  if (!ctx.response || !ctx.response.ok) {
     yield put(revert);
   }
 }
@@ -241,8 +237,8 @@ export function* simpleCache<Ctx extends ApiCtx = ApiCtx>(
   next: Next,
 ) {
   yield next();
-  if (!ctx.request.simpleCache) return;
-  const { data } = ctx.response;
+  if (!ctx.cache) return;
+  const { data } = ctx.json;
   const key = ctx.key;
   ctx.actions.push(addData({ [key]: data }));
 }
@@ -253,13 +249,11 @@ export function requestMonitor<Ctx extends ApiCtx = ApiCtx>(
   return compose<Ctx>([
     errorHandler,
     queryCtx,
+    urlParser,
     dispatchActions,
     loadingMonitor(errorFn),
+    simpleCache,
   ]);
-}
-
-export function requestParser<Ctx extends ApiCtx = ApiCtx>() {
-  return compose<Ctx>([urlParser, simpleCache]);
 }
 
 export interface PerfCtx<P = any> extends PipeCtx<P> {
