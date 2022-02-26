@@ -311,15 +311,26 @@ store.dispatch(fetchUsers());
 
 ### Manipulating the request
 
+We built a helper function that is baked into the `ctx` object called `ctx.req()`.
+
+The entire purpose of this function is to help make it easier to update the
+request object that will be sent directly into `fetch`.  It does a smart merge
+with the current `ctx.request` object and whatever you pass into it.
+
+We recommend **not** manipulating the `ctx.request` object directly and instead
+use `ctx.req` to assign the value of `ctx.request`.
+
 ```ts
 const createUser = api.post<{ id: string, email: string }>(
   `/users`,
   function* onCreateUser(ctx: ApiCtx<User>, next) {
     // here we manipulate the request before it gets sent to our middleware
-    ctx.request = {
+    ctx.request = ctx.req({
       body: JSON.stringify({ email: ctx.payload.email }),
-    };
+    });
+
     yield next();
+
     if (!ctx.json.ok) return;
 
     const curUser = ctx.json.data;
@@ -458,9 +469,9 @@ const fetchMessages = api.get<{ id: string }>(
       return;
     }
 
-    ctx.request = {
+    ctx.request = ctx.req({
       url: `/mailboxes/${mailCtx.json.id}/messages`
-    };
+    });
 
     yield next();
   },
@@ -483,14 +494,10 @@ api.post<{ message: string }>('create-message', function* onCreateMsg(ctx, next)
   const mailbox = yield select(selectMailbox);
   const message = ctx.payload.message;
 
-  ctx.request = {
+  ctx.request = ctx.req({
     url: `/mailboxes/${mailbox.id}/messages`,
-    // NOTE: at this point in time, when `ctx.request.url` is present before
-    // `urlParser` is activated, then we cannot automatically set the `method`
-    // property, you **must** add it youself.
-    method: 'POST',
     body: JSON.stringify({ message }),
-  };
+  });
 
   yield next();
 })
@@ -757,9 +764,9 @@ const updateUser = api.patch<Partial<User> & { id: string }>(
   `/users/:id`,
   function* onUpdateUser(ctx: ApiCtx<User>, next) {
     const { id, email } = ctx.payload;
-    ctx.request = {
+    ctx.request = ctx.req({
       body: JSON.stringify(email),
-    };
+    });
 
     // save the current user record in a variable
     const prevUser = yield select(selectUserById, { id }));
@@ -803,10 +810,10 @@ api.patch(
       revert: users.actions.add({ [id]: prevUser }),
     };
 
-    ctx.request = {
+    ctx.request = ctx.req({
       method: 'PATCH',
       body: JSON.stringify({ email }),
-    };
+    });
 
     yield next();
   }
@@ -859,9 +866,9 @@ const archiveMessage = api.patch<{ id: string; }>(
     ctx.undoable = true;
 
     // prepare the request
-    ctx.request = {
+    ctx.request = ctx.req({
       body: JSON.stringify({ archived: true }),
-    };
+    });
 
     // make the API request
     yield next();
