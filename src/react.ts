@@ -35,7 +35,7 @@ export function useQuery<D = any, S = any, P = any>(
   return { ...loader, trigger, data: data || null };
 }
 
-export function useSimpleCache<D = any, S = any>(action: {
+export function useCache<D = any, S = any>(action: {
   payload: { name: string; key: string };
 }): Data<D> {
   const dispatch = useDispatch();

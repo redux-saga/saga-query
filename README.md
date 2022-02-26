@@ -57,11 +57,11 @@ export const fetchRepo = api.get(
 ```tsx
 // app.tsx
 import React, { useEffect } from 'react';
-import { useSimpleCache } from 'saga-query';
+import { useCache } from 'saga-query';
 import { fetchUsers } from './api';
 
 const useUsers = () => {
-  const cache = useSimpleCache(fetchUsers());
+  const cache = useCache(fetchUsers());
 
   useEffect(() => {
     cache.trigger();
@@ -237,7 +237,7 @@ const api = createApi<ApiCtx>();
 // [urlParser] is a middleware that will take the name of `api.create(name)` and
 //  replace it with the values passed into the action.
 // [simpleCache] is a middleware that will automatically store the response of
-//  endpoints if the endpoint has `request.simpleCache = true`
+//  endpoints if the endpoint has `ctx.cache = true`
 api.use(requestMonitor());
 
 // This is where all the endpoints (e.g. `.get()`, `.put()`, etc.) you created
@@ -624,7 +624,7 @@ const App = () => {
 
 ### React
 
-We built a couple of simple hooks `useQuery` and `useSimpleCache` to make
+We built a couple of simple hooks `useQuery` and `useCache` to make
 interacting with `saga-query` easier.  Having said that, it would be trivial to
 build your own custom hooks to do exactly what you want.
 
