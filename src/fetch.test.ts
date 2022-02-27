@@ -157,8 +157,17 @@ test('fetch - POST', async (t) => {
 
   const fetchUsers = api.post('/users', function* (ctx, next) {
     ctx.cache = true;
-    t.deepEqual(ctx.req(), { url: '/users', headers: {}, method: 'POST' });
+    ctx.request = ctx.req({ body: JSON.stringify(mockUser) });
     yield next();
+
+    t.deepEqual(ctx.req(), {
+      url: `${baseUrl}/users`,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      method: 'POST',
+      body: JSON.stringify(mockUser),
+    });
 
     t.deepEqual(ctx.json, { ok: true, data: mockUser });
   });
