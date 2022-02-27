@@ -145,3 +145,27 @@ test('fetch - malformed json', async (t) => {
 
   await delay();
 });
+
+test('fetch - POST', async (t) => {
+  t.plan(2);
+  nock(baseUrl).post('/users').reply(200, mockUser);
+
+  const api = createApi();
+  api.use(requestMonitor());
+  api.use(api.routes());
+  api.use(fetcher({ baseUrl }));
+
+  const fetchUsers = api.post('/users', function* (ctx, next) {
+    ctx.cache = true;
+    t.deepEqual(ctx.req(), { url: '/users', headers: {}, method: 'POST' });
+    yield next();
+
+    t.deepEqual(ctx.json, { ok: true, data: mockUser });
+  });
+
+  const store = setupStore(api.saga());
+  const action = fetchUsers();
+  store.dispatch(action);
+
+  await delay();
+});
