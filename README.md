@@ -32,10 +32,13 @@ state.**
 
 - Write middleware to handle fetching, synchronizing, and caching API requests
   on the front-end
-- A familiar middleware system that node.js developers are familiar with
-  (e.g. express.js)
+- A middleware system that node.js developers are familiar with
+  (e.g. express.js, koa.js)
+- Automatically track loading states for data fetching
+- Automatically cache data in redux
 - Simple recipes to handle complex use-cases like cancellation, polling,
-  optimistic updates, loading states, undo, react
+  optimistic updates, loading states, undo
+- React hooks to make it even easier to use in react applications
 - Full control over the data fetching and caching layers in your application
 - Fine tune selectors for your specific needs
 
@@ -57,26 +60,34 @@ export const fetchRepo = api.get(
 ```tsx
 // app.tsx
 import React, { useEffect } from 'react';
-import { useCache } from 'saga-query';
-import { fetchUsers } from './api';
+import { useCache } from 'saga-query/react';
+import { fetchRepo } from './api';
 
-const useUsers = () => {
-  const cache = useCache(fetchUsers());
+interface Repo {
+  name: string;
+  stargazers_count: number;
+}
+
+const useRepo = () => {
+  const cache = useCache<Repo>(fetchRepo());
 
   useEffect(() => {
     cache.trigger();
   }, []);
+
+  return cache;
 }
 
 const App = () => {
-  const { isInitialLoading, isError, data, message } = useUsers();
+  const { data, isInitialLoading, isError, message } = useRepo();
 
   if (isInitialLoading) return <div>Loading ...</div>
   if (isError) return <div>{message}</div>
 
   return (
     <div>
-      {data.map((user) => <div key={user.id}>{user.email}</div>)}
+      <div>{data.name}</div>
+      <div>{data.stargazers_count}</div>
     </div>
   );
 }
@@ -608,13 +619,8 @@ const App = () => {
     dispatch(fetchUsers());
   }, []);
 
-  if (loader.isInitialLoading) {
-    return <div>Loading ...</div>
-  }
-
-  if (loader.isError) {
-    return <div>Error: {loader.message}</div>
-  }
+  if (loader.isInitialLoading) return <div>Loading ...</div>
+  if (loader.isError) return <div>Error: {loader.message}</div>
 
   return (
     <div>{users.map((user) => <div key={user.id}>{user.email}</div>)}</div>
@@ -624,50 +630,13 @@ const App = () => {
 
 ### React
 
-We built a couple of simple hooks `useQuery` and `useCache` to make
+We built a couple of simple hooks `useQuery`, `useCache`, `useLoader`, and
+`userLoaderSuccess` to make
 interacting with `saga-query` easier.  Having said that, it would be trivial to
 build your own custom hooks to do exactly what you want.
 
-Let's rewrite the react code used in the previous example ([loading
-state](#loading-state))
-
-```ts
-// use-query.ts
-import { useEffect } from 'react';
-import { useQuery } from 'saga-query';
-
-import { fetchUsers, selectUsersAsList } from './api';
-
-export const useQueryUsers = () => {
-  const cache = useQuery(fetchUsers, selectUsersAsList);
-  useEffect(() => {
-    cache.trigger();
-  }, []);
-  return cache;
-}
-```
-
-```tsx
-// app.tsx
-import React from 'react';
-import { useQueryUsers } from './use-query';
-
-const App = () => {
-  const { data, isInitialLoading, isError, message } = useQueryUsers();
-
-  if (isInitialLoading) {
-    return <div>Loading ...</div>
-  }
-
-  if (isError) {
-    return <div>Error: {message}</div>
-  }
-
-  return (
-    <div>{data.map((user) => <div key={user.id}>{user.email}</div>)}</div>
-  );
-}
-```
+This section is a WIP, for now you can [read the
+source](https://github.com/neurosnap/saga-query/blob/main/src/react.ts)
 
 ### Cache timer
 

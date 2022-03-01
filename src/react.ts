@@ -10,6 +10,10 @@ type DataPayload<D = any, P = any> = LoadingState & {
   data: D | null;
   trigger: (p: P) => any;
 };
+type DataPayloadOptional<D = any, P = any> = LoadingState & {
+  data: D | null;
+  trigger: (p?: P) => any;
+};
 
 export function useQuery<D = any, S = any, P = any>(
   actionFn: (p: P) => { type: string },
@@ -22,7 +26,7 @@ export function useQuery<D = any, S = any>(
 export function useQuery<D = any, S = any, P = any>(
   actionFn: (p?: P) => { type: string },
   selector: (s: S) => D,
-): DataPayload<D> {
+): DataPayloadOptional<D> {
   const dispatch = useDispatch();
   const data = useSelector(selector);
   const loader = useSelector((s: QueryState) =>
