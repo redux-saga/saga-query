@@ -7,6 +7,8 @@ import {
   delay,
   take,
   call,
+  throttle as throttleHelper,
+  debounce as debounceHelper,
 } from 'redux-saga/effects';
 import type { SagaIterator } from 'redux-saga';
 
@@ -167,6 +169,18 @@ export function* latest(action: string, saga: any, ...args: any[]) {
 
 export function* leading(action: string, saga: any, ...args: any[]) {
   yield takeLeading(`${action}`, saga, ...args);
+}
+
+export function createThrottle(ms: number) {
+  return function* (action: string, saga: any, ...args: any[]) {
+    yield throttleHelper(ms, `${action}`, saga, ...args);
+  };
+}
+
+export function createDebounce(ms: number) {
+  return function* (action: string, saga: any, ...args: any[]) {
+    yield debounceHelper(ms, `${action}`, saga, ...args);
+  };
 }
 
 export function timer(timer: number) {
