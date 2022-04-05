@@ -1,5 +1,11 @@
 import type { SagaIterator } from 'redux-saga';
-import type { LoadingMapPayload } from 'robodux';
+import type {
+  LoadingMapPayload,
+  LoadingState,
+  LoadingItemState,
+} from 'robodux';
+
+export type { LoadingState, LoadingItemState };
 
 export interface PipeCtx<P = any> {
   name: string;

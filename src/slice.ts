@@ -1,6 +1,8 @@
 import { createTable, createLoaderTable, createReducerMap } from 'robodux';
 import type { LoadingItemState } from 'robodux';
 
+export { defaultLoader, defaultLoadingItem } from 'robodux';
+
 export interface QueryState {
   '@@saga-query/loaders': { [key: string]: LoadingItemState };
   '@@saga-query/data': { [key: string]: any };
