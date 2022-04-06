@@ -141,6 +141,44 @@ test('middleware - with loader', (t) => {
   });
 });
 
+test('middleware - with loader error', (t) => {
+  const users = createTable<User>({ name: 'users' });
+
+  const api = createApi<ApiCtx>();
+  api.use(requestMonitor());
+  api.use(api.routes());
+  api.use(function* fetchApi(ctx, next) {
+    ctx.response = new Response(jsonBlob(mockUser), { status: 200 });
+    ctx.json = { ok: false, data: { message: 'failure' } };
+    yield next();
+  });
+
+  const fetchUsers = api.create(
+    `/users`,
+    function* processUsers(ctx: ApiCtx<any, { users: User[] }>, next) {
+      yield next();
+      if (!ctx.json.ok) {
+        ctx.throw(ctx.json.data.message);
+        return;
+      }
+    },
+  );
+
+  const reducers = createReducerMap(users);
+  const store = setupStore(api.saga(), reducers);
+
+  store.dispatch(fetchUsers());
+  t.like(store.getState(), {
+    [users.name]: {},
+    [LOADERS_NAME]: {
+      '/users': {
+        status: 'error',
+        message: 'failure',
+      },
+    },
+  });
+});
+
 test('middleware - with POST', async (t) => {
   t.plan(1);
   const name = 'users';
@@ -294,10 +332,8 @@ test('undo', (t) => {
   const store = setupStore(api.saga());
   store.dispatch(createUser());
   store.dispatch(undo());
-  t.deepEqual(store.getState(), {
-    ...createQueryState({
-      [LOADERS_NAME]: { [`${createUser}`]: defaultLoadingItem() },
-    }),
+  t.like(store.getState(), {
+    [LOADERS_NAME]: { [`${createUser}`]: { status: 'success' } },
   });
 });
 

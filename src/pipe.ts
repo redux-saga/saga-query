@@ -2,7 +2,7 @@ import { call, takeEvery } from 'redux-saga/effects';
 import type { SagaIterator } from 'redux-saga';
 import sagaCreator from 'redux-saga-creator';
 
-import { isFn, isObject } from './util';
+import { CtxError, isFn, isObject } from './util';
 import type {
   Middleware,
   MiddlewareCo,
@@ -96,6 +96,9 @@ export function createPipe<Ctx extends PipeCtx = PipeCtx<any>>({
       name,
       key,
       payload: options,
+      throw: (message: string, meta: any) => {
+        throw new CtxError(message, meta);
+      },
     };
     const fn = compose(middleware);
     yield call(fn, ctx);

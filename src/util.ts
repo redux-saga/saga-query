@@ -56,3 +56,14 @@ export const mergeRequest = (
     headers: mergeHeaders((cur as any).headers, (next as any).headers),
   };
 };
+
+export class CtxError<M = any> extends Error {
+  meta: M | undefined;
+
+  constructor(message: string, meta?: M) {
+    super(message);
+    this.message = message;
+    this.meta = meta;
+  }
+}
+CtxError.prototype.name = 'CtxError';

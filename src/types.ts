@@ -4,6 +4,7 @@ import type {
   LoadingState,
   LoadingItemState,
 } from 'robodux';
+import { CtxError } from './util';
 
 export type { LoadingState, LoadingItemState };
 
@@ -12,6 +13,7 @@ export interface PipeCtx<P = any> {
   key: string;
   payload: P;
   action: ActionWithPayload<CreateActionPayload<P>>;
+  throw: <M = any>(message: string, meta?: M) => CtxError<M>;
 }
 
 export interface ApiFetchSuccess<S = any> {

@@ -21,7 +21,7 @@ import type {
   RequiredApiRequest,
 } from './types';
 import { compose } from './pipe';
-import { isObject, createAction, mergeRequest } from './util';
+import { isObject, createAction, mergeRequest, CtxError } from './util';
 import {
   setLoaderStart,
   setLoaderError,
@@ -105,7 +105,7 @@ export function* dispatchActions(ctx: { actions: Action[] }, next: Next) {
   yield put(batchActions(ctx.actions));
 }
 
-export function loadingMonitor<Ctx extends ApiCtx = ApiCtx>(
+export function loadingRequestMonitor<Ctx extends ApiCtx = ApiCtx>(
   errorFn: (ctx: Ctx) => string = (ctx) => ctx.json?.data?.message || '',
 ) {
   return function* trackLoading(ctx: Ctx, next: Next) {
@@ -130,6 +130,36 @@ export function loadingMonitor<Ctx extends ApiCtx = ApiCtx>(
 
     ctx.actions.push(setLoaderSuccess({ id, ...payload }));
   };
+}
+
+type LoaderCtx = Pick<ApiCtx, 'name' | 'actions' | 'loader'>;
+
+export function* loaderMdw<Ctx extends LoaderCtx = LoaderCtx>(
+  ctx: Ctx,
+  next: Next,
+) {
+  const id = ctx.name;
+  yield put(setLoaderStart({ id }));
+  if (!ctx.loader) ctx.loader = {} as any;
+
+  try {
+    yield next();
+  } catch (err: any) {
+    console.log('CAUGHT', err instanceof CtxError);
+    const message = err instanceof Error ? err.message : err;
+    const meta = err instanceof CtxError ? err.meta : {};
+    const payload = ctx.loader || {};
+    ctx.actions.push(setLoaderError({ id, message, meta, ...payload }));
+
+    if (err instanceof CtxError) {
+    } else if (err instanceof Error) {
+      throw err;
+    }
+    return;
+  }
+
+  const payload = ctx.loader || {};
+  ctx.actions.push(setLoaderSuccess({ id, ...payload }));
 }
 
 export interface UndoCtx<P = any, S = any, E = any> extends ApiCtx<P, S, E> {
@@ -257,15 +287,13 @@ export function* simpleCache<Ctx extends ApiCtx = ApiCtx>(
   ctx.actions.push(addData({ [key]: data }));
 }
 
-export function requestMonitor<Ctx extends ApiCtx = ApiCtx>(
-  errorFn?: (ctx: Ctx) => string,
-) {
+export function requestMonitor<Ctx extends ApiCtx = ApiCtx>() {
   return compose<Ctx>([
     errorHandler,
     queryCtx,
     urlParser,
     dispatchActions,
-    loadingMonitor(errorFn),
+    loaderMdw,
     simpleCache,
   ]);
 }
