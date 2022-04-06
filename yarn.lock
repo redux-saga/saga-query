@@ -1973,6 +1973,11 @@ require-directory@^2.1.1:
   resolved "https://registry.yarnpkg.com/require-directory/-/require-directory-2.1.1.tgz#8c64ad5fd30dab1c976e2344ffe7f792a6a6df42"
   integrity sha1-jGStX9MNqxyXbiNE/+f3kqam30I=
 
+reselect@>=4.0.0:
+  version "4.1.5"
+  resolved "https://registry.yarnpkg.com/reselect/-/reselect-4.1.5.tgz#852c361247198da6756d07d9296c2b51eddb79f6"
+  integrity sha512-uVdlz8J7OO+ASpBYoz1Zypgx0KasCY20H+N8JD13oUMtPvSHQuscrHop4KbXrbsBcdB9Ds7lVK7eRkBIfO43vQ==
+
 reselect@^4.0.0:
   version "4.0.0"
   resolved "https://registry.yarnpkg.com/reselect/-/reselect-4.0.0.tgz#f2529830e5d3d0e021408b246a206ef4ea4437f7"
@@ -2030,12 +2035,13 @@ rimraf@^3.0.2:
   dependencies:
     glob "^7.1.3"
 
-robodux@^13.0.0:
-  version "13.0.0"
-  resolved "https://registry.yarnpkg.com/robodux/-/robodux-13.0.0.tgz#1a87f3c06b6b8609ab498c55326bee0f9ece0206"
-  integrity sha512-EFc0G1dY8aSniIXptbKo2yecArpWzB1a036pOhktc107hezSe1Q0RdXT+SEip3oFWn/YTUjGTcV/pyVrvT/kZA==
+robodux@^14.0.0:
+  version "14.0.0"
+  resolved "https://registry.yarnpkg.com/robodux/-/robodux-14.0.0.tgz#9950627f8c5a1d38ec6ab9f739c5a6f31e55cdd5"
+  integrity sha512-+G7hxl8eD5WidGABRPZfi2b+mAUJkHSjELMrmKkeqHOas3Oy4+yqqgH1IWk7SnQJZ4sYLAIsMLaqxAlSnI5f8Q==
   dependencies:
     immer "^9.0.7"
+    reselect ">=4.0.0"
 
 run-parallel@^1.1.9:
   version "1.2.0"
