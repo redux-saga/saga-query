@@ -30,6 +30,10 @@ import {
   addData,
 } from './slice';
 
+const MS = 1000;
+const SECONDS = 1 * MS;
+const MINUTES = 60 * SECONDS;
+
 export function* errorHandler<Ctx extends PipeCtx = PipeCtx>(
   ctx: Ctx,
   next: Next,
@@ -171,19 +175,19 @@ export function* leading(action: string, saga: any, ...args: any[]) {
   yield takeLeading(`${action}`, saga, ...args);
 }
 
-export function createThrottle(ms: number) {
+export function createThrottle(ms: number = 5 * SECONDS) {
   return function* (action: string, saga: any, ...args: any[]) {
     yield throttleHelper(ms, `${action}`, saga, ...args);
   };
 }
 
-export function createDebounce(ms: number) {
+export function createDebounce(ms: number = 5 * SECONDS) {
   return function* (action: string, saga: any, ...args: any[]) {
     yield debounceHelper(ms, `${action}`, saga, ...args);
   };
 }
 
-export function timer(timer: number) {
+export function timer(timer: number = 5 * MINUTES) {
   return function* onTimer(
     type: string,
     saga: any,
