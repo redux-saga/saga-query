@@ -122,7 +122,7 @@ test('middleware - with request fn', (t) => {
   query.use(queryCtx);
   query.use(urlParser);
   query.use(query.routes());
-  query.use(function* (ctx, next) {
+  query.use(function* (ctx) {
     t.deepEqual(ctx.req().method, 'POST');
     t.deepEqual(ctx.req().url, '/users');
   });
@@ -136,11 +136,11 @@ test('run() on endpoint action - should run the effect', (t) => {
   const api = createApi();
   api.use(api.routes());
   let acc = '';
-  const action1 = api.get<{ id: string }>('/users/:id', function* (ctx, next) {
+  const action1 = api.get<{ id: string }>('/users/:id', function* (_, next) {
     yield next();
     acc += 'a';
   });
-  const action2 = api.get('/users2', function* (ctx, next) {
+  const action2 = api.get('/users2', function* (_, next) {
     yield next();
     yield call(action1.run, action1({ id: '1' }));
     acc += 'b';
@@ -156,7 +156,7 @@ test('run() from a normal saga', (t) => {
   const api = createApi();
   api.use(api.routes());
   let acc = '';
-  const action1 = api.get<{ id: string }>('/users/:id', function* (ctx, next) {
+  const action1 = api.get<{ id: string }>('/users/:id', function* (_, next) {
     yield next();
     acc += 'a';
   });
