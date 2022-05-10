@@ -141,6 +141,52 @@ test('middleware - with loader', (t) => {
   });
 });
 
+test('middleware - with item loader', (t) => {
+  const users = createTable<User>({ name: 'users' });
+
+  const api = createApi<ApiCtx>();
+  api.use(requestMonitor());
+  api.use(api.routes());
+  api.use(function* fetchApi(ctx, next) {
+    ctx.response = new Response(jsonBlob(mockUser), { status: 200 });
+    ctx.json = { ok: true, data: { users: [mockUser] } };
+    yield next();
+  });
+
+  const fetchUser = api.create<{ id: string }>(
+    `/users/:id`,
+    function* processUsers(ctx: ApiCtx<any, { users: User[] }>, next) {
+      yield next();
+      if (!ctx.json.ok) return;
+
+      const { data } = ctx.json;
+      const curUsers = data.users.reduce<MapEntity<User>>((acc, u) => {
+        acc[u.id] = u;
+        return acc;
+      }, {});
+
+      ctx.actions.push(users.actions.add(curUsers));
+    },
+  );
+
+  const reducers = createReducerMap(users);
+  const store = setupStore(api.saga(), reducers);
+
+  const action = fetchUser({ id: mockUser.id });
+  store.dispatch(action);
+  t.like(store.getState(), {
+    [users.name]: { [mockUser.id]: mockUser },
+    [LOADERS_NAME]: {
+      '/users/:id': {
+        status: 'success',
+      },
+      [action.payload.key]: {
+        status: 'success',
+      },
+    },
+  });
+});
+
 test('middleware - with POST', async (t) => {
   t.plan(1);
   const name = 'users';
@@ -292,11 +338,15 @@ test('undo', (t) => {
   });
 
   const store = setupStore(api.saga());
-  store.dispatch(createUser());
+  const action = createUser();
+  store.dispatch(action);
   store.dispatch(undo());
   t.deepEqual(store.getState(), {
     ...createQueryState({
-      [LOADERS_NAME]: { [`${createUser}`]: defaultLoadingItem() },
+      [LOADERS_NAME]: {
+        [`${createUser}`]: defaultLoadingItem(),
+        [action.payload.key]: defaultLoadingItem(),
+      },
     }),
   });
 });
