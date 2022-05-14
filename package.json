@@ -38,7 +38,7 @@
   },
   "devDependencies": {
     "@types/node": "^17.0.23",
-    "ava": "^4.1.0",
+    "ava": "^4.2.0",
     "cross-fetch": "^3.1.5",
     "husky": "^7.0.4",
     "lint-staged": "^12.3.7",
