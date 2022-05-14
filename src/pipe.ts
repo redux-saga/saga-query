@@ -150,7 +150,7 @@ export function createPipe<Ctx extends PipeCtx = PipeCtx<any>>({
 
     const actionFn = (options?: any) => {
       const koSort = (opts?: any): object => {
-        if (!opts) return {};
+        if (opts === null || opts === undefined) return {};
         if (!isObject(opts)) return { opts: opts };
         return Object.keys(opts)
           .sort()

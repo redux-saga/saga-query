@@ -617,7 +617,7 @@ test('options object keys order for action key identity - 4: deepNested object',
 });
 
 test('options object keys order for action key identity - 5: other', (t) => {
-  t.plan(10);
+  t.plan(17);
   const api = createApi();
   api.use(api.routes());
   //array options
@@ -628,6 +628,12 @@ test('options object keys order for action key identity - 5: other', (t) => {
     };
     yield next();
   });
+  const falsy0 = action5(0);
+  const falsy1 = action5(false);
+  const falsy2 = action5('');
+  const falsy3 = action5(undefined);
+  const falsy4 = action5(null);
+  const primNo0 = action5(NaN);
   const primNo1 = action5(1);
   const primNo1bis = action5(1);
   const primNo2 = action5(2);
@@ -660,6 +666,13 @@ test('options object keys order for action key identity - 5: other', (t) => {
     { param1: '2', param2: ['2', '3'] },
     { param1: '1', param2: ['2', '3'] },
   ]);
+  t.assert(getKeyOf(falsy0) !== getKeyOf(falsy1));
+  t.assert(getKeyOf(falsy0) !== getKeyOf(falsy2));
+  t.assert(getKeyOf(falsy1) !== getKeyOf(falsy2));
+  t.assert(getKeyOf(falsy1) !== getKeyOf(falsy3));
+  t.assert(getKeyOf(falsy3) === getKeyOf(falsy4));
+  t.assert(getKeyOf(primNo0) !== getKeyOf(falsy0));
+  t.assert(getKeyOf(primNo0) !== getKeyOf(primNo1));
   t.assert(getKeyOf(primNo1) !== getKeyOf(primNo2));
   t.assert(getKeyOf(primNo1) === getKeyOf(primNo1bis));
   t.assert(getKeyOf(str1) !== getKeyOf(str2));
