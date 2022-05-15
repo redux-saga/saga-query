@@ -37,16 +37,19 @@
     }
   },
   "devDependencies": {
+    "@testing-library/react": "^13.2.0",
     "@types/node": "^17.0.23",
     "ava": "^4.1.0",
     "cross-fetch": "^3.1.5",
+    "global-jsdom": "^8.4.0",
     "husky": "^7.0.4",
+    "jsdom": "^19.0.0",
     "lint-staged": "^12.3.7",
     "nock": "^13.2.4",
     "prettier": "^2.6.2",
-    "react": "^17.0.2",
-    "react-dom": "^17.0.2",
-    "react-redux": "^7.2.5",
+    "react": "18",
+    "react-dom": "18",
+    "react-redux": "^8.0.1",
     "redux-saga": "^1.1.3",
     "ts-node": "^10.7.0",
     "typescript": "^4.6.3"

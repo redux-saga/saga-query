@@ -2,7 +2,7 @@ import { call, takeEvery } from 'redux-saga/effects';
 import type { SagaIterator } from 'redux-saga';
 import sagaCreator from 'redux-saga-creator';
 
-import { isFn, isObject } from './util';
+import { createActionKey, isFn, isObject } from './util';
 import type {
   Middleware,
   MiddlewareCo,
@@ -13,7 +13,6 @@ import type {
   PipeCtx,
 } from './types';
 import { API_ACTION_PREFIX } from './constants';
-import { encodeBase64 } from './encoding';
 
 export function compose<Ctx extends PipeCtx = PipeCtx>(
   middleware: Middleware<Ctx>[],
@@ -143,7 +142,7 @@ export function createPipe<Ctx extends PipeCtx = PipeCtx<any>>({
     }
     sagas[`${createName}`] = curSaga;
     const actionFn = (options?: any) => {
-      const key = encodeBase64(JSON.stringify({ name: createName, options }));
+      const key = createActionKey(createName, options);
       return action({ name: createName, key, options });
     };
     actionFn.run = onApi as any;

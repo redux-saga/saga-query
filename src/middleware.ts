@@ -113,26 +113,34 @@ export function loadingMonitor<Ctx extends ApiCtx = ApiCtx>(
   errorFn: (ctx: Ctx) => string = (ctx) => ctx.json?.data?.message || '',
 ) {
   return function* trackLoading(ctx: Ctx, next: Next) {
-    const id = ctx.name;
-    yield put(setLoaderStart({ id }));
+    yield put(
+      batchActions([
+        setLoaderStart({ id: ctx.name }),
+        setLoaderStart({ id: ctx.key }),
+      ]),
+    );
     if (!ctx.loader) ctx.loader = {} as any;
 
     yield next();
 
     if (!ctx.response) {
-      ctx.actions.push(resetLoaderById(id));
+      ctx.actions.push(resetLoaderById(ctx.name), resetLoaderById(ctx.key));
       return;
     }
 
     const payload = ctx.loader || {};
     if (!ctx.response.ok) {
       ctx.actions.push(
-        setLoaderError({ id, message: errorFn(ctx), ...payload }),
+        setLoaderError({ id: ctx.name, message: errorFn(ctx), ...payload }),
+        setLoaderError({ id: ctx.key, message: errorFn(ctx), ...payload }),
       );
       return;
     }
 
-    ctx.actions.push(setLoaderSuccess({ id, ...payload }));
+    ctx.actions.push(
+      setLoaderSuccess({ id: ctx.name, ...payload }),
+      setLoaderSuccess({ id: ctx.key, ...payload }),
+    );
   };
 }
 
