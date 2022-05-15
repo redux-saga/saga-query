@@ -5,6 +5,8 @@ import { prepareStore } from './store';
 import { API_ACTION_PREFIX } from './constants';
 import { ApiRequest, RequiredApiRequest } from '.';
 import { encodeBase64 } from './encoding';
+import { koSort } from './create-key';
+
 export const isFn = (fn?: any) => fn && typeof fn === 'function';
 export const isObject = (obj?: any) => typeof obj === 'object' && obj !== null;
 export const createAction = (curType: string) => {
@@ -59,7 +61,10 @@ export const mergeRequest = (
 };
 
 export const createActionKey = (name: string, options?: any) => {
-  const enc = options ? encodeBase64(JSON.stringify(options)) : '';
+  const enc =
+    typeof options !== undefined
+      ? encodeBase64(JSON.stringify(koSort(options)))
+      : '';
   const encKey = enc ? `|${enc}` : '';
   const key = `${name}${encKey}`;
   return key;
