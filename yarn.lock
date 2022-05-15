@@ -260,10 +260,10 @@ astral-regex@^2.0.0:
   resolved "https://registry.npmjs.org/astral-regex/-/astral-regex-2.0.0.tgz"
   integrity sha512-Z7tMw1ytTXt5jqMcOP+OQteU1VuNK9Y02uuJtKQ1Sv69jXQKKg5cibLwGJow8yzZP+eAc18EmLGPal0bp36rvQ==
 
-ava@^4.2.0:
-  version "4.2.0"
-  resolved "https://registry.npmjs.org/ava/-/ava-4.2.0.tgz"
-  integrity sha512-96N/rH2ZlBjoh18CsjH3zfo/rzukkRoqNK7R/Z3MLRrqu6cRRf+i4Zwna7ZRYEIl55yF1BKh/nSPCZWqoXfPJA==
+ava@4.1.0:
+  version "4.1.0"
+  resolved "https://registry.yarnpkg.com/ava/-/ava-4.1.0.tgz#a8e2fb84f17ff7b2b40b389103f677edf11351b9"
+  integrity sha512-QD6MBWHzagAwb9vxduXzVWx6Q77DUHLxvIebSY6+enL+Ri6KzSZYj0IBOFifA26wfpJPZnWKLUh3vwx1LyVh/g==
   dependencies:
     acorn "^8.7.0"
     acorn-walk "^8.2.0"

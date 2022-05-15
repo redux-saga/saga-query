@@ -14,6 +14,7 @@ import type {
 } from './types';
 import { API_ACTION_PREFIX } from './constants';
 import { encodeBase64 } from './encoding';
+import { koSort } from './create-key';
 
 export function compose<Ctx extends PipeCtx = PipeCtx>(
   middleware: Middleware<Ctx>[],
@@ -104,16 +105,12 @@ export function createPipe<Ctx extends PipeCtx = PipeCtx<any>>({
 
   function create(createName: string, ...args: any[]) {
     const type = createType(createName);
-
     const action = (payload?: any) => {
       return { type, payload };
     };
-
     action.toString = () => `${type}`;
-
     let req = null;
     let fn = null;
-
     if (args.length === 2) {
       req = args[0];
       fn = args[1];
@@ -142,31 +139,14 @@ export function createPipe<Ctx extends PipeCtx = PipeCtx<any>>({
     middlewareMap[`${createName}`] = fn || defaultMiddleware;
 
     const tt = req ? (req as any).saga : takeEvery;
-
     function* curSaga(): SagaIterator<void> {
       yield tt(`${action}`, onApi);
     }
     sagas[`${createName}`] = curSaga;
-
     const actionFn = (options?: any) => {
-      const koSort = (opts?: any): object => {
-        if (opts === null || opts === undefined) return {};
-        if (!isObject(opts)) return { opts: opts };
-        return Object.keys(opts)
-          .sort()
-          .reduce((res: any, key: any) => {
-            res[`${key}`] = opts[key];
-            if (opts[key] && typeof opts[key] === 'object') {
-              res[`${key}`] = koSort(opts[key]);
-            }
-            return res;
-          }, {});
-      };
-
       const key = encodeBase64(
         JSON.stringify(Object.assign({ name: createName }, koSort(options))),
       );
-
       return action({ name: createName, key, options });
     };
     actionFn.run = onApi as any;
