@@ -8,7 +8,7 @@ import { requestMonitor } from './middleware';
 const baseUrl = 'https://saga-query.com';
 const mockUser = { id: '1', email: 'test@saga-query.com' };
 
-const delay = (n: number = 50) =>
+const delay = (n: number = 200) =>
   new Promise((resolve) => {
     setTimeout(resolve, n);
   });
