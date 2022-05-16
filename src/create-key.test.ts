@@ -318,7 +318,7 @@ test('options object keys order for action key identity - 5: other', (t) => {
   t.assert(getKeyOf(falsy0) !== getKeyOf(falsy2));
   t.assert(getKeyOf(falsy1) !== getKeyOf(falsy2));
   t.assert(getKeyOf(falsy1) !== getKeyOf(falsy3));
-  t.assert(getKeyOf(falsy3) === getKeyOf(falsy4));
+  t.assert(getKeyOf(falsy3) !== getKeyOf(falsy4));
   t.assert(getKeyOf(primNo0) !== getKeyOf(falsy0));
   t.assert(getKeyOf(primNo0) !== getKeyOf(primNo1));
   t.assert(getKeyOf(primNo1) !== getKeyOf(primNo2));
