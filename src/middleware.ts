@@ -9,8 +9,9 @@ import {
   call,
   throttle as throttleHelper,
   debounce as debounceHelper,
+  fork,
 } from 'redux-saga/effects';
-import type { SagaIterator } from 'redux-saga';
+import type { SagaIterator, Task } from 'redux-saga';
 
 import type {
   Action,
@@ -19,6 +20,8 @@ import type {
   PipeCtx,
   ApiRequest,
   RequiredApiRequest,
+  ActionWithPayload,
+  CreateActionPayload,
 } from './types';
 import { compose } from './pipe';
 import { isObject, createAction, mergeRequest } from './util';
@@ -195,16 +198,39 @@ export function createDebounce(ms: number = 5 * SECONDS) {
   };
 }
 
+/*
+ * This function will create a cache timer for each `key` inside
+ * of a saga-query api endpoint.  `key` is a hash of the action type and payload.
+ *
+ * Why do we want this?  If we have an api endpoint to fetch a single app: `fetchApp({ id: 1 })`
+ * if we don't set a timer per key then all calls to `fetchApp` will be on a timer.
+ * So if we call `fetchApp({ id: 1 })` and then `fetchApp({ id: 2 })` if we use a normal
+ * cache timer then the second call will not send an http request.
+ */
 export function timer(timer: number = 5 * MINUTES) {
   return function* onTimer(
-    type: string,
+    actionType: string,
     saga: any,
     ...args: any[]
   ): SagaIterator<void> {
-    while (true) {
-      const action = yield take(`${type}`);
+    const map: { [key: string]: Task } = {};
+
+    function* activate(action: ActionWithPayload<CreateActionPayload>) {
       yield call(saga, action, ...args);
       yield delay(timer);
+      delete map[action.payload.key];
+    }
+
+    while (true) {
+      const action: ActionWithPayload<CreateActionPayload> = yield take(
+        `${actionType}`,
+      );
+      const key = action.payload.key;
+      const notRunning = map[key] && !map[key].isRunning();
+      if (!map[key] || notRunning) {
+        const task = yield fork(activate, action);
+        map[key] = task;
+      }
     }
   };
 }
