@@ -76,8 +76,10 @@ export const defaultOnError = (err: Error) => {
 };
 
 export function createPipe<Ctx extends PipeCtx = PipeCtx<any>>({
+  saga = takeEvery,
   onError = defaultOnError,
 }: {
+  saga?: (...args: any[]) => any;
   onError?: (err: Error) => any;
 } = {}): SagaApi<Ctx> {
   const middleware: Middleware<Ctx>[] = [];
@@ -137,7 +139,7 @@ export function createPipe<Ctx extends PipeCtx = PipeCtx<any>>({
 
     middlewareMap[`${createName}`] = fn || defaultMiddleware;
 
-    const tt = req ? (req as any).saga : takeEvery;
+    const tt = req ? (req as any).saga : saga;
     function* curSaga(): SagaIterator<void> {
       yield tt(`${action}`, onApi);
     }
