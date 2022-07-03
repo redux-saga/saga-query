@@ -925,7 +925,7 @@ make caching data simple and straight-forward.  Even for large scale application
 100% of my redux state is composed of `robodux` slice helpers.
 
 I also wrote a
-[redux-saga style-guide](https://erock.io/2020/01/01/redux-saga-style-guide.html) that
+[redux-saga style-guide](https://erock.io/2022/05/03/redux-saga-style-guide.html) that
 is also heavily encouraged.
 
 ## Redux-toolkit
