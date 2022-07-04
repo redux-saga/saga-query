@@ -1,6 +1,6 @@
 # saga-query
 
-[![ci](https://github.com/neurosnap/saga-query/actions/workflows/test.yml/badge.svg)](https://github.com/neurosnap/saga-query/actions/workflows/test.yml)
+[![ci](https://github.com/redux-saga/saga-query/actions/workflows/test.yml/badge.svg)](https://github.com/redux-saga/saga-query/actions/workflows/test.yml)
 
 Control your data cache on the front-end.
 
@@ -52,7 +52,7 @@ api.use(api.routes());
 api.use(fetcher({ baseUrl: 'https://api.github.com' }));
 
 export const fetchRepo = api.get(
-  `/repos/neurosnap/saga-query`,
+  `/repos/redux-saga/saga-query`,
   api.cache()
 );
 ```
@@ -636,7 +636,7 @@ interacting with `saga-query` easier.  Having said that, it would be trivial to
 build your own custom hooks to do exactly what you want.
 
 This section is a WIP, for now you can [read the
-source](https://github.com/neurosnap/saga-query/blob/main/src/react.ts)
+source](https://github.com/redux-saga/saga-query/blob/main/src/react.ts)
 
 ### Cache timer
 
