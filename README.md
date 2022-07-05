@@ -213,7 +213,6 @@ communication](https://www.electronjs.org/docs/api/ipc-main).
 ## Control your data cache
 
 ```ts
-import { createTable, createReducerMap } from 'robodux';
 import {
   createApi,
   requestMonitor,
@@ -223,10 +222,25 @@ import {
   put,
   call
 } from 'saga-query';
+import { createSlice } from '@reduxjs/toolkit';
+
+interface MapEntity<E> {
+  [key: string]: E | undefined;
+}
 
 // create a reducer that acts like a SQL database table
 // the keys are the id and the value is the record
-const users = createTable<User>({ name: 'users' });
+const users = createSlice({
+  name: 'users',
+  initialState: {},
+  reducers: {
+    add: (state, action) => {
+      action.payload.forEach((user) => {
+        state[user.id] = user.id;
+      });
+    }
+  }
+});
 
 // something awesome happens in here
 // The default generic value here is `ApiCtx` which includes a `payload`,
@@ -294,17 +308,13 @@ const fetchUsers = api.get(
   },
 );
 
-// This is a helper function, all id does is iterate through all the objects
-// looking for a `.reducer` property and create a big object containing all
-// the reducers which will then have `combineReducers` applied to it.
-const reducers = createReducerMap(users);
 // This is a helper function that does a bunch of stuff to prepare redux for
 // saga-query.  In particular, it will:
 //   - Setup redux-saga
 //   - Setup redux-batched-actions
 //   - Setup a couple of reducers that saga-query will use: loaders and data
 const prepared = prepareStore({
-  reducers,
+  reducers: { users: users.reducer },
   sagas: { api: api.saga() }
 });
 const store = createStore(
@@ -599,7 +609,10 @@ import React, { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import type { QueryState } from 'saga-query';
 import { useLoader } from 'saga-query/react';
-import type { MapEntity } from 'robodux';
+
+interface MapEntity<E> {
+  [key: string]: E | undefined;
+}
 
 import {
   fetchUsers,
@@ -770,8 +783,15 @@ const updateUser = api.patch<UpdateUser>(
 Not too bad, but we built an optimistic middleware for you:
 
 ```tsx
-import { MapEntity, PatchEntity } from 'robodux';
 import { OptimisticCtx, optimistic } from 'saga-query';
+
+interface MapEntity<E> {
+  [key: string]: E | undefined;
+}
+
+interface PatchEntity<T> {
+  [key: string]: Partial<T[keyof T]>;
+}
 
 const api = createApi();
 api.use(api.routes());
@@ -813,7 +833,6 @@ The middleware accepts three properties:
   get canceled automatically
 
 ```ts
-import { createAction } from 'robodux';
 import {
   createApi,
   requestMonitor,
@@ -872,7 +891,7 @@ timer, you could build a middleware to do that for you:
 ```ts
 import { race, delay } from 'saga-query';
 
-const undo = createAction('UNDO');
+const undo = () => ({ type: 'UNDO' });
 function* undoer<Ctx extends UndoCtx = UndoCtx>() {
   if (!ctx.undoable) {
     yield next();
@@ -912,22 +931,6 @@ store.dispatch(slow());
 // calling something-slow took 10000 ms
 ```
 
-## A note on `robodux`
-
-The docs heavily use [robodux](https://github.com/neurosnap/robodux) and is
-recommended for usage with `saga-query`.  **It is not required to use
-`saga-query`.**  At this point in time `saga-query` works fine with other
-libraries like `redux-toolkit` and I didn't want to impose `robodux` on other
-developers.
-
-Having said that, I use it for most of my production applications and it will
-make caching data simple and straight-forward.  Even for large scale applications,
-100% of my redux state is composed of `robodux` slice helpers.
-
-I also wrote a
-[redux-saga style-guide](https://erock.io/2022/05/03/redux-saga-style-guide.html) that
-is also heavily encouraged.
-
 ## Redux-toolkit
 
 `redux-toolkit` is a very popular redux library officially supported by the
@@ -937,14 +940,13 @@ response data.
 
 ```ts
 import { createStore } from 'redux';
-import { createReducerMap } from 'robodux';
 import {
   prepareStore,
   createApi,
   requestMonitor,
   fetcher,
 } from 'saga-query';
-import { createSlice } from 'redux-toolkit';
+import { createSlice } from '@reduxjs/toolkit';
 
 const users = createSlice({
   name: 'users',
@@ -970,9 +972,8 @@ const fetchUsers = api.get<{ users: User[] }>('/users', function* (ctx, next) {
   yield put(users.actions.add(data.users));
 });
 
-const reducers = createReducerMap(users);
 const prepared = prepareStore({
-  reducers,
+  reducers: { users: users.reducer },
   sagas: { api: api.saga() },
 });
 const store = createStore(
