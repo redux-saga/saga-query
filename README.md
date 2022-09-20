@@ -644,7 +644,7 @@ const App = () => {
 ### React
 
 We built a couple of simple hooks `useQuery`, `useCache`, `useLoader`, and
-`userLoaderSuccess` to make
+`useLoaderSuccess` to make
 interacting with `saga-query` easier.  Having said that, it would be trivial to
 build your own custom hooks to do exactly what you want.
 
