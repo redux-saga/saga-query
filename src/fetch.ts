@@ -22,17 +22,6 @@ export function* headersMdw<CurCtx extends FetchCtx = FetchCtx>(
   yield next();
 }
 
-export function* fetchMdw<CurCtx extends FetchCtx = FetchCtx>(
-  ctx: CurCtx,
-  next: Next,
-): SagaIterator<any> {
-  const { url, ...req } = ctx.req();
-  const request = new Request(url, req);
-  const response: Response = yield call(fetch, request);
-  ctx.response = response;
-  yield next();
-}
-
 export function* jsonMdw<CurCtx extends FetchJsonCtx = FetchJsonCtx>(
   ctx: CurCtx,
   next: Next,
@@ -67,7 +56,7 @@ export function* jsonMdw<CurCtx extends FetchJsonCtx = FetchJsonCtx>(
   yield next();
 }
 
-function apiUrlMdw<CurCtx extends FetchJsonCtx = FetchJsonCtx>(
+export function apiUrlMdw<CurCtx extends FetchJsonCtx = FetchJsonCtx>(
   baseUrl: string = '',
 ) {
   return function* (ctx: CurCtx, next: Next): SagaIterator<any> {
@@ -77,6 +66,58 @@ function apiUrlMdw<CurCtx extends FetchJsonCtx = FetchJsonCtx>(
   };
 }
 
+/**
+ * If there's a slug inside the ctx.name (which is the URL segement in this case)
+ * and there is *not* a corresponding truthy value in the payload, then that means
+ * the user has an empty value (e.g. empty string) which means we want to abort the
+ * fetch request.
+ *
+ * e.g. `ctx.name = "/apps/:id"` with `payload = { id: '' }`
+ *
+ * Ideally the action wouldn't have been dispatched at all but that is *not* a
+ * gaurantee we can make here.
+ */
+export function* payloadMdw<CurCtx extends FetchJsonCtx = FetchJsonCtx>(
+  ctx: CurCtx,
+  next: Next,
+) {
+  const payload = ctx.payload;
+  if (!payload) {
+    yield next();
+    return;
+  }
+
+  const keys = Object.keys(payload);
+  for (let i = 0; i < keys.length; i += 1) {
+    const key = keys[i];
+    if (!ctx.name.includes(`:${key}`)) {
+      continue;
+    }
+
+    const val = payload[key];
+    if (!val) {
+      ctx.json = {
+        ok: false,
+        data: `found :${key} in endpoint name (${ctx.name}) but payload has falsy value (${val})`,
+      };
+      return;
+    }
+  }
+
+  yield next();
+}
+
+export function* fetchMdw<CurCtx extends FetchCtx = FetchCtx>(
+  ctx: CurCtx,
+  next: Next,
+): SagaIterator<any> {
+  const { url, ...req } = ctx.req();
+  const request = new Request(url, req);
+  const response: Response = yield call(fetch, request);
+  ctx.response = response;
+  yield next();
+}
+
 export function fetcher<CurCtx extends FetchJsonCtx = FetchJsonCtx>(
   {
     baseUrl = '',
@@ -84,5 +125,11 @@ export function fetcher<CurCtx extends FetchJsonCtx = FetchJsonCtx>(
     baseUrl?: string;
   } = { baseUrl: '' },
 ) {
-  return compose<CurCtx>([headersMdw, apiUrlMdw(baseUrl), fetchMdw, jsonMdw]);
+  return compose<CurCtx>([
+    headersMdw,
+    apiUrlMdw(baseUrl),
+    payloadMdw,
+    fetchMdw,
+    jsonMdw,
+  ]);
 }

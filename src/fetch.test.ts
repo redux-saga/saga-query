@@ -178,3 +178,33 @@ test('fetch - POST', async (t) => {
 
   await delay();
 });
+
+test('fetch - slug in url but payload has empty string for slug value', async (t) => {
+  t.plan(1);
+
+  const api = createApi();
+  api.use(requestMonitor());
+  api.use(api.routes());
+  api.use(fetcher({ baseUrl }));
+
+  const fetchUsers = api.post<{ id: string }>(
+    '/users/:id',
+    function* (ctx, next) {
+      ctx.cache = true;
+      ctx.request = ctx.req({ body: JSON.stringify(mockUser) });
+
+      yield next();
+
+      t.deepEqual(ctx.json, {
+        ok: false,
+        data: 'found :id in endpoint name (/users/:id [POST]) but payload has falsy value ()',
+      });
+    },
+  );
+
+  const store = setupStore(api.saga());
+  const action = fetchUsers({ id: '' });
+  store.dispatch(action);
+
+  await delay();
+});
