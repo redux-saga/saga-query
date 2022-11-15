@@ -5,7 +5,7 @@ import type {
   LoadingItemState,
 } from 'robodux';
 
-export type { LoadingState, LoadingItemState };
+export type { LoadingState, LoadingItemState, LoadingMapPayload };
 
 type IfAny<T, Y, N> = 0 extends 1 & T ? Y : N;
 
