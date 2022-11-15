@@ -1,5 +1,5 @@
 import * as robodux from 'robodux';
-const { createLoaderTable, createTable, createReducerMap } = robodux;
+export const { createLoaderTable, createTable, createReducerMap } = robodux;
 import type { LoadingItemState } from 'robodux';
 
 export { defaultLoader, defaultLoadingItem } from 'robodux';
