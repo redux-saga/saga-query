@@ -351,3 +351,55 @@ test('middleware order of execution', async (t) => {
   await sleep(150);
   t.assert(acc === 'abcdefg');
 });
+
+test('retry with actionFn', async (t) => {
+  t.plan(1);
+  let acc = '';
+  let called = false;
+
+  const api = createPipe();
+  api.use(api.routes());
+
+  const action = api.create('/api', function* (ctx, next) {
+    acc += 'a';
+    yield next();
+    acc += 'g';
+
+    if (!called) {
+      called = true;
+      yield put(ctx.actionFn());
+    }
+  });
+
+  const store = setupStore(api.saga());
+  store.dispatch(action());
+
+  await sleep(150);
+  t.deepEqual(acc, 'agag');
+});
+
+test('retry with actionFn with payload', async (t) => {
+  t.plan(1);
+  let acc = '';
+  const api = createPipe();
+  api.use(api.routes());
+
+  api.use(function* (ctx: PipeCtx<{ page: number }>, next) {
+    yield next();
+    if (ctx.payload.page == 1) {
+      yield put(ctx.actionFn({ page: 2 }));
+    }
+  });
+
+  const action = api.create<{ page: number }>('/api', function* (ctx, next) {
+    acc += 'a';
+    yield next();
+    acc += 'g';
+  });
+
+  const store = setupStore(api.saga());
+  store.dispatch(action({ page: 1 }));
+
+  await sleep(150);
+  t.deepEqual(acc, 'aagg');
+});
