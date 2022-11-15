@@ -4,8 +4,8 @@
 
 Control your data cache on the front-end.
 
-Data fetching and caching using a robust middleware system. Quickly build data loading within your 
-redux application and reduce boilerplate.
+Data fetching and caching using a robust middleware system. Quickly build data
+loading within your redux application and reduce boilerplate.
 
 **This library is undergoing active development. Consider this in a beta
 state.**
@@ -32,8 +32,8 @@ state.**
 
 - Write middleware to handle fetching, synchronizing, and caching API requests
   on the front-end
-- A middleware system that node.js developers are familiar with
-  (e.g. express.js, koa.js)
+- A middleware system that node.js developers are familiar with (e.g.
+  express.js, koa.js)
 - Automatically track loading states for data fetching
 - Automatically cache data in redux
 - Simple recipes to handle complex use-cases like cancellation, polling,
@@ -51,10 +51,7 @@ api.use(requestMonitor());
 api.use(api.routes());
 api.use(fetcher({ baseUrl: 'https://api.github.com' }));
 
-export const fetchRepo = api.get(
-  `/repos/redux-saga/saga-query`,
-  api.cache()
-);
+export const fetchRepo = api.get(`/repos/redux-saga/saga-query`, api.cache());
 ```
 
 ```tsx
@@ -76,13 +73,13 @@ const useRepo = () => {
   }, []);
 
   return cache;
-}
+};
 
 const App = () => {
   const { data, isInitialLoading, isError, message } = useRepo();
 
-  if (isInitialLoading) return <div>Loading ...</div>
-  if (isError) return <div>{message}</div>
+  if (isInitialLoading) return <div>Loading ...</div>;
+  if (isError) return <div>{message}</div>;
 
   return (
     <div>
@@ -90,41 +87,42 @@ const App = () => {
       <div>{data.stargazers_count}</div>
     </div>
   );
-}
+};
 ```
 
 ## Why?
 
 Libraries like [react-query](https://react-query.tanstack.com/),
 [rtk-query](https://rtk-query-docs.netlify.app/), and
-[apollo-client](https://www.apollographql.com/docs/react/) are making it
-easier than ever to fetch and cache data from an API server.  All of them
-have their unique attributes and I encourage everyone to check them out.
+[apollo-client](https://www.apollographql.com/docs/react/) are making it easier
+than ever to fetch and cache data from an API server. All of them have their
+unique attributes and I encourage everyone to check them out.
 
-There's no better async flow control system than `redux-saga`.  Treating
+There's no better async flow control system than `redux-saga`. Treating
 side-effects as data makes testing dead simple and provides a powerful effect
-handling system to accommodate any use-case.  Features like polling, data loading
+handling system to accommodate any use-case. Features like polling, data loading
 states, cancellation, racing, parallelization, optimistic updates, and undo are
-at your disposal when using `redux-saga`.  Other libraries and paradigms can
-also accomplish the same tasks, but I think nothing rivals the readability and
+at your disposal when using `redux-saga`. Other libraries and paradigms can also
+accomplish the same tasks, but I think nothing rivals the readability and
 maintainability of redux/redux-saga.
 
 All three libraries above are reinventing async flow control and hiding them
-from the end-developer.  For the happy path, this works beautifully.  Why learn
-how to cache API data when a library can do it for you?  However:
+from the end-developer. For the happy path, this works beautifully. Why learn
+how to cache API data when a library can do it for you? However:
 
-- What happens when [`useMemo` isn't good
-  enough](https://medium.com/swlh/should-you-use-usememo-in-react-a-benchmarked-analysis-159faf6609b7)?
+- What happens when
+  [`useMemo` isn't good enough](https://medium.com/swlh/should-you-use-usememo-in-react-a-benchmarked-analysis-159faf6609b7)?
 - What happens when the data syncing library lacks the caching granularity you
   need?
 - What happens when the data syncing library doesn't cache things in an
   optimized way for your needs?
 - What happens when you want to reuse your business logic for another platform
-(e.g. a cli) and can't use `react`?
+  (e.g. a cli) and can't use `react`?
 
-This library is built to support both small and large scale, complex flow control applications
-that need full control over the data cache layer while setting good standards
-for using redux and a flexible middleware to handle all business logic.
+This library is built to support both small and large scale, complex flow
+control applications that need full control over the data cache layer while
+setting good standards for using redux and a flexible middleware to handle all
+business logic.
 
 ## Core principles
 
@@ -136,7 +134,7 @@ for using redux and a flexible middleware to handle all business logic.
 - A minimal API that encourages end-developers to write code instead of
   configuring objects
 
-## `saga-query` is *not*
+## `saga-query` is _not_
 
 - A DSL wrapped around data fetching and caching logic
 - A one-line solution to fetch and cache server data automatically
@@ -151,64 +149,71 @@ for using redux and a flexible middleware to handle all business logic.
 
 ## How does it work?
 
-`createApi` will build a set of actions and sagas for each `create` or http
-method used (e.g. `get`, `post`, `put`).  Let's call them endpoints.  Each
-endpoint gets their own action and linked saga.  When you call `api.saga()` it
-loops through all the endpoints and creates a root saga that is fault tolerant
-(one saga won't crash all the other sagas).  The default for each endpoint is to
-use `takeEvery` from `redux-saga` but as you'll see in other recipes, this can
-be easily overridden.
+### A familiar middleware system
 
-The middleware that is loaded into the query via `.use(...)` gets added to an
-array.  This array becomes a pipeline that each endpoint calls in order.  When
-`yield next()` is called inside the middleware or an endpoint, it calls the
-next middleware in the stack until it finishes.  Everything after `yield
-next()` gets called after all the middleware ahead of the current middleware
-finishes its execution.
+Underneath `saga-query` is a simple middleware system that will feel familiar to
+those using `express` or `koa`. Our thought was: why not use it for the FE? So
+we took that middleware system and integrated it with `redux-saga` to create a
+powerful system for managing business logic in your FE apps.
 
-Here's a test that demonstrates the order of execution:
+The middleware that is loaded into the system via `.use(...)` which gets added
+to an array. Each action that is dispatched using this system moves through this
+array pipeline in order. When `yield next()` is called inside the middleware, it
+calls the next middleware in the stack until it finishes. Everything after
+`yield next()` gets called after all the middleware ahead of the current
+function finishes its execution.
+
+An example of the order of execution can be found in our
+[tests](https://github.com/redux-saga/saga-query/blob/6f9a53899460cc3fc06f36ca1928a7e9792184fe/src/pipe.test.ts#L320).
+
+The actions created from `saga-query` are JSON serializable. We are **not**
+passing middleware functions through our actions. This is a design decision to
+support things like
+[inter-process communication](https://www.electronjs.org/docs/api/ipc-main).
+
+### `createPipe`
+
+At its core, we have `createPipe` which just builds the middleware system and
+allows you to dispatch actions that traverse through the middleware pipeline.
 
 ```ts
-test('middleware order of execution', async (t) => {
-  t.plan(1);
-  let acc = '';
-  const api = createApi();
-  api.use(api.routes());
+import { createPipe, put, delay } from 'saga-query';
 
-  api.use(function* (ctx, next) {
-    yield delay(10);
-    acc += 'b';
-    yield next();
-    yield delay(10);
-    acc += 'f';
-  });
-
-  api.use(function* (ctx, next) {
-    acc += 'c';
-    yield next();
-    acc += 'd';
-    yield delay(30);
-    acc += 'e';
-  });
-
-  const action = api.create('/api', function* (ctx, next) {
-    acc += 'a';
-    yield next();
-    acc += 'g';
-  });
-
-  const store = setupStore(api.saga());
-  store.dispatch(action());
-
-  await sleep(60);
-  t.assert(acc === 'abcdefg');
+const thunks = createPipe();
+thunks.use(thunks.routes());
+thunks.use(function* (ctx, next) {
+  console.log('start');
+  yield next();
+  console.log('all done!');
 });
+
+const increment = thunks.create('increment', function* (ctx, next) {
+  yield next();
+  console.log('waiting 1s');
+  yield delay(1000);
+  console.log('incrementing!');
+  yield put({ type: 'INCREMENT' });
+});
+
+store.dispatch(increment());
+// start
+// waiting 1s
+// incrementing!
+// all done!
 ```
 
-The actions created from `saga-query` are JSON serializable.  We are **not**
-passing middleware functions through our actions.  This is a design decision to
-support things like [inter-process
-communication](https://www.electronjs.org/docs/api/ipc-main).
+Even if you don't want to use `saga-query` for fetching/caching functionality,
+it is still exceptionally useful with just `createPipe`.
+
+### `createApi`
+
+`createApi` will build a set of actions and sagas for each `create` or http
+method used (e.g. `get`, `post`, `put`). Let's call them endpoints. Each
+endpoint gets their own action and linked saga. When you call `api.saga()` it
+loops through all the endpoints and creates a root saga that is fault tolerant
+(one saga won't crash all the other sagas). The default for each endpoint is to
+use `takeEvery` from `redux-saga` but as you'll see in other recipes, this can
+be easily overridden.
 
 ## Control your data cache
 
@@ -220,7 +225,7 @@ import {
   // You don't have to use it if you don't want to.
   ApiCtx,
   put,
-  call
+  call,
 } from 'saga-query';
 import { createSlice } from '@reduxjs/toolkit';
 
@@ -238,8 +243,8 @@ const users = createSlice({
       action.payload.forEach((user) => {
         state[user.id] = user.id;
       });
-    }
-  }
+    },
+  },
 });
 
 // something awesome happens in here
@@ -250,7 +255,7 @@ const api = createApi<ApiCtx>();
 
 // This middleware monitors the lifecycle of the request.  It needs to be
 // loaded before `.routes()` because it needs to be around after everything
-// else. 
+// else.
 // [dispatchActions]  This middleware leverages `redux-batched-actions` to
 //  dispatch all the actions stored within `ctx.actions` which get added by
 //  other middleware during the lifecycle of the request.
@@ -272,9 +277,9 @@ api.use(requestMonitor());
 api.use(api.routes());
 
 // Under the hood this is a middleware that handles fetching
-// and endpoint using window.fetch.  It also automatically 
+// and endpoint using window.fetch.  It also automatically
 // processes JSON and stores it in `ctx.json`.
-api.use(fetcher({ baseUrl: 'https://...' }))
+api.use(fetcher({ baseUrl: 'https://...' }));
 
 // This is how you create a function that will fetch an API endpoint.  The
 // first parameter is the name of the action type.  When using `urlParser` it
@@ -315,7 +320,7 @@ const fetchUsers = api.get(
 //   - Setup a couple of reducers that saga-query will use: loaders and data
 const prepared = prepareStore({
   reducers: { users: users.reducer },
-  sagas: { api: api.saga() }
+  sagas: { api: api.saga() },
 });
 const store = createStore(
   prepared.reducer,
@@ -332,22 +337,23 @@ store.dispatch(fetchUsers());
 
 ### Manipulating the request
 
-Under the hood, `ctx.request` goes directly into `fetch`.  `ctx.response` is
-the `Response` object from `fetch`.  The `fetcher` middleware assumes you are
-dealing with JSON so it will automatically set the `Content-Type` and also try
-to convert the `Response` to JSON.
+Under the hood, `ctx.request` goes directly into `fetch`. `ctx.response` is the
+`Response` object from `fetch`. The `fetcher` middleware assumes you are dealing
+with JSON so it will automatically set the `Content-Type` and also try to
+convert the `Response` to JSON.
 
-We built a helper function that is baked into the `ctx` object called `ctx.req()`.
+We built a helper function that is baked into the `ctx` object called
+`ctx.req()`.
 
 The entire purpose of this function is to help make it easier to update the
-request object that will be sent directly into `fetch`.  It does a smart merge
+request object that will be sent directly into `fetch`. It does a smart merge
 with the current `ctx.request` object and whatever you pass into it.
 
-We recommend **not** updating properies on the `ctx.request` object directly and instead
-use `ctx.req` to assign the value of `ctx.request`.
+We recommend **not** updating properies on the `ctx.request` object directly and
+instead use `ctx.req` to assign the value of `ctx.request`.
 
 ```ts
-const createUser = api.post<{ id: string, email: string }>(
+const createUser = api.post<{ id: string; email: string }>(
   `/users`,
   function* onCreateUser(ctx: ApiCtx<User>, next) {
     // here we manipulate the request before it gets sent to our middleware
@@ -366,31 +372,31 @@ const createUser = api.post<{ id: string, email: string }>(
   },
 );
 
-store.dispatch(createUser({ id: '1', }));
+store.dispatch(createUser({ id: '1' }));
 ```
 
 Have some `request` data that you want to set when creating the endpoint?
 
 ```ts
-const fetchUsers = api.get('/users', api.request({ credentials: 'include' }))
+const fetchUsers = api.get('/users', api.request({ credentials: 'include' }));
 ```
 
-`api.request()` accepts the request for the `Ctx` that the end-developer
+`api.request()` accepts the request for the `ctx` that the end-developer
 provides.
 
 ### Auto caching
 
 If you want to have a cache that doesn't enforce strict types and is more of a
-dumb cache that fetches and stores data for you, then `simpleCache` will
-provide that functionality for you.
+dumb cache that fetches and stores data for you, then `simpleCache` will provide
+that functionality for you.
 
 The following code will mimic what a library like `react-query` is doing
-behind-the-scenes.  I want to make it clear that `react-query` is doing a lot
-more than this so I don't want to understate what it does.  However, you can
-see that not only can we get a core chunk of the functionality `react-query`
-provides with a little over 100 lines of code but we also have full control
-over fetching, querying, and caching data with the ability to customize it
-using middleware.
+behind-the-scenes. I want to make it clear that `react-query` is doing a lot
+more than this so I don't want to understate what it does. However, you can see
+that not only can we get a core chunk of the functionality `react-query`
+provides with a little over 100 lines of code but we also have full control over
+fetching, querying, and caching data with the ability to customize it using
+middleware.
 
 ```ts
 // api.ts
@@ -432,7 +438,7 @@ prepared.run();
 ```tsx
 // app.tsx
 import React from 'react';
-import { useQuery } from 'saga-query/react';
+import { useCache } from 'saga-query/react';
 
 import { fetchUsers } from './api';
 
@@ -442,12 +448,12 @@ interface User {
 }
 
 const useUsers = () => {
-  const query = useQuery<{ users: User[] }>(fetchUsers);
+  const cache = useCache<{ users: User[] }>(fetchUsers);
   useEffect(() => {
-    query.trigger();
+    cache.trigger();
   }, []);
-  return query;
-}
+  return cache;
+};
 
 export const App = () => {
   const { data = [], isInitialLoading, isError, message } = useUsers();
@@ -457,46 +463,73 @@ export const App = () => {
 
   return (
     <div>
-      {data.map((user) => <div key={user.id}>{user.name}</div>)}
+      {data.map((user) => (
+        <div key={user.id}>{user.name}</div>
+      ))}
     </div>
   );
-}
+};
 ```
 
 ### Dispatching many actions
 
-Sometimes we need to dispatch a bunch of actions for an endpoint.  From loading
+Sometimes we need to dispatch a bunch of actions for an endpoint. From loading
 states to making multiple requests in a single saga, there can be a lot of
-actions being dispatched.  When using `prepareStore` we automatically setup
-`redux-batched-actions` so you don't have to.  Anything that gets added to
+actions being dispatched. When using `prepareStore` we automatically setup
+`redux-batched-actions` so you don't have to. Anything that gets added to
 `ctx.actions` will be automatically dispatched by the `dispatchActions`
 middleware.
 
 ### Dependent queries
 
-Sometimes it's necessary to compose multiple endpoints together.  For example
-we might want to fetch a mailbox and its associated messages.  Every endpoint
-also returns a property on the action creator `.run` which returns the saga
-that runs when the action is dispatched.
+Sometimes it's necessary to compose multiple endpoints together. For example we
+might want to fetch a mailbox and its associated messages. Every endpoint also
+returns a property on the action creator `.run` which returns the saga that runs
+when the action is dispatched.
 
 This allows us to `yield` to that saga inside another endpoint.
 
 ```ts
-const fetchMailbox = api.get('/mailboxes');
+const fetchMailboxes = api.get('/mailboxes');
 
-const fetchMessages = api.get<{ id: string }>(
-  '/mailboxes/:id/messages',
-  function*(ctx, next) {
-    // The return value of a `.run` is the entire `ctx` object.
-    const mailCtx = yield call(fetchMailbox.run, fetchMailbox());
+const fetchMessages = api.get('/mailboxes/:id/messages', function* (ctx, next) {
+  // The return value of a `.run` is the entire `ctx` object.
+  const mailCtx = yield call(fetchMailboxes.run, fetchMailboxes());
 
-    if (!mailCtx.json.ok) {
-      yield next();
-      return;
-    }
+  if (!mailCtx.json.ok) {
+    yield next();
+    return;
+  }
+
+  // grab first mailbox from list
+  const url = `/mailboxes/${mailCtx.json[0].id}/messages`;
+  ctx.request = ctx.req({ url });
+
+  yield next();
+});
+```
+
+### Dynamic endpoints
+
+Sometimes a URL needs to be generated from other data. When creating an
+endpoint, it **must** be created **before** `api.saga()` is called. Because of
+this, there's a limitation to what we can permit inside the `name` of the
+endpoint. The `name` is the first parameter passed to the HTTP methods
+`api.get(name)` or `api.post(name)`. If you need to generate the URL based on
+dynamic content, like a state derived value, then the recommended solution is to
+do the following:
+
+```ts
+api.post<{ message: string }>(
+  'create-message',
+  function* onCreateMsg(ctx, next) {
+    // made up selector that grabs a mailbox
+    const mailbox = yield select(selectMailbox);
+    const message = ctx.payload.message;
 
     ctx.request = ctx.req({
-      url: `/mailboxes/${mailCtx.json.id}/messages`
+      url: `/mailboxes/${mailbox.id}/messages`,
+      body: JSON.stringify({ message }),
     });
 
     yield next();
@@ -504,33 +537,8 @@ const fetchMessages = api.get<{ id: string }>(
 );
 ```
 
-### Dynamic endpoints
-
-Sometimes a URL needs to be generated from other data.  When creating an
-endpoint, it **must** be created **before** `api.saga()` is called.  Because of
-this, there's a limitation to what we can permit inside the `name` of the
-endpoint.  The `name` is the first parameter passed to the HTTP methods
-`api.get(name)` or `api.post(name)`.  If you need to generate the URL based on
-dynamic content, like a state derived value, then the recommended solution is
-to do the following:
-
-```ts
-api.post<{ message: string }>('create-message', function* onCreateMsg(ctx, next) {
-  // made up selector that grabs a mailbox
-  const mailbox = yield select(selectMailbox);
-  const message = ctx.payload.message;
-
-  ctx.request = ctx.req({
-    url: `/mailboxes/${mailbox.id}/messages`,
-    body: JSON.stringify({ message }),
-  });
-
-  yield next();
-})
-```
-
 As you can see, we can put whatever want for the `name` parameter passed into
-`api.get(name)`.  The key thing to realize here is that the name **must** be
+`api.get(name)`. The key thing to realize here is that the name **must** be
 unique across all endpoints since the name is what we use for the action type.
 
 ### Error handling
@@ -585,7 +593,9 @@ Global error handler:
 
 ```ts
 const api = createApi({
-  onError: (err: Error) => { console.log('error!'); },
+  onError: (err: Error) => {
+    console.log('error!');
+  },
 });
 api.use(api.routes());
 api.use(function* upstream(ctx, next) {
@@ -599,9 +609,10 @@ store.dispatch(action());
 
 ### Loading state
 
-When using `prepareStore` in conjunction with `requestMonitor` the loading state will automatically be
-added to all of your endpoints.  We also export `QueryState` which is the
-interface that contains all the state types that `saga-query` provides.
+When using `prepareStore` in conjunction with `requestMonitor` so the loading
+state will automatically be added to all of your endpoints. We also export
+`QueryState` which is the interface that contains all the state types that
+`saga-query` provides.
 
 ```tsx
 // app.tsx
@@ -614,10 +625,7 @@ interface MapEntity<E> {
   [key: string]: E | undefined;
 }
 
-import {
-  fetchUsers,
-  selectUsersAsList,
-} from './api';
+import { fetchUsers, selectUsersAsList } from './api';
 
 interface AppState extends QueryState {
   users: MapEntity<User>;
@@ -632,30 +640,34 @@ const App = () => {
     dispatch(fetchUsers());
   }, []);
 
-  if (loader.isInitialLoading) return <div>Loading ...</div>
-  if (loader.isError) return <div>Error: {loader.message}</div>
+  if (loader.isInitialLoading) return <div>Loading ...</div>;
+  if (loader.isError) return <div>Error: {loader.message}</div>;
 
   return (
-    <div>{users.map((user) => <div key={user.id}>{user.email}</div>)}</div>
+    <div>
+      {users.map((user) => (
+        <div key={user.id}>{user.email}</div>
+      ))}
+    </div>
   );
-}
+};
 ```
 
 ### React
 
 We built a couple of simple hooks `useQuery`, `useCache`, `useLoader`, and
-`useLoaderSuccess` to make
-interacting with `saga-query` easier.  Having said that, it would be trivial to
-build your own custom hooks to do exactly what you want.
+`useLoaderSuccess` to make interacting with `saga-query` easier. Having said
+that, it would be trivial to build your own custom hooks to do exactly what you
+want.
 
-This section is a WIP, for now you can [read the
-source](https://github.com/redux-saga/saga-query/blob/main/src/react.ts)
+This section is a WIP, for now you can
+[read the source](https://github.com/redux-saga/saga-query/blob/main/src/react.ts)
 
 ### Cache timer
 
-Only call the endpoint at most on an interval.  We can call the endpoint
-as many times as we want but it will only get activated once every X
-milliseconds.  This effectively updates the cache on an interval.
+Only call the endpoint at most on an interval. We can call the endpoint as many
+times as we want but it will only get activated once every X milliseconds. This
+effectively updates the cache on an interval.
 
 ```ts
 import { timer } from 'saga-query';
@@ -663,15 +675,13 @@ import { timer } from 'saga-query';
 const SECONDS = 1000;
 const MINUTES = 60 * SECONDS;
 
-const fetchUsers = api.get(
-  '/users',
-  { saga: timer(5 * MINUTES) }
-);
+const fetchUsers = api.get('/users', { saga: timer(5 * MINUTES) });
 ```
 
 ### Take leading
 
 If two requests are made:
+
 - (A) request; then
 - (B) request
 
@@ -704,10 +714,7 @@ or if the payload contains a timer prop:
 ```ts
 import { poll } from 'saga-query';
 
-const pollUsers = api.get(
-  `/users`,
-  { saga: poll(5 * 1000) },
-);
+const pollUsers = api.get(`/users`, { saga: poll(5 * 1000) });
 ```
 
 `action.payload.timer` takes precedence.
@@ -719,15 +726,15 @@ import { pollUsers } from './api';
 
 const App = () => {
   const dispatch = useDispatch();
-  const [polling, setPolling] = useState("init");
+  const [polling, setPolling] = useState('init');
 
   const onClick = () => {
-    if (polling === "on") setPolling("off");
-    else setPolling("on");
+    if (polling === 'on') setPolling('off');
+    else setPolling('on');
   };
 
   useEffect(() => {
-    if (polling === "init") return;
+    if (polling === 'init') return;
     dispatch(pollRepo());
   }, [polling]);
 
@@ -737,7 +744,7 @@ const App = () => {
       <button onClick={onClick}>Toggle Polling</button>
     </div>
   );
-}
+};
 ```
 
 ### Optimistic UI
@@ -829,7 +836,7 @@ The middleware accepts three properties:
 
 - `doItType` (default: `${doIt}`) => action type
 - `undoType` (default: `${undo}`) => action type
-- `timeout` (default: 30 * 1000) => time in milliseconds before the endpoint
+- `timeout` (default: 30 \* 1000) => time in milliseconds before the endpoint
   get canceled automatically
 
 ```ts
@@ -842,7 +849,7 @@ import {
   UndoCtx,
   delay,
   put,
-  race
+  race,
 } from 'saga-query';
 
 interface Message {
@@ -856,7 +863,7 @@ api.use(requestMonitor());
 api.use(api.routes());
 api.use(undoer());
 
-const archiveMessage = api.patch<{ id: string; }>(
+const archiveMessage = api.patch<{ id: string }>(
   `message/:id`,
   function* onArchive(ctx, next) {
     ctx.undoable = true;
@@ -868,8 +875,8 @@ const archiveMessage = api.patch<{ id: string; }>(
 
     // make the API request
     yield next();
-  }
-)
+  },
+);
 
 const reducers = createReducerMap(messages);
 const store = setupStore(api.saga(), reducers);
@@ -911,7 +918,13 @@ function* undoer<Ctx extends UndoCtx = UndoCtx>() {
 # Performance monitor
 
 ```ts
-import { performanceMonitor, createPipe, wrap, PerfCtx, delay } from 'saga-query';
+import {
+  performanceMonitor,
+  createPipe,
+  wrap,
+  PerfCtx,
+  delay,
+} from 'saga-query';
 
 const thunks = createPipe<PerfCtx>();
 thunks.use(function* (ctx, next) {
@@ -934,18 +947,13 @@ store.dispatch(slow());
 ## Redux-toolkit
 
 `redux-toolkit` is a very popular redux library officially supported by the
-`redux` team.  When using it with `saga-query` the main thing it is responsible
+`redux` team. When using it with `saga-query` the main thing it is responsible
 for is setting up the redux slice where we want to cache the API endpoint
 response data.
 
 ```ts
 import { createStore } from 'redux';
-import {
-  prepareStore,
-  createApi,
-  requestMonitor,
-  fetcher,
-} from 'saga-query';
+import { prepareStore, createApi, requestMonitor, fetcher } from 'saga-query';
 import { createSlice } from '@reduxjs/toolkit';
 
 const users = createSlice({
@@ -956,8 +964,8 @@ const users = createSlice({
       action.payload.forEach((user) => {
         state[user.id] = user.id;
       });
-    }
-  }
+    },
+  },
 });
 
 const api = createApi();
