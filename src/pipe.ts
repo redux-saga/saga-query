@@ -85,19 +85,25 @@ export function createPipe<Ctx extends PipeCtx = PipeCtx<any>>({
   const middleware: Middleware<Ctx>[] = [];
   const sagas: { [key: string]: any } = {};
   const middlewareMap: { [key: string]: Middleware<Ctx> } = {};
+  const actionMap: {
+    [key: string]: CreateActionWithPayload<Ctx, any>;
+  } = {};
 
   function* defaultMiddleware(_: Ctx, next: Next): SagaIterator<void> {
     yield next();
   }
 
   const createType = (post: string) => `${API_ACTION_PREFIX}${post}`;
+
   function* onApi(action: ActionWithPayload<any>): SagaIterator<Ctx> {
     const { name, key, options } = action.payload;
+    const actionFn = actionMap[name];
     const ctx: any = {
       action,
       name,
       key,
       payload: options,
+      actionFn,
     };
     const fn = compose(middleware);
     yield call(fn, ctx);
@@ -144,12 +150,14 @@ export function createPipe<Ctx extends PipeCtx = PipeCtx<any>>({
       yield tt(`${action}`, onApi);
     }
     sagas[`${createName}`] = curSaga;
+
     const actionFn = (options?: any) => {
       const key = createActionKey(createName, options);
       return action({ name: createName, key, options });
     };
     actionFn.run = onApi as any;
     actionFn.toString = () => createName;
+    actionMap[`${createName}`] = actionFn;
     return actionFn;
   }
 

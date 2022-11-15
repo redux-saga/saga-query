@@ -7,11 +7,18 @@ import type {
 
 export type { LoadingState, LoadingItemState };
 
+type IfAny<T, Y, N> = 0 extends 1 & T ? Y : N;
+
 export interface PipeCtx<P = any> {
   name: string;
   key: string;
   payload: P;
   action: ActionWithPayload<CreateActionPayload<P>>;
+  actionFn: IfAny<
+    P,
+    CreateAction<PipeCtx>,
+    CreateActionWithPayload<PipeCtx<P>, P>
+  >;
 }
 
 export interface ApiFetchSuccess<S = any> {
