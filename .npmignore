@@ -5,3 +5,8 @@ yarn-error.log
 .husky/
 *.test.ts
 *.test.js
+src/
+rollup.config.js
+babel.config.js
+.node-version
+.github/
