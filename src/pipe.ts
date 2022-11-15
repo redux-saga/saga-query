@@ -1,6 +1,5 @@
 import { call, takeEvery } from 'redux-saga/effects';
 import type { SagaIterator } from 'redux-saga';
-import sagaCreator from 'redux-saga-creator';
 
 import { isFn, isObject } from './util';
 import { createActionKey } from './create-key';
@@ -13,6 +12,7 @@ import type {
   CreateActionWithPayload,
   PipeCtx,
 } from './types';
+import { sagaCreator } from './store';
 import { API_ACTION_PREFIX } from './constants';
 
 export function compose<Ctx extends PipeCtx = PipeCtx>(
