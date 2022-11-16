@@ -2,57 +2,12 @@ import type { Reducer, Middleware } from 'redux';
 import { combineReducers } from 'redux';
 import type { Saga, Task } from 'redux-saga';
 import createSagaMiddleware, { stdChannel } from 'redux-saga';
+import sagaCreator from 'redux-saga-creator';
 import { enableBatching, BATCH } from 'redux-batched-actions';
 
 import type { ActionWithPayload } from './types';
 import type { QueryState } from './slice';
 import { reducers as sagaQueryReducers } from './slice';
-
-import { call, spawn, all, ForkEffectDescriptor } from 'redux-saga/effects';
-import { CombinatorEffect, SimpleEffect } from '@redux-saga/types';
-
-function defaultOnError(err: Error) {
-  console.error(err);
-}
-
-function* keepAlive(
-  saga: (...args: any[]) => any,
-  onError: (err: Error) => any = defaultOnError,
-  options: any[],
-) {
-  while (true) {
-    try {
-      // @ts-ignore
-      yield call(saga, ...options);
-      break;
-    } catch (err) {
-      if (typeof onError === 'function') {
-        yield call(onError as any, err);
-      }
-    }
-  }
-}
-
-export function sagaCreator(
-  sagas: {
-    [key: string]: (...args: any[]) => any;
-  },
-  onError?: (err: Error) => any,
-): (
-  ...options: any[]
-) => Generator<
-  CombinatorEffect<'ALL', SimpleEffect<'FORK', ForkEffectDescriptor<void>>>,
-  void,
-  unknown
-> {
-  return function* rootSaga(...options: any[]) {
-    yield all(
-      Object.values(sagas).map((saga) =>
-        spawn(keepAlive, saga, onError, options),
-      ),
-    );
-  };
-}
 
 export interface PrepareStore<
   S extends { [key: string]: any } = { [key: string]: any },

@@ -13,8 +13,6 @@ jobs:
           registry-url: https://registry.npmjs.org
       - name: install dependencies
         run: yarn install --frozen-lockfile
-      - name: build files
-        run: NODE_ENV=production yarn build
       - name: test
         run: yarn test
       - name: version
