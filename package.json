@@ -2,12 +2,12 @@
   "name": "saga-query",
   "version": "0.0.0",
   "description": "Data fetching and caching using a middleware system",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
   "repository": "https://github.com/redux-saga/saga-query.git",
   "author": "Eric Bower <me@erock.io>",
   "license": "MIT",
   "private": false,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "scripts": {
     "prebuild": "shx rm -rf dist",
     "postbuild": "shx rm dist/*.test.*",
@@ -31,6 +31,16 @@
       "types": "./dist/react.d.ts",
       "module": "./dist/esm/react.js",
       "default": "./dist/react.js"
+    }
+  },
+  "typesVersions": {
+    "*": {
+      ".": [
+        "dist/index.d.ts"
+      ],
+      "react": [
+        "dist/react.d.ts"
+      ]
     }
   },
   "devDependencies": {
