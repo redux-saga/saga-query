@@ -1,4 +1,4 @@
-prettier.config.js
+prettier.config.cjs
 tsconfig.json
 yarn.lock
 yarn-error.log
@@ -6,7 +6,5 @@ yarn-error.log
 *.test.ts
 *.test.js
 src/
-rollup.config.js
-babel.config.js
 .node-version
 .github/

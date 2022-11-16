@@ -1,5 +1,5 @@
-import { isObject } from './util';
-import { encodeBase64 } from './encoding';
+import { isObject } from "./util";
+import { encodeBase64 } from "./encoding";
 
 const deepSortObject = (opts?: any): any => {
   if (!isObject(opts)) return opts;
@@ -18,8 +18,8 @@ export const createActionKey = (name: string, options?: any) => {
   const enc =
     typeof options !== undefined
       ? encodeBase64(JSON.stringify(deepSortObject(options)))
-      : '';
-  const encKey = enc ? `|${enc}` : '';
+      : "";
+  const encKey = enc ? `|${enc}` : "";
   const key = `${name}${encKey}`;
   return key;
 };

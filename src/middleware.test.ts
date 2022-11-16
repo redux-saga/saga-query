@@ -1,22 +1,22 @@
-import test from 'ava';
-import { takeLatest, put, delay } from 'redux-saga/effects';
-import { createReducerMap, createTable, defaultLoadingItem } from 'robodux';
-import type { MapEntity } from 'robodux';
-import { Buffer } from 'buffer';
+import test from "ava";
+import { takeLatest, put, delay } from "redux-saga/effects";
+import { createReducerMap, createTable, defaultLoadingItem } from "robodux";
+import type { MapEntity } from "robodux";
+import { Buffer } from "buffer";
 
-import { createApi } from './api';
+import { createApi } from "./api";
 import {
   urlParser,
   queryCtx,
   requestMonitor,
   undo,
   undoer,
-} from './middleware';
-import type { UndoCtx } from './middleware';
-import type { ApiCtx } from './types';
-import { setupStore } from './util';
-import { DATA_NAME, LOADERS_NAME, createQueryState } from './slice';
-import { SagaIterator } from 'redux-saga';
+} from "./middleware";
+import type { UndoCtx } from "./middleware";
+import type { ApiCtx } from "./types";
+import { setupStore } from "./util";
+import { DATA_NAME, LOADERS_NAME, createQueryState } from "./slice";
+import { SagaIterator } from "redux-saga";
 
 interface User {
   id: string;
@@ -24,8 +24,8 @@ interface User {
   email: string;
 }
 
-const mockUser: User = { id: '1', name: 'test', email: 'test@test.com' };
-const mockUser2: User = { id: '2', name: 'two', email: 'two@test.com' };
+const mockUser: User = { id: "1", name: "test", email: "test@test.com" };
+const mockUser2: User = { id: "2", name: "two", email: "two@test.com" };
 
 function* latest(action: string, saga: any, ...args: any[]) {
   yield takeLatest(`${action}`, saga, ...args);
@@ -35,8 +35,8 @@ const jsonBlob = (data: any) => {
   return Buffer.from(JSON.stringify(data));
 };
 
-test('middleware - basic', (t) => {
-  const name = 'users';
+test("middleware - basic", (t) => {
+  const name = "users";
   const cache = createTable<User>({ name });
   const query = createApi<ApiCtx>();
 
@@ -44,7 +44,7 @@ test('middleware - basic', (t) => {
   query.use(urlParser);
   query.use(query.routes());
   query.use(function* fetchApi(ctx, next) {
-    if (`${ctx.req().url}`.startsWith('/users/')) {
+    if (`${ctx.req().url}`.startsWith("/users/")) {
       ctx.json = { ok: true, data: mockUser2 };
       yield next();
       return;
@@ -67,7 +67,7 @@ test('middleware - basic', (t) => {
         return acc;
       }, {});
       yield put(cache.actions.add(curUsers));
-    },
+    }
   );
 
   const fetchUser = query.create<{ id: string }>(
@@ -76,13 +76,13 @@ test('middleware - basic', (t) => {
       saga: latest,
     },
     function* processUser(ctx: ApiCtx<User>, next) {
-      ctx.request = ctx.req({ method: 'POST' });
+      ctx.request = ctx.req({ method: "POST" });
       yield next();
       if (!ctx.json.ok) return;
       const curUser = ctx.json.data;
       const curUsers = { [curUser.id]: curUser };
       yield put(cache.actions.add(curUsers));
-    },
+    }
   );
 
   const reducers = createReducerMap(cache);
@@ -92,15 +92,15 @@ test('middleware - basic', (t) => {
     ...createQueryState(),
     users: { [mockUser.id]: mockUser },
   });
-  store.dispatch(fetchUser({ id: '2' }));
+  store.dispatch(fetchUser({ id: "2" }));
   t.deepEqual(store.getState(), {
     ...createQueryState(),
     users: { [mockUser.id]: mockUser, [mockUser2.id]: mockUser2 },
   });
 });
 
-test('middleware - with loader', (t) => {
-  const users = createTable<User>({ name: 'users' });
+test("middleware - with loader", (t) => {
+  const users = createTable<User>({ name: "users" });
 
   const api = createApi<ApiCtx>();
   api.use(requestMonitor());
@@ -124,7 +124,7 @@ test('middleware - with loader', (t) => {
       }, {});
 
       ctx.actions.push(users.actions.add(curUsers));
-    },
+    }
   );
 
   const reducers = createReducerMap(users);
@@ -134,15 +134,15 @@ test('middleware - with loader', (t) => {
   t.like(store.getState(), {
     [users.name]: { [mockUser.id]: mockUser },
     [LOADERS_NAME]: {
-      '/users': {
-        status: 'success',
+      "/users": {
+        status: "success",
       },
     },
   });
 });
 
-test('middleware - with item loader', (t) => {
-  const users = createTable<User>({ name: 'users' });
+test("middleware - with item loader", (t) => {
+  const users = createTable<User>({ name: "users" });
 
   const api = createApi<ApiCtx>();
   api.use(requestMonitor());
@@ -166,7 +166,7 @@ test('middleware - with item loader', (t) => {
       }, {});
 
       ctx.actions.push(users.actions.add(curUsers));
-    },
+    }
   );
 
   const reducers = createReducerMap(users);
@@ -177,19 +177,19 @@ test('middleware - with item loader', (t) => {
   t.like(store.getState(), {
     [users.name]: { [mockUser.id]: mockUser },
     [LOADERS_NAME]: {
-      '/users/:id': {
-        status: 'success',
+      "/users/:id": {
+        status: "success",
       },
       [action.payload.key]: {
-        status: 'success',
+        status: "success",
       },
     },
   });
 });
 
-test('middleware - with POST', async (t) => {
+test("middleware - with POST", async (t) => {
   t.plan(1);
-  const name = 'users';
+  const name = "users";
   const cache = createTable<User>({ name });
   const query = createApi();
 
@@ -199,10 +199,10 @@ test('middleware - with POST', async (t) => {
   query.use(function* fetchApi(ctx, next): SagaIterator<any> {
     const request = ctx.req();
     t.deepEqual(request, {
-      url: '/users',
+      url: "/users",
       headers: {},
-      method: 'POST',
-      body: JSON.stringify({ email: 'test@test.com' }),
+      method: "POST",
+      body: JSON.stringify({ email: "test@test.com" }),
     });
 
     const data = {
@@ -216,10 +216,10 @@ test('middleware - with POST', async (t) => {
     `/users [POST]`,
     function* processUsers(
       ctx: ApiCtx<{ email: string }, { users: User[] }>,
-      next,
+      next
     ) {
       ctx.request = ctx.req({
-        method: 'POST',
+        method: "POST",
         body: JSON.stringify({ email: ctx.payload.email }),
       });
 
@@ -233,7 +233,7 @@ test('middleware - with POST', async (t) => {
         return acc;
       }, {});
       yield put(cache.actions.add(curUsers));
-    },
+    }
   );
 
   const reducers = createReducerMap(cache);
@@ -241,7 +241,7 @@ test('middleware - with POST', async (t) => {
   store.dispatch(createUser({ email: mockUser.email }));
 });
 
-test('simpleCache', (t) => {
+test("simpleCache", (t) => {
   const api = createApi<ApiCtx>();
   api.use(requestMonitor());
   api.use(api.routes());
@@ -252,7 +252,7 @@ test('simpleCache', (t) => {
     yield next();
   });
 
-  const fetchUsers = api.get('/users', api.cache());
+  const fetchUsers = api.get("/users", api.cache());
   const store = setupStore(api.saga());
 
   const action = fetchUsers();
@@ -263,14 +263,14 @@ test('simpleCache', (t) => {
     },
     [LOADERS_NAME]: {
       [`${fetchUsers}`]: {
-        status: 'success',
+        status: "success",
       },
     },
   });
 });
 
-test('overriding default loader behavior', (t) => {
-  const users = createTable<User>({ name: 'users' });
+test("overriding default loader behavior", (t) => {
+  const users = createTable<User>({ name: "users" });
 
   const api = createApi<ApiCtx>();
   api.use(requestMonitor());
@@ -297,9 +297,9 @@ test('overriding default loader behavior', (t) => {
         return acc;
       }, {});
 
-      ctx.loader = { id, message: 'yes', meta: { wow: true } };
+      ctx.loader = { id, message: "yes", meta: { wow: true } };
       ctx.actions.push(users.actions.add(curUsers));
-    },
+    }
   );
 
   const reducers = createReducerMap(users);
@@ -310,15 +310,15 @@ test('overriding default loader behavior', (t) => {
     [users.name]: { [mockUser.id]: mockUser },
     [LOADERS_NAME]: {
       [`${fetchUsers}`]: {
-        status: 'success',
-        message: 'yes',
+        status: "success",
+        message: "yes",
         meta: { wow: true },
       },
     },
   });
 });
 
-test('undo', (t) => {
+test("undo", (t) => {
   const api = createApi<UndoCtx>();
   api.use(requestMonitor());
   api.use(api.routes());
@@ -332,7 +332,7 @@ test('undo', (t) => {
     yield next();
   });
 
-  const createUser = api.post('/users', function* (ctx, next) {
+  const createUser = api.post("/users", function* (ctx, next) {
     ctx.undoable = true;
     yield next();
   });
@@ -351,22 +351,22 @@ test('undo', (t) => {
   });
 });
 
-test('requestMonitor - error handler', (t) => {
+test("requestMonitor - error handler", (t) => {
   t.plan(1);
   let err = false;
   console.error = (msg: string) => {
     if (err) return;
-    t.deepEqual(msg, 'Error: something happened.  Check the endpoint [/users]');
+    t.deepEqual(msg, "Error: something happened.  Check the endpoint [/users]");
     err = true;
   };
-  const name = 'users';
+  const name = "users";
   const cache = createTable<User>({ name });
   const query = createApi<ApiCtx>();
 
   query.use(requestMonitor());
   query.use(query.routes());
   query.use(function* () {
-    throw new Error('something happened');
+    throw new Error("something happened");
   });
 
   const fetchUsers = query.create(`/users`);

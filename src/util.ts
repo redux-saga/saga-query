@@ -1,14 +1,14 @@
-import { createStore, applyMiddleware } from 'redux';
-import type { Reducer } from 'redux';
-import { prepareStore } from './store';
+import { createStore, applyMiddleware } from "redux";
+import type { Reducer } from "redux";
+import { prepareStore } from "./store";
 
-import { API_ACTION_PREFIX } from './constants';
-import { ApiRequest, RequiredApiRequest } from '.';
+import { API_ACTION_PREFIX } from "./constants";
+import { ApiRequest, RequiredApiRequest } from ".";
 
-export const isFn = (fn?: any) => fn && typeof fn === 'function';
-export const isObject = (obj?: any) => typeof obj === 'object' && obj !== null;
+export const isFn = (fn?: any) => fn && typeof fn === "function";
+export const isObject = (obj?: any) => typeof obj === "object" && obj !== null;
 export const createAction = (curType: string) => {
-  if (!curType) throw new Error('createAction requires non-empty string');
+  if (!curType) throw new Error("createAction requires non-empty string");
   const type = `${API_ACTION_PREFIX}/${curType}`;
   const action = () => ({ type });
   action.toString = () => type;
@@ -17,16 +17,16 @@ export const createAction = (curType: string) => {
 
 export function setupStore(
   saga: any,
-  reducers: { [key: string]: Reducer } = {},
+  reducers: { [key: string]: Reducer } = {}
 ) {
-  const sagas: any = typeof saga === 'function' ? { saga } : saga;
+  const sagas: any = typeof saga === "function" ? { saga } : saga;
   const prepared = prepareStore({
     reducers,
     sagas,
   });
   const store: any = createStore(
     prepared.reducer,
-    applyMiddleware(...prepared.middleware),
+    applyMiddleware(...prepared.middleware)
   );
   prepared.run();
   return store;
@@ -34,7 +34,7 @@ export function setupStore(
 
 export const mergeHeaders = (
   cur?: { [key: string]: string },
-  next?: { [key: string]: string },
+  next?: { [key: string]: string }
 ): HeadersInit => {
   if (!cur && !next) return {};
   if (!cur && next) return next;
@@ -44,9 +44,9 @@ export const mergeHeaders = (
 
 export const mergeRequest = (
   cur?: ApiRequest | null,
-  next?: ApiRequest | null,
+  next?: ApiRequest | null
 ): RequiredApiRequest => {
-  const defaultReq = { url: '', method: 'GET', headers: mergeHeaders() };
+  const defaultReq = { url: "", method: "GET", headers: mergeHeaders() };
   if (!cur && !next) return { ...defaultReq, headers: mergeHeaders() };
   if (!cur && next) return { ...defaultReq, ...next };
   if (cur && !next) return { ...defaultReq, ...cur };

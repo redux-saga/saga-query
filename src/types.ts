@@ -1,9 +1,9 @@
-import type { SagaIterator } from 'redux-saga';
+import type { SagaIterator } from "redux-saga";
 import type {
   LoadingMapPayload,
   LoadingState,
   LoadingItemState,
-} from 'robodux';
+} from "robodux";
 
 export type { LoadingState, LoadingItemState, LoadingMapPayload };
 
@@ -60,7 +60,7 @@ export interface ApiCtx<P = any, S = any, E = any>
 
 export type Middleware<Ctx extends PipeCtx = PipeCtx> = (
   ctx: Ctx,
-  next: Next,
+  next: Next
 ) => any;
 export type MiddlewareCo<Ctx extends PipeCtx = PipeCtx> =
   | Middleware<Ctx>

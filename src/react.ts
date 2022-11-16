@@ -1,9 +1,9 @@
-import { useSelector, useDispatch } from 'react-redux';
-import { useState, useEffect } from 'react';
-import type { LoadingState } from 'robodux';
+import { useSelector, useDispatch } from "react-redux";
+import { useState, useEffect } from "react";
+import type { LoadingState } from "robodux";
 
-import type { QueryState } from './slice';
-import { selectLoaderById, selectDataById } from './slice';
+import type { QueryState } from "./slice";
+import { selectLoaderById, selectDataById } from "./slice";
 
 type ActionFn<P = any> = (p: P) => { toString: () => string };
 type ActionFnSimple = () => { toString: () => string };
@@ -37,26 +37,26 @@ interface UseCacheResult<D = any, A extends SagaAction = SagaAction>
 }
 
 export function useLoader<S extends QueryState = QueryState>(
-  action: SagaAction | ActionFn,
+  action: SagaAction | ActionFn
 ) {
-  const id = typeof action === 'function' ? `${action}` : action.payload.key;
+  const id = typeof action === "function" ? `${action}` : action.payload.key;
   return useSelector((s: S) => selectLoaderById(s, { id }));
 }
 
 export function useApi<P = any, A extends SagaAction = SagaAction<P>>(
-  action: A,
+  action: A
 ): UseApiAction<A>;
 export function useApi<P = any, A extends SagaAction = SagaAction<P>>(
-  action: ActionFn<P>,
+  action: ActionFn<P>
 ): UseApiProps<P>;
 export function useApi<A extends SagaAction = SagaAction>(
-  action: ActionFnSimple,
+  action: ActionFnSimple
 ): UseApiSimpleProps;
 export function useApi(action: any) {
   const dispatch = useDispatch();
   const loader = useLoader(action);
   const trigger = (p: any) => {
-    if (typeof action === 'function') {
+    if (typeof action === "function") {
       dispatch(action(p));
     } else {
       dispatch(action);
@@ -66,7 +66,7 @@ export function useApi(action: any) {
 }
 
 export function useQuery<P = any, A extends SagaAction = SagaAction<P>>(
-  action: A,
+  action: A
 ): UseApiAction<A> {
   const api = useApi(action);
   useEffect(() => {
@@ -76,7 +76,7 @@ export function useQuery<P = any, A extends SagaAction = SagaAction<P>>(
 }
 
 export function useCache<D = any, A extends SagaAction = SagaAction>(
-  action: A,
+  action: A
 ): UseCacheResult<D, A> {
   const id = action.payload.key;
   const data = useSelector((s: any) => selectDataById(s, { id }));
@@ -85,8 +85,8 @@ export function useCache<D = any, A extends SagaAction = SagaAction>(
 }
 
 export function useLoaderSuccess(
-  cur: Pick<LoadingState, 'isLoading' | 'isSuccess'>,
-  success: () => any,
+  cur: Pick<LoadingState, "isLoading" | "isSuccess">,
+  success: () => any
 ) {
   const [prev, setPrev] = useState(cur);
   useEffect(() => {

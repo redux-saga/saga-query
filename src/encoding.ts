@@ -5,12 +5,12 @@
  * @returns The base64 encoded string.
  */
 export function encodeBase64(data: string) {
-  if (typeof btoa === 'function') {
+  if (typeof btoa === "function") {
     return btoa(data);
-  } else if (typeof Buffer === 'function') {
-    return Buffer.from(data, 'utf-8').toString('base64');
+  } else if (typeof Buffer === "function") {
+    return Buffer.from(data, "utf-8").toString("base64");
   } else {
-    throw new Error('Failed to determine the platform specific encoder');
+    throw new Error("Failed to determine the platform specific encoder");
   }
 }
 
@@ -21,11 +21,11 @@ export function encodeBase64(data: string) {
  * @returns The decoded text.
  */
 export function decodeBase64(data: string) {
-  if (typeof atob === 'function') {
+  if (typeof atob === "function") {
     return atob(data);
-  } else if (typeof Buffer === 'function') {
-    return Buffer.from(data, 'base64').toString('utf-8');
+  } else if (typeof Buffer === "function") {
+    return Buffer.from(data, "base64").toString("utf-8");
   } else {
-    throw new Error('Failed to determine the platform specific decoder');
+    throw new Error("Failed to determine the platform specific decoder");
   }
 }
