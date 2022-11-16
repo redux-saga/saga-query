@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
+    "baseUrl": ".",
     "target": "es5",
-    "module": "commonjs",
     "moduleResolution": "node",
     "outDir": "./dist",
     "declaration": true,
@@ -12,5 +12,5 @@
     "forceConsistentCasingInFileNames": true
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "dist"]
 }
