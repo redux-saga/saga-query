@@ -1,11 +1,11 @@
-import { SagaIterator } from "redux-saga";
-import { call } from "redux-saga/effects";
-import { compose } from "./pipe";
-import type { FetchCtx, FetchJsonCtx, Next } from "./types";
+import { SagaIterator } from 'redux-saga';
+import { call } from 'redux-saga/effects';
+import { compose } from './pipe';
+import type { FetchCtx, FetchJsonCtx, Next } from './types';
 
 export function* headersMdw<CurCtx extends FetchCtx = FetchCtx>(
   ctx: CurCtx,
-  next: Next
+  next: Next,
 ): SagaIterator<any> {
   if (!ctx.request) {
     yield next();
@@ -13,9 +13,9 @@ export function* headersMdw<CurCtx extends FetchCtx = FetchCtx>(
   }
 
   const cur = ctx.req();
-  if (!cur.headers.hasOwnProperty("Content-Type")) {
+  if (!cur.headers.hasOwnProperty('Content-Type')) {
     ctx.request = ctx.req({
-      headers: { "Content-Type": "application/json" },
+      headers: { 'Content-Type': 'application/json' },
     });
   }
 
@@ -24,7 +24,7 @@ export function* headersMdw<CurCtx extends FetchCtx = FetchCtx>(
 
 export function* jsonMdw<CurCtx extends FetchJsonCtx = FetchJsonCtx>(
   ctx: CurCtx,
-  next: Next
+  next: Next,
 ): SagaIterator<any> {
   if (!ctx.response) {
     yield next();
@@ -41,7 +41,7 @@ export function* jsonMdw<CurCtx extends FetchJsonCtx = FetchJsonCtx>(
   }
 
   try {
-    const data = yield call([ctx.response, "json"]);
+    const data = yield call([ctx.response, 'json']);
     ctx.json = {
       ok: ctx.response.ok,
       data,
@@ -57,7 +57,7 @@ export function* jsonMdw<CurCtx extends FetchJsonCtx = FetchJsonCtx>(
 }
 
 export function apiUrlMdw<CurCtx extends FetchJsonCtx = FetchJsonCtx>(
-  baseUrl: string = ""
+  baseUrl: string = '',
 ) {
   return function* (ctx: CurCtx, next: Next): SagaIterator<any> {
     const req = ctx.req();
@@ -79,7 +79,7 @@ export function apiUrlMdw<CurCtx extends FetchJsonCtx = FetchJsonCtx>(
  */
 export function* payloadMdw<CurCtx extends FetchJsonCtx = FetchJsonCtx>(
   ctx: CurCtx,
-  next: Next
+  next: Next,
 ) {
   const payload = ctx.payload;
   if (!payload) {
@@ -109,7 +109,7 @@ export function* payloadMdw<CurCtx extends FetchJsonCtx = FetchJsonCtx>(
 
 export function* fetchMdw<CurCtx extends FetchCtx = FetchCtx>(
   ctx: CurCtx,
-  next: Next
+  next: Next,
 ): SagaIterator<any> {
   const { url, ...req } = ctx.req();
   const request = new Request(url, req);
@@ -120,10 +120,10 @@ export function* fetchMdw<CurCtx extends FetchCtx = FetchCtx>(
 
 export function fetcher<CurCtx extends FetchJsonCtx = FetchJsonCtx>(
   {
-    baseUrl = "",
+    baseUrl = '',
   }: {
     baseUrl?: string;
-  } = { baseUrl: "" }
+  } = { baseUrl: '' },
 ) {
   return compose<CurCtx>([
     headersMdw,

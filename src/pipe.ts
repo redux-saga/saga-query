@@ -1,8 +1,8 @@
-import { call, takeEvery } from "redux-saga/effects";
-import type { SagaIterator } from "redux-saga";
+import { call, takeEvery } from 'redux-saga/effects';
+import type { SagaIterator } from 'redux-saga';
 
-import { isFn, isObject } from "./util";
-import { createActionKey } from "./create-key";
+import { isFn, isObject } from './util';
+import { createActionKey } from './create-key';
 import type {
   Middleware,
   MiddlewareCo,
@@ -11,19 +11,19 @@ import type {
   CreateAction,
   CreateActionWithPayload,
   PipeCtx,
-} from "./types";
-import { sagaCreator } from "./store";
-import { API_ACTION_PREFIX } from "./constants";
+} from './types';
+import { sagaCreator } from './store';
+import { API_ACTION_PREFIX } from './constants';
 
 export function compose<Ctx extends PipeCtx = PipeCtx>(
-  middleware: Middleware<Ctx>[]
+  middleware: Middleware<Ctx>[],
 ) {
   if (!Array.isArray(middleware)) {
-    throw new TypeError("Middleware stack must be an array!");
+    throw new TypeError('Middleware stack must be an array!');
   }
   for (const fn of middleware) {
-    if (typeof fn !== "function") {
-      throw new TypeError("Middleware must be composed of functions!");
+    if (typeof fn !== 'function') {
+      throw new TypeError('Middleware must be composed of functions!');
     }
   }
 
@@ -34,7 +34,7 @@ export function compose<Ctx extends PipeCtx = PipeCtx>(
 
     function* dispatch(i: number): SagaIterator<void> {
       if (i <= index) {
-        throw new Error("next() called multiple times");
+        throw new Error('next() called multiple times');
       }
       index = i;
       let fn: any = middleware[i];
@@ -57,17 +57,17 @@ export interface SagaApi<Ctx extends PipeCtx> {
   create(name: string, fn: MiddlewareCo<Ctx>): CreateAction<Ctx>;
   create<P>(
     name: string,
-    fn: MiddlewareCo<Ctx>
+    fn: MiddlewareCo<Ctx>,
   ): CreateActionWithPayload<Ctx, P>;
   create(
     name: string,
     req: { saga?: any },
-    fn: MiddlewareCo<Ctx>
+    fn: MiddlewareCo<Ctx>,
   ): CreateAction<Ctx>;
   create<P>(
     name: string,
     req: { saga?: any },
-    fn: MiddlewareCo<Ctx>
+    fn: MiddlewareCo<Ctx>,
   ): CreateActionWithPayload<Ctx, P>;
 }
 
@@ -132,7 +132,7 @@ export function createPipe<Ctx extends PipeCtx = PipeCtx<any>>({
     }
 
     if (req && !isObject(req)) {
-      throw new Error("Options must be an object");
+      throw new Error('Options must be an object');
     }
 
     if (fn && Array.isArray(fn)) {
@@ -140,7 +140,7 @@ export function createPipe<Ctx extends PipeCtx = PipeCtx<any>>({
     }
 
     if (fn && !isFn(fn)) {
-      throw new Error("Middleware must be a function");
+      throw new Error('Middleware must be a function');
     }
 
     middlewareMap[`${createName}`] = fn || defaultMiddleware;

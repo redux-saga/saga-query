@@ -1,13 +1,13 @@
-import test from "ava";
-import type { SagaIterator } from "redux-saga";
-import { put, call, delay } from "redux-saga/effects";
-import { createTable, createReducerMap } from "robodux";
-import type { Action, MapEntity } from "robodux";
+import test from 'ava';
+import type { SagaIterator } from 'redux-saga';
+import { put, call, delay } from 'redux-saga/effects';
+import { createTable, createReducerMap } from 'robodux';
+import type { Action, MapEntity } from 'robodux';
 
-import { createPipe } from "./pipe";
-import type { PipeCtx, Next } from "./types";
-import { setupStore as prepStore } from "./util";
-import { createQueryState } from "./slice";
+import { createPipe } from './pipe';
+import type { PipeCtx, Next } from './types';
+import { setupStore as prepStore } from './util';
+import { createQueryState } from './slice';
 
 interface RoboCtx<D = any, P = any> extends PipeCtx<P> {
   url: string;
@@ -53,12 +53,12 @@ const deserializeTicket = (u: TicketResponse): Ticket => {
   };
 };
 
-const users = createTable<User>({ name: "USER" });
-const tickets = createTable<Ticket>({ name: "TICKET" });
+const users = createTable<User>({ name: 'USER' });
+const tickets = createTable<Ticket>({ name: 'TICKET' });
 const reducers = createReducerMap(users, tickets);
 
-const mockUser = { id: "1", name: "test", email_address: "test@test.com" };
-const mockTicket = { id: "2", name: "test-ticket" };
+const mockUser = { id: '1', name: 'test', email_address: 'test@test.com' };
+const mockTicket = { id: '2', name: 'test-ticket' };
 
 function* convertNameToUrl(ctx: RoboCtx, next: Next) {
   if (!ctx.url) {
@@ -70,13 +70,13 @@ function* convertNameToUrl(ctx: RoboCtx, next: Next) {
 function* onFetchApi(ctx: RoboCtx, next: Next) {
   const url = ctx.url;
   let json = {};
-  if (url === "/users") {
+  if (url === '/users') {
     json = {
       users: [mockUser],
     };
   }
 
-  if (url === "/tickets") {
+  if (url === '/tickets') {
     json = {
       tickets: [mockTicket],
     };
@@ -106,7 +106,7 @@ function* processUsers(ctx: RoboCtx<{ users?: UserResponse[] }>, next: Next) {
 
 function* processTickets(
   ctx: RoboCtx<{ tickets?: UserResponse[] }>,
-  next: Next
+  next: Next,
 ) {
   if (!ctx.response.tickets) {
     yield next();
@@ -117,7 +117,7 @@ function* processTickets(
       acc[u.id] = deserializeTicket(u);
       return acc;
     },
-    {}
+    {},
   );
   ctx.actions.push(tickets.actions.add(curTickets));
   yield next();
@@ -136,7 +136,7 @@ function setupStore(saga: any) {
   return store;
 }
 
-test("createPipe: when create a query fetch pipeline - execute all middleware and save to redux", (t) => {
+test('createPipe: when create a query fetch pipeline - execute all middleware and save to redux', (t) => {
   const api = createPipe<RoboCtx>();
   api.use(api.routes());
   api.use(convertNameToUrl);
@@ -156,7 +156,7 @@ test("createPipe: when create a query fetch pipeline - execute all middleware an
   });
 });
 
-test("createPipe: when providing a generator the to api.create function - should call that generator before all other middleware", (t) => {
+test('createPipe: when providing a generator the to api.create function - should call that generator before all other middleware', (t) => {
   t.plan(2);
   const api = createPipe<RoboCtx>();
   api.use(api.routes());
@@ -169,7 +169,7 @@ test("createPipe: when providing a generator the to api.create function - should
   const fetchUsers = api.create(`/users`);
   const fetchTickets = api.create(`/ticket-wrong-url`, function* (ctx, next) {
     // before middleware has been triggered
-    ctx.url = "/tickets";
+    ctx.url = '/tickets';
 
     // triggers all middleware
     yield next();
@@ -192,7 +192,7 @@ test("createPipe: when providing a generator the to api.create function - should
   });
 });
 
-test("error handling", (t) => {
+test('error handling', (t) => {
   t.plan(1);
   const api = createPipe<RoboCtx>();
   api.use(api.routes());
@@ -204,7 +204,7 @@ test("error handling", (t) => {
     }
   });
   api.use(function* fail() {
-    throw new Error("some error");
+    throw new Error('some error');
   });
 
   const action = api.create(`/error`);
@@ -212,12 +212,12 @@ test("error handling", (t) => {
   store.dispatch(action());
 });
 
-test("error handling inside create", (t) => {
+test('error handling inside create', (t) => {
   t.plan(1);
   const api = createPipe<RoboCtx>();
   api.use(api.routes());
   api.use(function* fail() {
-    throw new Error("some error");
+    throw new Error('some error');
   });
 
   const action = api.create(`/error`, function* (ctx, next) {
@@ -231,14 +231,14 @@ test("error handling inside create", (t) => {
   store.dispatch(action());
 });
 
-test("error handling - error handler", (t) => {
+test('error handling - error handler', (t) => {
   t.plan(1);
   const api = createPipe<RoboCtx>({
-    onError: (err: Error) => t.assert(err.message === "failure"),
+    onError: (err: Error) => t.assert(err.message === 'failure'),
   });
   api.use(api.routes());
   api.use(function* upstream() {
-    throw new Error("failure");
+    throw new Error('failure');
   });
 
   const action = api.create(`/error`);
@@ -246,28 +246,28 @@ test("error handling - error handler", (t) => {
   store.dispatch(action());
 });
 
-test("create fn is an array", (t) => {
+test('create fn is an array', (t) => {
   t.plan(1);
   const api = createPipe<RoboCtx>();
   api.use(api.routes());
   api.use(function* (ctx, next) {
     t.deepEqual(ctx.request, {
-      method: "POST",
+      method: 'POST',
       body: {
-        test: "me",
+        test: 'me',
       },
     });
     yield next();
   });
-  const action = api.create("/users", [
+  const action = api.create('/users', [
     function* (ctx, next) {
       ctx.request = {
-        method: "POST",
+        method: 'POST',
       };
       yield next();
     },
     function* (ctx, next) {
-      ctx.request.body = { test: "me" };
+      ctx.request.body = { test: 'me' };
       yield next();
     },
   ]);
@@ -276,34 +276,34 @@ test("create fn is an array", (t) => {
   store.dispatch(action());
 });
 
-test("run() on endpoint action - should run the effect", (t) => {
+test('run() on endpoint action - should run the effect', (t) => {
   t.plan(2);
   const api = createPipe<RoboCtx>();
   api.use(api.routes());
-  let acc = "";
-  const action1 = api.create("/users", function* (ctx, next) {
+  let acc = '';
+  const action1 = api.create('/users', function* (ctx, next) {
     yield next();
-    ctx.request = "expect this";
-    acc += "a";
+    ctx.request = 'expect this';
+    acc += 'a';
   });
   const action2 = api.create(
-    "/users2",
+    '/users2',
     function* (ctx, next): SagaIterator<void> {
       yield next();
       const curCtx = yield call(action1.run, action1());
-      acc += "b";
-      t.assert(acc === "ab");
+      acc += 'b';
+      t.assert(acc === 'ab');
       t.like(curCtx, {
         action: {
-          type: "@@saga-query/users",
+          type: '@@saga-query/users',
           payload: {
-            name: "/users",
+            name: '/users',
           },
         },
-        name: "/users",
-        request: "expect this",
+        name: '/users',
+        request: 'expect this',
       });
-    }
+    },
   );
 
   const store = setupStore(api.saga());
@@ -317,53 +317,53 @@ const sleep = (n: number) =>
     }, n);
   });
 
-test("middleware order of execution", async (t) => {
+test('middleware order of execution', async (t) => {
   t.plan(1);
-  let acc = "";
+  let acc = '';
   const api = createPipe();
   api.use(api.routes());
 
   api.use(function* (ctx, next) {
     yield delay(10);
-    acc += "b";
+    acc += 'b';
     yield next();
     yield delay(10);
-    acc += "f";
+    acc += 'f';
   });
 
   api.use(function* (ctx, next) {
-    acc += "c";
+    acc += 'c';
     yield next();
-    acc += "d";
+    acc += 'd';
     yield delay(30);
-    acc += "e";
+    acc += 'e';
   });
 
-  const action = api.create("/api", function* (ctx, next) {
-    acc += "a";
+  const action = api.create('/api', function* (ctx, next) {
+    acc += 'a';
     yield next();
-    acc += "g";
+    acc += 'g';
   });
 
   const store = setupStore(api.saga());
   store.dispatch(action());
 
   await sleep(150);
-  t.assert(acc === "abcdefg");
+  t.assert(acc === 'abcdefg');
 });
 
-test("retry with actionFn", async (t) => {
+test('retry with actionFn', async (t) => {
   t.plan(1);
-  let acc = "";
+  let acc = '';
   let called = false;
 
   const api = createPipe();
   api.use(api.routes());
 
-  const action = api.create("/api", function* (ctx, next) {
-    acc += "a";
+  const action = api.create('/api', function* (ctx, next) {
+    acc += 'a';
     yield next();
-    acc += "g";
+    acc += 'g';
 
     if (!called) {
       called = true;
@@ -375,12 +375,12 @@ test("retry with actionFn", async (t) => {
   store.dispatch(action());
 
   await sleep(150);
-  t.deepEqual(acc, "agag");
+  t.deepEqual(acc, 'agag');
 });
 
-test("retry with actionFn with payload", async (t) => {
+test('retry with actionFn with payload', async (t) => {
   t.plan(1);
-  let acc = "";
+  let acc = '';
   const api = createPipe();
   api.use(api.routes());
 
@@ -391,15 +391,15 @@ test("retry with actionFn with payload", async (t) => {
     }
   });
 
-  const action = api.create<{ page: number }>("/api", function* (ctx, next) {
-    acc += "a";
+  const action = api.create<{ page: number }>('/api', function* (ctx, next) {
+    acc += 'a';
     yield next();
-    acc += "g";
+    acc += 'g';
   });
 
   const store = setupStore(api.saga());
   store.dispatch(action({ page: 1 }));
 
   await sleep(150);
-  t.deepEqual(acc, "aagg");
+  t.deepEqual(acc, 'aagg');
 });

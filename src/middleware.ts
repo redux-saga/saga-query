@@ -1,4 +1,4 @@
-import { batchActions } from "redux-batched-actions";
+import { batchActions } from 'redux-batched-actions';
 import {
   put,
   takeLatest,
@@ -10,8 +10,8 @@ import {
   throttle as throttleHelper,
   debounce as debounceHelper,
   fork,
-} from "redux-saga/effects";
-import type { SagaIterator, Task } from "redux-saga";
+} from 'redux-saga/effects';
+import type { SagaIterator, Task } from 'redux-saga';
 
 import type {
   Action,
@@ -22,16 +22,16 @@ import type {
   RequiredApiRequest,
   ActionWithPayload,
   CreateActionPayload,
-} from "./types";
-import { compose } from "./pipe";
-import { isObject, createAction, mergeRequest } from "./util";
+} from './types';
+import { compose } from './pipe';
+import { isObject, createAction, mergeRequest } from './util';
 import {
   setLoaderStart,
   setLoaderError,
   setLoaderSuccess,
   resetLoaderById,
   addData,
-} from "./slice";
+} from './slice';
 
 const MS = 1000;
 const SECONDS = 1 * MS;
@@ -39,14 +39,14 @@ const MINUTES = 60 * SECONDS;
 
 export function* errorHandler<Ctx extends PipeCtx = PipeCtx>(
   ctx: Ctx,
-  next: Next
+  next: Next,
 ) {
   try {
     yield next();
   } catch (err: any) {
     console.error(
       `Error: ${err.message}.  Check the endpoint [${ctx.name}]`,
-      ctx
+      ctx,
     );
     throw err;
   }
@@ -66,15 +66,15 @@ export function* queryCtx<Ctx extends ApiCtx = ApiCtx>(ctx: Ctx, next: Next) {
 
 export function* urlParser<Ctx extends ApiCtx = ApiCtx>(ctx: Ctx, next: Next) {
   const httpMethods = [
-    "get",
-    "head",
-    "post",
-    "put",
-    "delete",
-    "connect",
-    "options",
-    "trace",
-    "patch",
+    'get',
+    'head',
+    'post',
+    'put',
+    'delete',
+    'connect',
+    'options',
+    'trace',
+    'patch',
   ];
 
   const options = ctx.payload || {};
@@ -87,10 +87,10 @@ export function* urlParser<Ctx extends ApiCtx = ApiCtx>(ctx: Ctx, next: Next) {
     return acc.replace(`:${key}`, options[key]);
   }, ctx.name);
 
-  let method = "";
+  let method = '';
   httpMethods.forEach((curMethod) => {
-    const pattern = new RegExp(`\\s*\\[` + curMethod + `\\]\\s*`, "i");
-    const tmpUrl = url.replace(pattern, "");
+    const pattern = new RegExp(`\\s*\\[` + curMethod + `\\]\\s*`, 'i');
+    const tmpUrl = url.replace(pattern, '');
     if (tmpUrl.length !== url.length) {
       method = curMethod.toLocaleUpperCase();
     }
@@ -113,14 +113,14 @@ export function* dispatchActions(ctx: { actions: Action[] }, next: Next) {
 }
 
 export function loadingMonitor<Ctx extends ApiCtx = ApiCtx>(
-  errorFn: (ctx: Ctx) => string = (ctx) => ctx.json?.data?.message || ""
+  errorFn: (ctx: Ctx) => string = (ctx) => ctx.json?.data?.message || '',
 ) {
   return function* trackLoading(ctx: Ctx, next: Next) {
     yield put(
       batchActions([
         setLoaderStart({ id: ctx.name }),
         setLoaderStart({ id: ctx.key }),
-      ])
+      ]),
     );
     if (!ctx.loader) ctx.loader = {} as any;
 
@@ -135,14 +135,14 @@ export function loadingMonitor<Ctx extends ApiCtx = ApiCtx>(
     if (!ctx.response.ok) {
       ctx.actions.push(
         setLoaderError({ id: ctx.name, message: errorFn(ctx), ...payload }),
-        setLoaderError({ id: ctx.key, message: errorFn(ctx), ...payload })
+        setLoaderError({ id: ctx.key, message: errorFn(ctx), ...payload }),
       );
       return;
     }
 
     ctx.actions.push(
       setLoaderSuccess({ id: ctx.name, ...payload }),
-      setLoaderSuccess({ id: ctx.key, ...payload })
+      setLoaderSuccess({ id: ctx.key, ...payload }),
     );
   };
 }
@@ -151,12 +151,12 @@ export interface UndoCtx<P = any, S = any, E = any> extends ApiCtx<P, S, E> {
   undoable: boolean;
 }
 
-export const doIt = createAction("DO_IT");
-export const undo = createAction("UNDO");
+export const doIt = createAction('DO_IT');
+export const undo = createAction('UNDO');
 export function undoer<Ctx extends UndoCtx = UndoCtx>(
   doItType = `${doIt}`,
   undoType = `${undo}`,
-  timeout = 30 * 1000
+  timeout = 30 * 1000,
 ) {
   return function* onUndo(ctx: Ctx, next: Next): SagaIterator<void> {
     if (!ctx.undoable) {
@@ -223,7 +223,7 @@ export function timer(timer: number = 5 * MINUTES) {
 
     while (true) {
       const action: ActionWithPayload<CreateActionPayload> = yield take(
-        `${actionType}`
+        `${actionType}`,
       );
       const key = action.payload.key;
       const notRunning = map[key] && !map[key].isRunning();
@@ -266,7 +266,7 @@ export interface OptimisticCtx<A extends Action = any, R extends Action = any>
 }
 
 export function* optimistic<
-  Ctx extends OptimisticCtx<any, any> = OptimisticCtx<any, any>
+  Ctx extends OptimisticCtx<any, any> = OptimisticCtx<any, any>,
 >(ctx: Ctx, next: Next) {
   if (!ctx.optimistic) {
     yield next();
@@ -286,7 +286,7 @@ export function* optimistic<
 
 export function* simpleCache<Ctx extends ApiCtx = ApiCtx>(
   ctx: Ctx,
-  next: Next
+  next: Next,
 ) {
   yield next();
   if (!ctx.cache) return;
@@ -296,7 +296,7 @@ export function* simpleCache<Ctx extends ApiCtx = ApiCtx>(
 }
 
 export function requestMonitor<Ctx extends ApiCtx = ApiCtx>(
-  errorFn?: (ctx: Ctx) => string
+  errorFn?: (ctx: Ctx) => string,
 ) {
   return compose<Ctx>([
     errorHandler,
@@ -314,7 +314,7 @@ export interface PerfCtx<P = any> extends PipeCtx<P> {
 
 export function* performanceMonitor<Ctx extends PerfCtx = PerfCtx>(
   ctx: Ctx,
-  next: Next
+  next: Next,
 ) {
   const t0 = performance.now();
   yield next();
@@ -323,7 +323,7 @@ export function* performanceMonitor<Ctx extends PerfCtx = PerfCtx>(
 }
 
 export function wrap<Ctx extends PipeCtx = PipeCtx>(
-  saga: (...args: any[]) => any
+  saga: (...args: any[]) => any,
 ) {
   return function* (ctx: Ctx, next: Next) {
     yield call(saga, ctx.action);

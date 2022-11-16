@@ -1,4 +1,4 @@
-import type { SagaIterator } from "redux-saga";
+import type { SagaIterator } from 'redux-saga';
 import type {
   CreateAction,
   CreateActionWithPayload,
@@ -6,14 +6,14 @@ import type {
   MiddlewareCo,
   Next,
   ApiRequest,
-} from "./types";
-import { createPipe } from "./pipe";
-import type { SagaApi } from "./pipe";
+} from './types';
+import { createPipe } from './pipe';
+import type { SagaApi } from './pipe';
 
 export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
   extends SagaApi<Ctx> {
   request: (
-    r: Partial<RequestInit>
+    r: Partial<RequestInit>,
   ) => (ctx: Ctx, next: Next) => SagaIterator<any>;
   cache: () => (ctx: Ctx, next: Next) => SagaIterator<any>;
 
@@ -25,7 +25,7 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
     get(req: { saga?: any }, fn: MiddlewareCo<Ctx>): CreateAction<Ctx>;
     get<P>(
       req: { saga?: any },
-      fn: MiddlewareCo<Ctx>
+      fn: MiddlewareCo<Ctx>,
     ): CreateActionWithPayload<Ctx, P>;
 
     post(req: { saga?: any }): CreateAction<Ctx>;
@@ -35,7 +35,7 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
     post(req: { saga?: any }, fn: MiddlewareCo<Ctx>): CreateAction<Ctx>;
     post<P>(
       req: { saga?: any },
-      fn: MiddlewareCo<Ctx>
+      fn: MiddlewareCo<Ctx>,
     ): CreateActionWithPayload<Ctx, P>;
 
     put(req: { saga?: any }): CreateAction<Ctx>;
@@ -45,7 +45,7 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
     put(req: { saga?: any }, fn: MiddlewareCo<Ctx>): CreateAction<Ctx>;
     put<P>(
       req: { saga?: any },
-      fn: MiddlewareCo<Ctx>
+      fn: MiddlewareCo<Ctx>,
     ): CreateActionWithPayload<Ctx, P>;
 
     patch(req: { saga?: any }): CreateAction<Ctx>;
@@ -55,7 +55,7 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
     patch(req: { saga?: any }, fn: MiddlewareCo<Ctx>): CreateAction<Ctx>;
     patch<P>(
       req: { saga?: any },
-      fn: MiddlewareCo<Ctx>
+      fn: MiddlewareCo<Ctx>,
     ): CreateActionWithPayload<Ctx, P>;
 
     delete(req: { saga?: any }): CreateAction<Ctx>;
@@ -65,7 +65,7 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
     delete(req: { saga?: any }, fn: MiddlewareCo<Ctx>): CreateAction<Ctx>;
     delete<P>(
       req: { saga?: any },
-      fn: MiddlewareCo<Ctx>
+      fn: MiddlewareCo<Ctx>,
     ): CreateActionWithPayload<Ctx, P>;
 
     options(req: { saga?: any }): CreateAction<Ctx>;
@@ -75,7 +75,7 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
     options(req: { saga?: any }, fn: MiddlewareCo<Ctx>): CreateAction<Ctx>;
     options<P>(
       req: { saga?: any },
-      fn: MiddlewareCo<Ctx>
+      fn: MiddlewareCo<Ctx>,
     ): CreateActionWithPayload<Ctx, P>;
 
     trace(req: { saga?: any }): CreateAction<Ctx>;
@@ -85,7 +85,7 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
     trace(req: { saga?: any }, fn: MiddlewareCo<Ctx>): CreateAction<Ctx>;
     trace<P>(
       req: { saga?: any },
-      fn: MiddlewareCo<Ctx>
+      fn: MiddlewareCo<Ctx>,
     ): CreateActionWithPayload<Ctx, P>;
 
     connect(req: { saga?: any }): CreateAction<Ctx>;
@@ -95,7 +95,7 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
     connect(req: { saga?: any }, fn: MiddlewareCo<Ctx>): CreateAction<Ctx>;
     connect<P>(
       req: { saga?: any },
-      fn: MiddlewareCo<Ctx>
+      fn: MiddlewareCo<Ctx>,
     ): CreateActionWithPayload<Ctx, P>;
 
     trace(req: { saga?: any }): CreateAction<Ctx>;
@@ -105,7 +105,7 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
     trace(req: { saga?: any }, fn: MiddlewareCo<Ctx>): CreateAction<Ctx>;
     trace<P>(
       req: { saga?: any },
-      fn: MiddlewareCo<Ctx>
+      fn: MiddlewareCo<Ctx>,
     ): CreateActionWithPayload<Ctx, P>;
   };
 
@@ -118,12 +118,12 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
   get(
     name: string,
     req: { saga?: any },
-    fn: MiddlewareCo<Ctx>
+    fn: MiddlewareCo<Ctx>,
   ): CreateAction<Ctx>;
   get<P>(
     name: string,
     req: { saga?: any },
-    fn: MiddlewareCo<Ctx>
+    fn: MiddlewareCo<Ctx>,
   ): CreateActionWithPayload<Ctx, P>;
 
   post(name: string): CreateAction<Ctx>;
@@ -135,12 +135,12 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
   post(
     name: string,
     req: { saga?: any },
-    fn: MiddlewareCo<Ctx>
+    fn: MiddlewareCo<Ctx>,
   ): CreateAction<Ctx>;
   post<P>(
     name: string,
     req: { saga?: any },
-    fn: MiddlewareCo<Ctx>
+    fn: MiddlewareCo<Ctx>,
   ): CreateActionWithPayload<Ctx, P>;
 
   put(name: string): CreateAction<Ctx>;
@@ -152,12 +152,12 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
   put(
     name: string,
     req: { saga?: any },
-    fn: MiddlewareCo<Ctx>
+    fn: MiddlewareCo<Ctx>,
   ): CreateAction<Ctx>;
   put<P>(
     name: string,
     req: { saga?: any },
-    fn: MiddlewareCo<Ctx>
+    fn: MiddlewareCo<Ctx>,
   ): CreateActionWithPayload<Ctx, P>;
 
   patch(name: string): CreateAction<Ctx>;
@@ -167,17 +167,17 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
   patch(name: string, fn: MiddlewareCo<Ctx>): CreateAction<Ctx>;
   patch<P>(
     name: string,
-    fn: MiddlewareCo<Ctx>
+    fn: MiddlewareCo<Ctx>,
   ): CreateActionWithPayload<Ctx, P>;
   patch(
     name: string,
     req: { saga?: any },
-    fn: MiddlewareCo<Ctx>
+    fn: MiddlewareCo<Ctx>,
   ): CreateAction<Ctx>;
   patch<P>(
     name: string,
     req: { saga?: any },
-    fn: MiddlewareCo<Ctx>
+    fn: MiddlewareCo<Ctx>,
   ): CreateActionWithPayload<Ctx, P>;
 
   delete(name: string): CreateAction<Ctx>;
@@ -187,17 +187,17 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
   delete(name: string, fn: MiddlewareCo<Ctx>): CreateAction<Ctx>;
   delete<P>(
     name: string,
-    fn: MiddlewareCo<Ctx>
+    fn: MiddlewareCo<Ctx>,
   ): CreateActionWithPayload<Ctx, P>;
   delete(
     name: string,
     req: { saga?: any },
-    fn: MiddlewareCo<Ctx>
+    fn: MiddlewareCo<Ctx>,
   ): CreateAction<Ctx>;
   delete<P>(
     name: string,
     req: { saga?: any },
-    fn: MiddlewareCo<Ctx>
+    fn: MiddlewareCo<Ctx>,
   ): CreateActionWithPayload<Ctx, P>;
 
   options(name: string): CreateAction<Ctx>;
@@ -205,22 +205,22 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
   options(name: string, req: { saga?: any }): CreateAction<Ctx>;
   options<P>(
     name: string,
-    req: { saga?: any }
+    req: { saga?: any },
   ): CreateActionWithPayload<Ctx, P>;
   options(name: string, fn: MiddlewareCo<Ctx>): CreateAction<Ctx>;
   options<P>(
     name: string,
-    fn: MiddlewareCo<Ctx>
+    fn: MiddlewareCo<Ctx>,
   ): CreateActionWithPayload<Ctx, P>;
   options(
     name: string,
     req: { saga?: any },
-    fn: MiddlewareCo<Ctx>
+    fn: MiddlewareCo<Ctx>,
   ): CreateAction<Ctx>;
   options<P>(
     name: string,
     req: { saga?: any },
-    fn: MiddlewareCo<Ctx>
+    fn: MiddlewareCo<Ctx>,
   ): CreateActionWithPayload<Ctx, P>;
 
   head(name: string): CreateAction<Ctx>;
@@ -232,12 +232,12 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
   head(
     name: string,
     req: { saga?: any },
-    fn: MiddlewareCo<Ctx>
+    fn: MiddlewareCo<Ctx>,
   ): CreateAction<Ctx>;
   head<P>(
     name: string,
     req: { saga?: any },
-    fn: MiddlewareCo<Ctx>
+    fn: MiddlewareCo<Ctx>,
   ): CreateActionWithPayload<Ctx, P>;
 
   connect(name: string): CreateAction<Ctx>;
@@ -245,22 +245,22 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
   connect(name: string, req: { saga?: any }): CreateAction<Ctx>;
   connect<P>(
     name: string,
-    req: { saga?: any }
+    req: { saga?: any },
   ): CreateActionWithPayload<Ctx, P>;
   connect(name: string, fn: MiddlewareCo<Ctx>): CreateAction<Ctx>;
   connect<P>(
     name: string,
-    fn: MiddlewareCo<Ctx>
+    fn: MiddlewareCo<Ctx>,
   ): CreateActionWithPayload<Ctx, P>;
   connect(
     name: string,
     req: { saga?: any },
-    fn: MiddlewareCo<Ctx>
+    fn: MiddlewareCo<Ctx>,
   ): CreateAction<Ctx>;
   connect<P>(
     name: string,
     req: { saga?: any },
-    fn: MiddlewareCo<Ctx>
+    fn: MiddlewareCo<Ctx>,
   ): CreateActionWithPayload<Ctx, P>;
 
   trace(name: string): CreateAction<Ctx>;
@@ -270,22 +270,22 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
   trace(name: string, fn: MiddlewareCo<Ctx>): CreateAction<Ctx>;
   trace<P>(
     name: string,
-    fn: MiddlewareCo<Ctx>
+    fn: MiddlewareCo<Ctx>,
   ): CreateActionWithPayload<Ctx, P>;
   trace(
     name: string,
     req: { saga?: any },
-    fn: MiddlewareCo<Ctx>
+    fn: MiddlewareCo<Ctx>,
   ): CreateAction<Ctx>;
   trace<P>(
     name: string,
     req: { saga?: any },
-    fn: MiddlewareCo<Ctx>
+    fn: MiddlewareCo<Ctx>,
   ): CreateActionWithPayload<Ctx, P>;
 }
 
 export function createApi<Ctx extends ApiCtx = ApiCtx>(
-  basePipe?: SagaApi<Ctx>
+  basePipe?: SagaApi<Ctx>,
 ): SagaQueryApi<Ctx> {
   const pipe = basePipe || createPipe<Ctx>();
   const uri = (name: string) => {

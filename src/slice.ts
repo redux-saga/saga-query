@@ -1,11 +1,11 @@
-import type { LoadingItemState } from "robodux";
-import * as robodux from "robodux";
+import type { LoadingItemState } from 'robodux';
+import * as robodux from 'robodux';
 const { createLoaderTable, createTable, createReducerMap } = robodux;
-export { defaultLoader, defaultLoadingItem } from "robodux";
+export { defaultLoader, defaultLoadingItem } from 'robodux';
 
 export interface QueryState {
-  "@@saga-query/loaders": { [key: string]: LoadingItemState };
-  "@@saga-query/data": { [key: string]: any };
+  '@@saga-query/loaders': { [key: string]: LoadingItemState };
+  '@@saga-query/data': { [key: string]: any };
 }
 
 export const LOADERS_NAME = `@@saga-query/loaders`;
