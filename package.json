@@ -99,6 +99,7 @@
     "extensions": [
       "ts"
     ],
+    "nodeArguments": ["--no-experimental-fetch"],
     "require": [
       "ts-node/register",
       "cross-fetch/polyfill"
