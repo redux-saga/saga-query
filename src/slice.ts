@@ -1,6 +1,5 @@
 import type { LoadingItemState } from 'robodux';
-import * as robodux from 'robodux';
-const { createLoaderTable, createTable, createReducerMap } = robodux;
+import { createLoaderTable, createTable, createReducerMap } from 'robodux';
 export { defaultLoader, defaultLoadingItem } from 'robodux';
 
 export interface QueryState {
