@@ -2,7 +2,7 @@ import { createStore, applyMiddleware } from 'redux';
 import type { Reducer } from 'redux';
 import { prepareStore } from './store';
 
-import { API_ACTION_PREFIX } from './constants';
+import { API_ACTION_PREFIX } from './constant';
 import { ApiRequest, RequiredApiRequest } from '.';
 
 export const isFn = (fn?: any) => fn && typeof fn === 'function';

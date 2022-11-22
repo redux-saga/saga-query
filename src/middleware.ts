@@ -1,16 +1,5 @@
 import { batchActions } from 'redux-batched-actions';
-import {
-  put,
-  takeLatest,
-  takeLeading,
-  race,
-  delay,
-  take,
-  call,
-  throttle as throttleHelper,
-  debounce as debounceHelper,
-  fork,
-} from 'redux-saga/effects';
+import { put, race, delay, take, call, fork } from 'redux-saga/effects';
 import type { SagaIterator, Task } from 'redux-saga';
 
 import type {
@@ -175,26 +164,6 @@ export function undoer<Ctx extends UndoCtx = UndoCtx>(
     }
 
     yield next();
-  };
-}
-
-export function* latest(action: string, saga: any, ...args: any[]) {
-  yield takeLatest(`${action}`, saga, ...args);
-}
-
-export function* leading(action: string, saga: any, ...args: any[]) {
-  yield takeLeading(`${action}`, saga, ...args);
-}
-
-export function createThrottle(ms: number = 5 * SECONDS) {
-  return function* (action: string, saga: any, ...args: any[]) {
-    yield throttleHelper(ms, `${action}`, saga, ...args);
-  };
-}
-
-export function createDebounce(ms: number = 5 * SECONDS) {
-  return function* (action: string, saga: any, ...args: any[]) {
-    yield debounceHelper(ms, `${action}`, saga, ...args);
   };
 }
 

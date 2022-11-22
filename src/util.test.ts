@@ -1,6 +1,6 @@
 import test from 'ava';
 import { createAction } from './util';
-import { API_ACTION_PREFIX } from './constants';
+import { API_ACTION_PREFIX } from './constant';
 
 test('createAction - should return action type when stringified', (t) => {
   const undo = createAction('UNDO');

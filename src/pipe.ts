@@ -13,7 +13,7 @@ import type {
   CreateActionWithPayload,
   PipeCtx,
 } from './types';
-import { API_ACTION_PREFIX } from './constants';
+import { API_ACTION_PREFIX } from './constant';
 
 export function compose<Ctx extends PipeCtx = PipeCtx>(
   middleware: Middleware<Ctx>[],
