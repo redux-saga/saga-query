@@ -3,7 +3,7 @@ import type { SagaIterator } from 'redux-saga';
 
 import { sagaCreator } from './store';
 import { isFn, isObject } from './util';
-import { createActionKey } from './create-key';
+import { createKey } from './create-key';
 import type {
   Middleware,
   MiddlewareCo,
@@ -152,7 +152,7 @@ export function createPipe<Ctx extends PipeCtx = PipeCtx<any>>({
     sagas[`${createName}`] = curSaga;
 
     const actionFn = (options?: any) => {
-      const key = createActionKey(createName, options);
+      const key = createKey(createName, options);
       return action({ name: createName, key, options });
     };
     actionFn.run = onApi as any;

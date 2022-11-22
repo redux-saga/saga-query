@@ -14,10 +14,10 @@ const deepSortObject = (opts?: any): any => {
     }, {});
 };
 
-export const createActionKey = (name: string, options?: any) => {
+export const createKey = (name: string, payload?: any) => {
   const enc =
-    typeof options !== undefined
-      ? encodeBase64(JSON.stringify(deepSortObject(options)))
+    typeof payload !== undefined
+      ? encodeBase64(JSON.stringify(deepSortObject(payload)))
       : '';
   const encKey = enc ? `|${enc}` : '';
   const key = `${name}${encKey}`;

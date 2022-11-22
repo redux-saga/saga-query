@@ -1,6 +1,8 @@
 import { createTable, createLoaderTable, createReducerMap } from 'robodux';
 import type { LoadingItemState } from 'robodux';
 
+import { createKey } from './create-key';
+
 export { defaultLoader, defaultLoadingItem } from 'robodux';
 
 export interface QueryState {
@@ -21,9 +23,19 @@ export const { selectTable: selectLoaders, selectById: selectLoaderById } =
 
 export const DATA_NAME = `@@saga-query/data`;
 export const data = createTable<any>({ name: DATA_NAME });
+export const { add: addData, reset: resetData } = data.actions;
+
 export const { selectTable: selectData, selectById: selectDataById } =
   data.getSelectors((s: any) => s[DATA_NAME] || {});
-export const { add: addData, reset: resetData } = data.actions;
+
+export const selectDataByName = (
+  s: any,
+  p: { name: string; payload?: any },
+) => {
+  const id = createKey(p.name, p.payload);
+  const data = selectDataById(s, { id });
+  return data;
+};
 
 export const reducers = createReducerMap(loaders, data);
 
