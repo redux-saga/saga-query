@@ -5,7 +5,7 @@ import { createAction, createReducerMap, createTable } from 'robodux';
 import type { MapEntity } from 'robodux';
 import { Buffer } from 'buffer';
 
-import { urlParser, queryCtx } from './middleware';
+import { urlParser, queryCtx, requestMonitor } from './middleware';
 import { createApi } from './api';
 import { setupStore } from './util';
 import { ApiCtx } from '.';
@@ -22,8 +22,14 @@ const jsonBlob = (data: any) => {
   return Buffer.from(JSON.stringify(data));
 };
 
+const sleep = (n: number) =>
+  new Promise<void>((resolve) => {
+    setTimeout(() => {
+      resolve();
+    }, n);
+  });
 test('createApi - POST', async (t) => {
-  t.plan(1);
+  t.plan(2);
   const name = 'users';
   const cache = createTable<User>({ name });
   const query = createApi();
@@ -41,7 +47,9 @@ test('createApi - POST', async (t) => {
     const data = {
       users: [mockUser],
     };
+
     ctx.response = new Response(jsonBlob(data), { status: 200 });
+
     yield next();
   });
 
@@ -53,9 +61,12 @@ test('createApi - POST', async (t) => {
         body: JSON.stringify({ email: ctx.payload.email }),
       });
       yield next();
-      if (!ctx.json.ok) return;
-      const { users } = ctx.json.data;
-      const curUsers = users.reduce<MapEntity<User>>((acc, u) => {
+
+      const buff: Buffer = yield ctx.response?.arrayBuffer();
+      const result = new TextDecoder('utf-8').decode(buff);
+      const { users } = JSON.parse(result);
+      if (!users) return;
+      const curUsers = (users as User[]).reduce<MapEntity<User>>((acc, u) => {
         acc[u.id] = u;
         return acc;
       }, {});
@@ -66,8 +77,11 @@ test('createApi - POST', async (t) => {
   const reducers = createReducerMap(cache);
   const store = setupStore(query.saga(), reducers);
   store.dispatch(createUser({ email: mockUser.email }));
+  await sleep(150);
+  t.deepEqual(store.getState().users, {
+    '1': { id: '1', name: 'test', email: 'test@test.com' },
+  });
 });
-
 test('createApi - POST with uri', async (t) => {
   t.plan(1);
   const name = 'users';
@@ -182,4 +196,66 @@ test('run() from a normal saga', (t) => {
 
   const store = setupStore({ api: api.saga(), watchAction });
   store.dispatch(action2());
+});
+
+test('createApi with own key', async (t) => {
+  t.plan(1);
+  // const name = 'users';
+  // const cache = createTable<User>({ name });
+  const query = createApi();
+
+  // query.use(queryCtx);
+  // query.use(urlParser);
+  query.use(requestMonitor());
+  query.use(query.routes());
+  query.use(function* fetchApi(ctx, next): SagaIterator<any> {
+    const data = {
+      users: [mockUser],
+    };
+
+    ctx.response = new Response(jsonBlob(data), { status: 200 });
+
+    yield next();
+  });
+  let theTestKey = '';
+  const createUser = query.post<{ email: string }>(
+    `/users`,
+    function* processUsers(ctx: ApiCtx<any, any>, next) {
+      ctx.cache = true;
+      ctx.key = `users-00-${Math.ceil(Math.random() * 100)}`;
+      theTestKey = ctx.key;
+      ctx.request = ctx.req({
+        method: 'POST',
+        body: JSON.stringify({ email: ctx.payload.email }),
+      });
+      yield next();
+      const buff: Buffer = yield ctx.response?.arrayBuffer();
+      const result = new TextDecoder('utf-8').decode(buff);
+      const { users } = JSON.parse(result);
+      if (!users) return;
+      const curUsers = (users as User[]).reduce<MapEntity<User>>((acc, u) => {
+        acc[u.id] = u;
+        return acc;
+      }, {});
+      ctx.response = new Response();
+      ctx.json = {
+        ok: true,
+        data: curUsers,
+      };
+      yield console.log(ctx.key);
+    },
+  );
+
+  const reducers = createReducerMap();
+  const store = setupStore(query.saga(), reducers);
+  store.dispatch(createUser({ email: mockUser.email }));
+  await sleep(150);
+  const s = await store.getState();
+  console.log('the store:', s);
+
+  t.deepEqual(s['@@saga-query/data'][theTestKey], {
+    '1': { id: '1', name: 'test', email: 'test@test.com' },
+  });
+  // todo: test the cache
+  // todo: test the loaders (all of them)
 });
