@@ -264,6 +264,19 @@ export function* simpleCache<Ctx extends ApiCtx = ApiCtx>(
   ctx.actions.push(addData({ [key]: data }));
 }
 
+export function* customKey<Ctx extends ApiCtx = ApiCtx>(ctx: Ctx, next: Next) {
+  if (
+    ctx?.key &&
+    ctx?.action?.payload?.key &&
+    ctx.key !== ctx.action.payload.key
+  ) {
+    const newKey = ctx.name.split('|')[0] + '|' + ctx.key;
+    ctx.key = newKey;
+    ctx.action.payload.key = newKey;
+  }
+  yield next();
+}
+
 export function requestMonitor<Ctx extends ApiCtx = ApiCtx>(
   errorFn?: (ctx: Ctx) => string,
 ) {

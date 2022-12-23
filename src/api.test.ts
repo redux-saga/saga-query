@@ -8,6 +8,7 @@ import { Buffer } from 'buffer';
 import { urlParser, queryCtx, requestMonitor } from './middleware';
 import { createApi } from './api';
 import { setupStore } from './util';
+import { createKey } from './create-key';
 import { ApiCtx } from '.';
 
 interface User {
@@ -198,36 +199,22 @@ test('run() from a normal saga', (t) => {
   store.dispatch(action2());
 });
 
-test('createApi with own key', async (t) => {
-  t.plan(1);
-  // const name = 'users';
-  // const cache = createTable<User>({ name });
+test('createApi with hash key on a large post', async (t) => {
+  t.plan(2);
   const query = createApi();
-
-  // query.use(queryCtx);
-  // query.use(urlParser);
   query.use(requestMonitor());
   query.use(query.routes());
   query.use(function* fetchApi(ctx, next): SagaIterator<any> {
     const data = {
-      users: [mockUser],
+      users: [{ ...mockUser, ...ctx.action.payload.options }],
     };
-
     ctx.response = new Response(jsonBlob(data), { status: 200 });
-
     yield next();
   });
-  let theTestKey = '';
-  const createUser = query.post<{ email: string }>(
+  const createUserDefaultKey = query.post<{ email: string; largetext: string }>(
     `/users`,
     function* processUsers(ctx: ApiCtx<any, any>, next) {
       ctx.cache = true;
-      ctx.key = `users-00-${Math.ceil(Math.random() * 100)}`;
-      theTestKey = ctx.key;
-      ctx.request = ctx.req({
-        method: 'POST',
-        body: JSON.stringify({ email: ctx.payload.email }),
-      });
       yield next();
       const buff: Buffer = yield ctx.response?.arrayBuffer();
       const result = new TextDecoder('utf-8').decode(buff);
@@ -242,20 +229,25 @@ test('createApi with own key', async (t) => {
         ok: true,
         data: curUsers,
       };
-      yield console.log(ctx.key);
     },
   );
 
+  const email = mockUser.email + '9';
+  const largetext = 'abc-def-ghi-jkl-mno-pqr'.repeat(100);
   const reducers = createReducerMap();
   const store = setupStore(query.saga(), reducers);
-  store.dispatch(createUser({ email: mockUser.email }));
+  store.dispatch(createUserDefaultKey({ email, largetext }));
   await sleep(150);
   const s = await store.getState();
-  console.log('the store:', s);
+  const expectedKey = createKey('/users [POST]', { email, largetext });
 
-  t.deepEqual(s['@@saga-query/data'][theTestKey], {
-    '1': { id: '1', name: 'test', email: 'test@test.com' },
+  t.assert(
+    [8, 9].includes(expectedKey.split('|')[1].length),
+    'key should  consist of optional "-" followed by 8 chars; Actual length: ' +
+      expectedKey.split('|')[1].length,
+  );
+
+  t.deepEqual(s['@@saga-query/data'][expectedKey], {
+    '1': { id: '1', name: 'test', email: email, largetext: largetext },
   });
-  // todo: test the cache
-  // todo: test the loaders (all of them)
 });
