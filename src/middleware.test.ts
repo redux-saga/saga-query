@@ -443,3 +443,62 @@ test('createApi with own key', async (t) => {
     'the keypart should match the input',
   );
 });
+
+test('createApi with custom key but no payload', async (t) => {
+  t.plan(2);
+  const query = createApi();
+  query.use(requestMonitor());
+  query.use(query.routes());
+  query.use(customKey);
+  query.use(function* fetchApi(ctx, next): SagaIterator<any> {
+    const data = {
+      users: [mockUser],
+    };
+    ctx.response = new Response(jsonBlob(data), { status: 200 });
+    yield next();
+  });
+
+  const theTestKey = `some-custom-key-${Math.ceil(Math.random() * 1000)}`;
+
+  const getUsers = query.get(
+    `/users`,
+    function* processUsers(ctx: ApiCtx<any, any>, next) {
+      ctx.cache = true;
+      ctx.key = theTestKey; // or some calculated key //
+      yield next();
+      const buff: Buffer = yield ctx.response?.arrayBuffer();
+      const result = new TextDecoder('utf-8').decode(buff);
+      const { users } = JSON.parse(result);
+      if (!users) return;
+      const curUsers = (users as User[]).reduce<MapEntity<User>>((acc, u) => {
+        acc[u.id] = u;
+        return acc;
+      }, {});
+      ctx.response = new Response();
+      ctx.json = {
+        ok: true,
+        data: curUsers,
+      };
+    },
+  );
+
+  const reducers = createReducerMap();
+  const store = setupStore(query.saga(), reducers);
+  store.dispatch(getUsers());
+  await sleep(150);
+  const s = await store.getState();
+  await sleep(150);
+  console.log('Please take a look at the keys of the loaders.\n The store:', s);
+  const expectedKey = theTestKey
+    ? `/users [GET]|${theTestKey}`
+    : createKey('/users [GET]', null);
+
+  t.deepEqual(s['@@saga-query/data'][expectedKey], {
+    '1': mockUser,
+  });
+
+  t.assert(
+    expectedKey.split('|')[1] === theTestKey,
+    'the keypart should match the input',
+  );
+});
