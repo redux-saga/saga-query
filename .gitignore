@@ -6,3 +6,6 @@ dist
 *.bak
 .envrc
 .direnv/
+.vscode/
+package-lock.json
+yarn.lock
