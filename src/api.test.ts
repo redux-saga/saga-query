@@ -5,9 +5,10 @@ import { createAction, createReducerMap, createTable } from 'robodux';
 import type { MapEntity } from 'robodux';
 import { Buffer } from 'buffer';
 
-import { urlParser, queryCtx } from './middleware';
+import { urlParser, queryCtx, requestMonitor } from './middleware';
 import { createApi } from './api';
 import { setupStore } from './util';
+import { createKey } from './create-key';
 import { ApiCtx } from '.';
 
 interface User {
@@ -22,8 +23,14 @@ const jsonBlob = (data: any) => {
   return Buffer.from(JSON.stringify(data));
 };
 
+const sleep = (n: number) =>
+  new Promise<void>((resolve) => {
+    setTimeout(() => {
+      resolve();
+    }, n);
+  });
 test('createApi - POST', async (t) => {
-  t.plan(1);
+  t.plan(2);
   const name = 'users';
   const cache = createTable<User>({ name });
   const query = createApi();
@@ -41,7 +48,9 @@ test('createApi - POST', async (t) => {
     const data = {
       users: [mockUser],
     };
+
     ctx.response = new Response(jsonBlob(data), { status: 200 });
+
     yield next();
   });
 
@@ -53,9 +62,12 @@ test('createApi - POST', async (t) => {
         body: JSON.stringify({ email: ctx.payload.email }),
       });
       yield next();
-      if (!ctx.json.ok) return;
-      const { users } = ctx.json.data;
-      const curUsers = users.reduce<MapEntity<User>>((acc, u) => {
+
+      const buff: Buffer = yield ctx.response?.arrayBuffer();
+      const result = new TextDecoder('utf-8').decode(buff);
+      const { users } = JSON.parse(result);
+      if (!users) return;
+      const curUsers = (users as User[]).reduce<MapEntity<User>>((acc, u) => {
         acc[u.id] = u;
         return acc;
       }, {});
@@ -66,8 +78,11 @@ test('createApi - POST', async (t) => {
   const reducers = createReducerMap(cache);
   const store = setupStore(query.saga(), reducers);
   store.dispatch(createUser({ email: mockUser.email }));
+  await sleep(150);
+  t.deepEqual(store.getState().users, {
+    '1': { id: '1', name: 'test', email: 'test@test.com' },
+  });
 });
-
 test('createApi - POST with uri', async (t) => {
   t.plan(1);
   const name = 'users';
@@ -182,4 +197,57 @@ test('run() from a normal saga', (t) => {
 
   const store = setupStore({ api: api.saga(), watchAction });
   store.dispatch(action2());
+});
+
+test('createApi with hash key on a large post', async (t) => {
+  t.plan(2);
+  const query = createApi();
+  query.use(requestMonitor());
+  query.use(query.routes());
+  query.use(function* fetchApi(ctx, next): SagaIterator<any> {
+    const data = {
+      users: [{ ...mockUser, ...ctx.action.payload.options }],
+    };
+    ctx.response = new Response(jsonBlob(data), { status: 200 });
+    yield next();
+  });
+  const createUserDefaultKey = query.post<{ email: string; largetext: string }>(
+    `/users`,
+    function* processUsers(ctx: ApiCtx<any, any>, next) {
+      ctx.cache = true;
+      yield next();
+      const buff: Buffer = yield ctx.response?.arrayBuffer();
+      const result = new TextDecoder('utf-8').decode(buff);
+      const { users } = JSON.parse(result);
+      if (!users) return;
+      const curUsers = (users as User[]).reduce<MapEntity<User>>((acc, u) => {
+        acc[u.id] = u;
+        return acc;
+      }, {});
+      ctx.response = new Response();
+      ctx.json = {
+        ok: true,
+        data: curUsers,
+      };
+    },
+  );
+
+  const email = mockUser.email + '9';
+  const largetext = 'abc-def-ghi-jkl-mno-pqr'.repeat(100);
+  const reducers = createReducerMap();
+  const store = setupStore(query.saga(), reducers);
+  store.dispatch(createUserDefaultKey({ email, largetext }));
+  await sleep(150);
+  const s = await store.getState();
+  const expectedKey = createKey('/users [POST]', { email, largetext });
+
+  t.assert(
+    [8, 9].includes(expectedKey.split('|')[1].length),
+    'key should  consist of optional "-" followed by 8 chars; Actual length: ' +
+      expectedKey.split('|')[1].length,
+  );
+
+  t.deepEqual(s['@@saga-query/data'][expectedKey], {
+    '1': { id: '1', name: 'test', email: email, largetext: largetext },
+  });
 });

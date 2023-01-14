@@ -11,10 +11,12 @@ import {
   requestMonitor,
   undo,
   undoer,
+  customKey,
 } from './middleware';
 import type { UndoCtx } from './middleware';
 import type { ApiCtx } from './types';
 import { setupStore } from './util';
+import { createKey } from './create-key';
 import { DATA_NAME, LOADERS_NAME, createQueryState } from './slice';
 import { SagaIterator } from 'redux-saga';
 
@@ -34,6 +36,13 @@ function* latest(action: string, saga: any, ...args: any[]) {
 const jsonBlob = (data: any) => {
   return Buffer.from(JSON.stringify(data));
 };
+
+const sleep = (n: number) =>
+  new Promise<void>((resolve) => {
+    setTimeout(() => {
+      resolve();
+    }, n);
+  });
 
 test('middleware - basic', (t) => {
   const name = 'users';
@@ -374,4 +383,120 @@ test('requestMonitor - error handler', (t) => {
   const reducers = createReducerMap(cache);
   const store = setupStore(query.saga(), reducers);
   store.dispatch(fetchUsers());
+});
+
+test('createApi with own key', async (t) => {
+  t.plan(2);
+  const query = createApi();
+  query.use(requestMonitor());
+  query.use(query.routes());
+  query.use(customKey);
+  query.use(function* fetchApi(ctx, next): SagaIterator<any> {
+    const data = {
+      users: [{ ...mockUser, ...ctx.action.payload.options }],
+    };
+    ctx.response = new Response(jsonBlob(data), { status: 200 });
+    yield next();
+  });
+
+  const theTestKey = `some-custom-key-${Math.ceil(Math.random() * 1000)}`;
+
+  const createUserCustomKey = query.post<{ email: string }>(
+    `/users`,
+    function* processUsers(ctx: ApiCtx<any, any>, next) {
+      ctx.cache = true;
+      ctx.key = theTestKey; // or some calculated key //
+      yield next();
+      const buff: Buffer = yield ctx.response?.arrayBuffer();
+      const result = new TextDecoder('utf-8').decode(buff);
+      const { users } = JSON.parse(result);
+      if (!users) return;
+      const curUsers = (users as User[]).reduce<MapEntity<User>>((acc, u) => {
+        acc[u.id] = u;
+        return acc;
+      }, {});
+      ctx.response = new Response();
+      ctx.json = {
+        ok: true,
+        data: curUsers,
+      };
+    },
+  );
+  const newUEmail = mockUser.email + '.org';
+  const reducers = createReducerMap();
+  const store = setupStore(query.saga(), reducers);
+  store.dispatch(createUserCustomKey({ email: newUEmail }));
+  await sleep(150);
+  const s = await store.getState();
+  await sleep(150);
+  const expectedKey = theTestKey
+    ? `/users [POST]|${theTestKey}`
+    : createKey('/users [POST]', { email: newUEmail });
+
+  t.deepEqual(s['@@saga-query/data'][expectedKey], {
+    '1': { id: '1', name: 'test', email: newUEmail },
+  });
+
+  t.assert(
+    expectedKey.split('|')[1] === theTestKey,
+    'the keypart should match the input',
+  );
+});
+
+test('createApi with custom key but no payload', async (t) => {
+  t.plan(2);
+  const query = createApi();
+  query.use(requestMonitor());
+  query.use(query.routes());
+  query.use(customKey);
+  query.use(function* fetchApi(ctx, next): SagaIterator<any> {
+    const data = {
+      users: [mockUser],
+    };
+    ctx.response = new Response(jsonBlob(data), { status: 200 });
+    yield next();
+  });
+
+  const theTestKey = `some-custom-key-${Math.ceil(Math.random() * 1000)}`;
+
+  const getUsers = query.get(
+    `/users`,
+    function* processUsers(ctx: ApiCtx<any, any>, next) {
+      ctx.cache = true;
+      ctx.key = theTestKey; // or some calculated key //
+      yield next();
+      const buff: Buffer = yield ctx.response?.arrayBuffer();
+      const result = new TextDecoder('utf-8').decode(buff);
+      const { users } = JSON.parse(result);
+      if (!users) return;
+      const curUsers = (users as User[]).reduce<MapEntity<User>>((acc, u) => {
+        acc[u.id] = u;
+        return acc;
+      }, {});
+      ctx.response = new Response();
+      ctx.json = {
+        ok: true,
+        data: curUsers,
+      };
+    },
+  );
+
+  const reducers = createReducerMap();
+  const store = setupStore(query.saga(), reducers);
+  store.dispatch(getUsers());
+  await sleep(150);
+  const s = await store.getState();
+  await sleep(150);
+  const expectedKey = theTestKey
+    ? `/users [GET]|${theTestKey}`
+    : createKey('/users [GET]', null);
+
+  t.deepEqual(s['@@saga-query/data'][expectedKey], {
+    '1': mockUser,
+  });
+
+  t.assert(
+    expectedKey.split('|')[1] === theTestKey,
+    'the keypart should match the input',
+  );
 });
