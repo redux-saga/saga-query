@@ -429,7 +429,6 @@ test('createApi with own key', async (t) => {
   await sleep(150);
   const s = await store.getState();
   await sleep(150);
-  console.log('Please take a look at the keys of the loaders.\n The store:', s);
   const expectedKey = theTestKey
     ? `/users [POST]|${theTestKey}`
     : createKey('/users [POST]', { email: newUEmail });
@@ -488,7 +487,6 @@ test('createApi with custom key but no payload', async (t) => {
   await sleep(150);
   const s = await store.getState();
   await sleep(150);
-  console.log('Please take a look at the keys of the loaders.\n The store:', s);
   const expectedKey = theTestKey
     ? `/users [GET]|${theTestKey}`
     : createKey('/users [GET]', null);
