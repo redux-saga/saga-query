@@ -57,3 +57,10 @@ export const mergeRequest = (
     headers: mergeHeaders((cur as any).headers, (next as any).headers),
   };
 };
+
+export const sleep = (n: number) =>
+  new Promise<void>((resolve) => {
+    setTimeout(() => {
+      resolve();
+    }, n);
+  });

@@ -11,6 +11,7 @@ import { setupStore } from './util';
 import { useApi } from './react';
 import { delay } from 'redux-saga/effects';
 import { selectDataById } from './slice';
+import { createKey } from './create-key';
 import { createAssign } from 'robodux';
 
 (global as any).IS_REACT_ACT_ENVIRONMENT = true;
@@ -88,10 +89,12 @@ test('useApi - with action creator', async (t) => {
   const { fetchUser, store } = setupTest();
   const App = () => {
     const query = useApi(fetchUser);
-    const user = useSelector((s: any) => s.user);
-
+    const user = useSelector((s: any) => {
+      const id = createKey(`${fetchUser}`, { id: '1' });
+      return selectDataById(s, { id });
+    });
     return h('div', null, [
-      h('div', { key: '1' }, user?.email || ''),
+      h('div', { key: '1' }, user?.email || 'no user'),
       h(
         'button',
         { key: '2', onClick: () => query.trigger({ id: '1' }) },
