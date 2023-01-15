@@ -287,6 +287,7 @@ export function requestMonitor<Ctx extends ApiCtx = ApiCtx>(
     dispatchActions,
     loadingMonitor(errorFn),
     simpleCache,
+    customKey,
   ]);
 }
 

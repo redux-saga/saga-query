@@ -90,8 +90,8 @@ test('useApi - with action creator', async (t) => {
   const App = () => {
     const query = useApi(fetchUser);
     const user = useSelector((s: any) => {
-      const cacheKey = createKey('/user/:id [GET]', { id: '1' });
-      return s['@@saga-query/data'][cacheKey];
+      const id = createKey(`${fetchUser}`, { id: '1' });
+      return selectDataById(s, { id });
     });
     return h('div', null, [
       h('div', { key: '1' }, user?.email || 'no user'),

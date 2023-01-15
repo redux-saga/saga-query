@@ -15,7 +15,7 @@ import {
 } from './middleware';
 import type { UndoCtx } from './middleware';
 import type { ApiCtx } from './types';
-import { setupStore } from './util';
+import { setupStore, sleep } from './util';
 import { createKey } from './create-key';
 import { DATA_NAME, LOADERS_NAME, createQueryState } from './slice';
 import { SagaIterator } from 'redux-saga';
@@ -36,13 +36,6 @@ function* latest(action: string, saga: any, ...args: any[]) {
 const jsonBlob = (data: any) => {
   return Buffer.from(JSON.stringify(data));
 };
-
-const sleep = (n: number) =>
-  new Promise<void>((resolve) => {
-    setTimeout(() => {
-      resolve();
-    }, n);
-  });
 
 test('middleware - basic', (t) => {
   const name = 'users';
@@ -426,9 +419,9 @@ test('createApi with own key', async (t) => {
   const reducers = createReducerMap();
   const store = setupStore(query.saga(), reducers);
   store.dispatch(createUserCustomKey({ email: newUEmail }));
-  await sleep(150);
+  await sleep(10);
   const s = await store.getState();
-  await sleep(150);
+  await sleep(10);
   const expectedKey = theTestKey
     ? `/users [POST]|${theTestKey}`
     : createKey('/users [POST]', { email: newUEmail });
@@ -484,9 +477,9 @@ test('createApi with custom key but no payload', async (t) => {
   const reducers = createReducerMap();
   const store = setupStore(query.saga(), reducers);
   store.dispatch(getUsers());
-  await sleep(150);
+  await sleep(10);
   const s = await store.getState();
-  await sleep(150);
+  await sleep(10);
   const expectedKey = theTestKey
     ? `/users [GET]|${theTestKey}`
     : createKey('/users [GET]', null);

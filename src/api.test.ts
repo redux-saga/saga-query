@@ -7,9 +7,9 @@ import { Buffer } from 'buffer';
 
 import { urlParser, queryCtx, requestMonitor } from './middleware';
 import { createApi } from './api';
-import { setupStore } from './util';
+import { setupStore, sleep } from './util';
 import { createKey } from './create-key';
-import { ApiCtx } from '.';
+import type { ApiCtx } from './types';
 
 interface User {
   id: string;
@@ -23,12 +23,6 @@ const jsonBlob = (data: any) => {
   return Buffer.from(JSON.stringify(data));
 };
 
-const sleep = (n: number) =>
-  new Promise<void>((resolve) => {
-    setTimeout(() => {
-      resolve();
-    }, n);
-  });
 test('createApi - POST', async (t) => {
   t.plan(2);
   const name = 'users';
@@ -78,7 +72,7 @@ test('createApi - POST', async (t) => {
   const reducers = createReducerMap(cache);
   const store = setupStore(query.saga(), reducers);
   store.dispatch(createUser({ email: mockUser.email }));
-  await sleep(150);
+  await sleep(10);
   t.deepEqual(store.getState().users, {
     '1': { id: '1', name: 'test', email: 'test@test.com' },
   });

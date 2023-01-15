@@ -6,7 +6,7 @@ import type { Action, MapEntity } from 'robodux';
 
 import { createPipe } from './pipe';
 import type { PipeCtx, Next } from './types';
-import { setupStore as prepStore } from './util';
+import { setupStore as prepStore, sleep } from './util';
 import { createQueryState } from './slice';
 
 interface RoboCtx<D = any, P = any> extends PipeCtx<P> {
@@ -310,13 +310,6 @@ test('run() on endpoint action - should run the effect', (t) => {
   store.dispatch(action2());
 });
 
-const sleep = (n: number) =>
-  new Promise<void>((resolve) => {
-    setTimeout(() => {
-      resolve();
-    }, n);
-  });
-
 test('middleware order of execution', async (t) => {
   t.plan(1);
   let acc = '';
@@ -348,7 +341,7 @@ test('middleware order of execution', async (t) => {
   const store = setupStore(api.saga());
   store.dispatch(action());
 
-  await sleep(150);
+  await sleep(10);
   t.assert(acc === 'abcdefg');
 });
 
@@ -374,7 +367,7 @@ test('retry with actionFn', async (t) => {
   const store = setupStore(api.saga());
   store.dispatch(action());
 
-  await sleep(150);
+  await sleep(10);
   t.deepEqual(acc, 'agag');
 });
 
@@ -400,6 +393,6 @@ test('retry with actionFn with payload', async (t) => {
   const store = setupStore(api.saga());
   store.dispatch(action({ page: 1 }));
 
-  await sleep(150);
+  await sleep(10);
   t.deepEqual(acc, 'aagg');
 });

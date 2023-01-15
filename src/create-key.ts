@@ -19,7 +19,7 @@ function padStart(hash: string, len: number) {
   }
   return hash;
 }
-
+//credit to Ivan Perelivskiy: https://gist.github.com/iperelivskiy/4110988
 const tinySimpleHash = (s: string) => {
   for (var i = 0, h = 9; i < s.length; )
     h = Math.imul(h ^ s.charCodeAt(i++), 9 ** 9);
