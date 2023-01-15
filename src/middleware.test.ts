@@ -419,9 +419,9 @@ test('createApi with own key', async (t) => {
   const reducers = createReducerMap();
   const store = setupStore(query.saga(), reducers);
   store.dispatch(createUserCustomKey({ email: newUEmail }));
-  await sleep(10);
+  await sleep(50);
   const s = await store.getState();
-  await sleep(10);
+  await sleep(50);
   const expectedKey = theTestKey
     ? `/users [POST]|${theTestKey}`
     : createKey('/users [POST]', { email: newUEmail });
@@ -477,9 +477,9 @@ test('createApi with custom key but no payload', async (t) => {
   const reducers = createReducerMap();
   const store = setupStore(query.saga(), reducers);
   store.dispatch(getUsers());
-  await sleep(10);
+  await sleep(50);
   const s = await store.getState();
-  await sleep(10);
+  await sleep(50);
   const expectedKey = theTestKey
     ? `/users [GET]|${theTestKey}`
     : createKey('/users [GET]', null);
