@@ -341,7 +341,7 @@ test('middleware order of execution', async (t) => {
   const store = setupStore(api.saga());
   store.dispatch(action());
 
-  await sleep(50);
+  await await sleep(150);
   t.assert(acc === 'abcdefg');
 });
 
@@ -367,7 +367,7 @@ test('retry with actionFn', async (t) => {
   const store = setupStore(api.saga());
   store.dispatch(action());
 
-  await sleep(50);
+  await await sleep(150);
   t.deepEqual(acc, 'agag');
 });
 
@@ -393,6 +393,6 @@ test('retry with actionFn with payload', async (t) => {
   const store = setupStore(api.saga());
   store.dispatch(action({ page: 1 }));
 
-  await sleep(50);
+  await await sleep(150);
   t.deepEqual(acc, 'aagg');
 });

@@ -72,7 +72,7 @@ test('createApi - POST', async (t) => {
   const reducers = createReducerMap(cache);
   const store = setupStore(query.saga(), reducers);
   store.dispatch(createUser({ email: mockUser.email }));
-  await sleep(50);
+  await await sleep(150);
   t.deepEqual(store.getState().users, {
     '1': { id: '1', name: 'test', email: 'test@test.com' },
   });
@@ -231,7 +231,7 @@ test('createApi with hash key on a large post', async (t) => {
   const reducers = createReducerMap();
   const store = setupStore(query.saga(), reducers);
   store.dispatch(createUserDefaultKey({ email, largetext }));
-  await sleep(50);
+  await await sleep(150);
   const s = await store.getState();
   const expectedKey = createKey('/users [POST]', { email, largetext });
 
