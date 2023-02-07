@@ -36,6 +36,29 @@ interface UseCacheResult<D = any, A extends SagaAction = SagaAction>
   data: D | null;
 }
 
+/**
+ * useLoader will take an action creator or action itself and return the associated
+ * loader for it.
+ *
+ * @returns the loader object for an action creator or action
+ *
+ * @example
+ * ```ts
+ * import { useLoader } from 'saga-query/react';
+ *
+ * import { api } from './api';
+ *
+ * const fetchUsers = api.get('/users', function*() {
+ *   // ...
+ * });
+ *
+ * const View = () => {
+ *   const loader = useLoader(fetchUsers);
+ *   // or: const loader = useLoader(fetchUsers());
+ *   return <div>{loader.isLoader ? 'Loading ...' : 'Done!'}</div>
+ * }
+ * ```
+ */
 export function useLoader<S extends QueryState = QueryState>(
   action: SagaAction | ActionFn,
 ) {
@@ -43,6 +66,33 @@ export function useLoader<S extends QueryState = QueryState>(
   return useSelector((s: S) => selectLoaderById(s, { id }));
 }
 
+/**
+ * useApi will take an action creator or action itself and fetch
+ * the associated loader and create a `trigger` function that you can call
+ * later in your react component.
+ *
+ * This hook will *not* fetch the data for you because it does not know how to fetch
+ * data from your redux state.
+ *
+ * @example
+ * ```ts
+ * import { useApi } from 'saga-query/react';
+ *
+ * import { api } from './api';
+ *
+ * const fetchUsers = api.get('/users', function*() {
+ *   // ...
+ * });
+ *
+ * const View = () => {
+ *   const { isLoading, trigger } = useApi(fetchUsers);
+ *   useEffect(() => {
+ *     trigger();
+ *   }, []);
+ *   return <div>{isLoading ? : 'Loading' : 'Done!'}</div>
+ * }
+ * ```
+ */
 export function useApi<P = any, A extends SagaAction = SagaAction<P>>(
   action: A,
 ): UseApiAction<A>;
@@ -65,6 +115,25 @@ export function useApi(action: any) {
   return { ...loader, trigger, action };
 }
 
+/**
+ * useQuery uses {@link useApi} and automatically calls `useApi().trigger()`
+ *
+ * @example
+ * ```ts
+ * import { useQuery } from 'saga-query/react';
+ *
+ * import { api } from './api';
+ *
+ * const fetchUsers = api.get('/users', function*() {
+ *   // ...
+ * });
+ *
+ * const View = () => {
+ *   const { isLoading } = useQuery(fetchUsers);
+ *   return <div>{isLoading ? : 'Loading' : 'Done!'}</div>
+ * }
+ * ```
+ */
 export function useQuery<P = any, A extends SagaAction = SagaAction<P>>(
   action: A,
 ): UseApiAction<A> {
@@ -75,6 +144,24 @@ export function useQuery<P = any, A extends SagaAction = SagaAction<P>>(
   return api;
 }
 
+/**
+ * useCache uses {@link useApi} and automatically selects the cached data associated
+ * with the action creator or action provided.
+ *
+ * @example
+ * ```ts
+ * import { useCache } from 'saga-query/react';
+ *
+ * import { api } from './api';
+ *
+ * const fetchUsers = api.get('/users', api.cache());
+ *
+ * const View = () => {
+ *   const { isLoading, data } = useCache(fetchUsers);
+ *   return <div>{isLoading ? : 'Loading' : data.length}</div>
+ * }
+ * ```
+ */
 export function useCache<D = any, A extends SagaAction = SagaAction>(
   action: A,
 ): UseCacheResult<D, A> {
@@ -83,6 +170,36 @@ export function useCache<D = any, A extends SagaAction = SagaAction>(
   const api = useApi(action);
   return { ...api, data: data || null };
 }
+
+/**
+ * useLoaderSuccess will activate the callback provided when the loader transitions
+ * from some state to success.
+ *
+ * @example
+ * ```ts
+ * import { useLoaderSuccess, useApi } from 'saga-query/react';
+ *
+ * import { api } from './api';
+ *
+ * const createUser = api.post('/users', function*(ctx, next) {
+ *   // ...
+ * });
+ *
+ * const View = () => {
+ *  const { loader, trigger } = useApi(createUser);
+ *  const onSubmit = () => {
+ *    trigger({ name: 'bob' });
+ *  };
+ *
+ *  useLoaderSuccess(loader, () => {
+ *    // success!
+ *    // Use this callback to navigate to another view
+ *  });
+ *
+ *  return <button onClick={onSubmit}>Create user!</button>
+ * }
+ * ```
+ */
 
 export function useLoaderSuccess(
   cur: Pick<LoadingState, 'isLoading' | 'isSuccess'>,

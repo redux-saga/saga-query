@@ -167,7 +167,7 @@ export function undoer<Ctx extends UndoCtx = UndoCtx>(
   };
 }
 
-/*
+/**
  * This function will create a cache timer for each `key` inside
  * of a saga-query api endpoint.  `key` is a hash of the action type and payload.
  *
