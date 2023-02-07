@@ -405,7 +405,6 @@ import {
   requestMonitor,
   fetcher,
   timer,
-  prepareStore,
 } from 'saga-query';
 
 const api = createApi();
@@ -422,17 +421,6 @@ export const fetchUsers = api.get(
   // automatically
   api.cache(),
 );
-
-const prepared = prepareStore({
-  sagas: { api: api.saga() },
-});
-const store = createStore(
-  prepared.reducer,
-  undefined,
-  applyMiddleware(...prepared.middleware),
-);
-// This runs the sagas
-prepared.run();
 ```
 
 ```tsx
@@ -508,6 +496,10 @@ const fetchMessages = api.get('/mailboxes/:id/messages', function* (ctx, next) {
   yield next();
 });
 ```
+
+**NOTE*: This will bypass the `saga` that is listenting for the action to be
+dispatched.  This means that if there's any special saga logic like our
+`timer()` saga it will **not** be run.
 
 ### Dynamic endpoints
 
