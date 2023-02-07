@@ -33,6 +33,9 @@ function* keepAlive(
   }
 }
 
+/**
+ * A fault tolerant saga.
+ */
 export function sagaCreator(
   sagas: {
     [key: string]: (...args: any[]) => any;
@@ -69,18 +72,25 @@ interface Props<S extends { [key: string]: any } = { [key: string]: any }> {
 }
 
 /**
- * prepareStore will setup redux-batched-actions to work with redux-saga.
- * It will also add some reducers to your redux store for decoupled loaders
+ * This will setup `redux-batched-actions` to work with `redux-saga`.
+ * It will also add some reducers to your `redux` store for decoupled loaders
  * and a simple data cache.
+ *
+ * @example
+ * ```ts
+ * import { prepareStore } from 'saga-query';
  *
  * const { middleware, reducer, run } = prepareStore({
  *  reducers: { users: (state, action) => state },
  *  sagas: { api: api.saga() },
  *  onError: (err) => console.error(err),
  * });
+ *
  * const store = createStore(reducer, {}, applyMiddleware(...middleware));
+ *
  * // you must call `.run(...args: any[])` in order for the sagas to bootup.
  * run();
+ * ```
  */
 export function prepareStore<
   S extends { [key: string]: any } = { [key: string]: any },

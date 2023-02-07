@@ -14,36 +14,7 @@ import type {
   PipeCtx,
 } from './types';
 import { API_ACTION_PREFIX } from './constant';
-
-export function compose<Ctx extends PipeCtx = PipeCtx>(
-  middleware: Middleware<Ctx>[],
-) {
-  if (!Array.isArray(middleware)) {
-    throw new TypeError('Middleware stack must be an array!');
-  }
-  for (const fn of middleware) {
-    if (typeof fn !== 'function') {
-      throw new TypeError('Middleware must be composed of functions!');
-    }
-  }
-
-  return function* composeSaga(context: Ctx, next?: Next): SagaIterator<void> {
-    // last called middleware #
-    let index = -1;
-    yield call(dispatch, 0);
-
-    function* dispatch(i: number): SagaIterator<void> {
-      if (i <= index) {
-        throw new Error('next() called multiple times');
-      }
-      index = i;
-      let fn: any = middleware[i];
-      if (i === middleware.length) fn = next;
-      if (!fn) return;
-      yield call(fn, context, dispatch.bind(null, i + 1));
-    }
-  };
-}
+import { compose } from './compose';
 
 export interface SagaApi<Ctx extends PipeCtx> {
   saga: () => (...options: any[]) => SagaIterator<void>;
@@ -75,6 +46,40 @@ export const defaultOnError = (err: Error) => {
   throw err;
 };
 
+/**
+ * Creates a middleware pipeline.
+ *
+ * @remarks
+ * This middleware pipeline is almost exactly like koa's middleware system.
+ * See {@link https://koajs.com}
+ *
+ * @example
+ * ```ts
+ * import { createPipe } from 'saga-query';
+ *
+ * const thunk = createPipe();
+ * thunk.use(function* (ctx, next) {
+ *   console.log('beginning');
+ *   yield next();
+ *   console.log('end');
+ * });
+ * thunks.use(thunks.routes());
+ *
+ * const doit = thunk.create('do-something', function*(ctx, next) {
+ *   console.log('middle');
+ *   yield next();
+ *   console.log('middle end');
+ * });
+ *
+ * // ...
+ *
+ * store.dispatch(doit());
+ * // beginning
+ * // middle
+ * // middle end
+ * // end
+ * ```
+ */
 export function createPipe<Ctx extends PipeCtx = PipeCtx<any>>({
   saga = takeEvery,
   onError = defaultOnError,

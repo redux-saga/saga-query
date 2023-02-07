@@ -17,7 +17,12 @@ import type { UndoCtx } from './middleware';
 import type { ApiCtx } from './types';
 import { setupStore, sleep } from './util';
 import { createKey } from './create-key';
-import { DATA_NAME, LOADERS_NAME, createQueryState } from './slice';
+import {
+  DATA_NAME,
+  LOADERS_NAME,
+  createQueryState,
+  selectDataById,
+} from './slice';
 import { SagaIterator } from 'redux-saga';
 
 interface User {
@@ -419,14 +424,13 @@ test('createApi with own key', async (t) => {
   const reducers = createReducerMap();
   const store = setupStore(query.saga(), reducers);
   store.dispatch(createUserCustomKey({ email: newUEmail }));
-  await await sleep(150);
-  const s = await store.getState();
-  await await sleep(150);
+  await sleep(150);
   const expectedKey = theTestKey
     ? `/users [POST]|${theTestKey}`
     : createKey('/users [POST]', { email: newUEmail });
 
-  t.deepEqual(s['@@saga-query/data'][expectedKey], {
+  const s = store.getState();
+  t.deepEqual(selectDataById(s, { id: expectedKey }), {
     '1': { id: '1', name: 'test', email: newUEmail },
   });
 
@@ -477,14 +481,13 @@ test('createApi with custom key but no payload', async (t) => {
   const reducers = createReducerMap();
   const store = setupStore(query.saga(), reducers);
   store.dispatch(getUsers());
-  await await sleep(150);
-  const s = await store.getState();
-  await await sleep(150);
+  await sleep(150);
   const expectedKey = theTestKey
     ? `/users [GET]|${theTestKey}`
     : createKey('/users [GET]', null);
 
-  t.deepEqual(s['@@saga-query/data'][expectedKey], {
+  const s = store.getState();
+  t.deepEqual(selectDataById(s, { id: expectedKey }), {
     '1': mockUser,
   });
 

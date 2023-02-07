@@ -26,6 +26,9 @@ const tinySimpleHash = (s: string) => {
   return h ^ (h >>> 9);
 };
 
+/**
+ * This function used to set `ctx.key`
+ */
 export const createKey = (name: string, payload?: any) => {
   const normJsonString =
     typeof payload !== undefined ? JSON.stringify(deepSortObject(payload)) : '';

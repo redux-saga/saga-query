@@ -12,3 +12,4 @@ export * from './store';
 export * from './slice';
 export * from './create-key';
 export * from './saga';
+export * from './compose';

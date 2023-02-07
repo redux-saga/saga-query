@@ -284,6 +284,28 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
   ): CreateActionWithPayload<Ctx, P>;
 }
 
+/**
+ * Creates a middleware pipeline for HTTP requests.
+ *
+ * @remarks
+ * It uses {@link createPipe} under the hood.
+ *
+ * @example
+ * ```ts
+ * import { createApi, requestMonitor, fetcher } from 'saga-query';
+ *
+ * const api = createApi();
+ * api.use(requestMonitor());
+ * api.use(api.routes());
+ * api.use(fetcher({ baseUrl: 'https://api.com' }));
+ *
+ * const fetchUsers = api.get('/users', function*(ctx, next) {
+ *   yield next();
+ * });
+ *
+ * store.dispatch(fetchUsers());
+ * ```
+ */
 export function createApi<Ctx extends ApiCtx = ApiCtx>(
   basePipe?: SagaApi<Ctx>,
 ): SagaQueryApi<Ctx> {

@@ -1,7 +1,7 @@
 import test from 'ava';
 import type { ActionWithPayload } from './types';
 import { createApi } from './api';
-import { poll } from './middleware';
+import { poll } from './saga';
 
 const getKeyOf = (action: ActionWithPayload<any>): string => action.payload.key;
 

@@ -21,6 +21,10 @@ export interface PipeCtx<P = any> {
   >;
 }
 
+export interface LoaderCtx<P = any> extends PipeCtx<P> {
+  loader: LoadingMapPayload<Record<string, any>> | null;
+}
+
 export interface ApiFetchSuccess<S = any> {
   ok: true;
   data: S;
@@ -51,11 +55,12 @@ export interface FetchJsonCtx<P = any, S = any, E = any> extends FetchCtx<P> {
   json: ApiFetchResponse<S, E>;
 }
 
-export interface ApiCtx<P = any, S = any, E = any>
-  extends FetchJsonCtx<P, S, E> {
+export interface ApiCtx<Payload = any, State = any, Err = any>
+  extends FetchJsonCtx<Payload, State, Err> {
   actions: Action[];
   loader: LoadingMapPayload<Record<string, any>> | null;
   cache: boolean;
+  cacheData: any;
 }
 
 export type Middleware<Ctx extends PipeCtx = PipeCtx> = (

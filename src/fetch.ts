@@ -1,6 +1,6 @@
 import { SagaIterator } from 'redux-saga';
 import { call } from 'redux-saga/effects';
-import { compose } from './pipe';
+import { compose } from './compose';
 import type { FetchCtx, FetchJsonCtx, Next } from './types';
 
 export function* headersMdw<CurCtx extends FetchCtx = FetchCtx>(
@@ -118,6 +118,10 @@ export function* fetchMdw<CurCtx extends FetchCtx = FetchCtx>(
   yield next();
 }
 
+/**
+ * This middleware is a composition of other middleware required to use `window.fetch`
+ * {@link https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API} with {@link createApi}
+ */
 export function fetcher<CurCtx extends FetchJsonCtx = FetchJsonCtx>(
   {
     baseUrl = '',

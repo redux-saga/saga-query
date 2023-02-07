@@ -28,6 +28,9 @@ export const { add: addData, reset: resetData } = data.actions;
 export const { selectTable: selectData, selectById: selectDataById } =
   data.getSelectors((s: any) => s[DATA_NAME] || {});
 
+/**
+ * Returns data from the saga-query slice of redux from an action.
+ */
 export const selectDataByName = (
   s: any,
   p: { name: string; payload?: any },

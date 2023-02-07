@@ -1,6 +1,6 @@
 import { batchActions } from 'redux-batched-actions';
-import { put, race, delay, take, call, fork } from 'redux-saga/effects';
-import type { SagaIterator, Task } from 'redux-saga';
+import { put, race, delay, take, call, select } from 'redux-saga/effects';
+import type { SagaIterator } from 'redux-saga';
 
 import type {
   Action,
@@ -9,10 +9,9 @@ import type {
   PipeCtx,
   ApiRequest,
   RequiredApiRequest,
-  ActionWithPayload,
-  CreateActionPayload,
+  LoaderCtx,
 } from './types';
-import { compose } from './pipe';
+import { compose } from './compose';
 import { isObject, createAction, mergeRequest } from './util';
 import {
   setLoaderStart,
@@ -20,12 +19,13 @@ import {
   setLoaderSuccess,
   resetLoaderById,
   addData,
+  selectDataById,
 } from './slice';
 
-const MS = 1000;
-const SECONDS = 1 * MS;
-const MINUTES = 60 * SECONDS;
-
+/**
+ * This middleware will catch any errors in the pipeline
+ * and return the context object.
+ */
 export function* errorHandler<Ctx extends PipeCtx = PipeCtx>(
   ctx: Ctx,
   next: Next,
@@ -41,6 +41,10 @@ export function* errorHandler<Ctx extends PipeCtx = PipeCtx>(
   }
 }
 
+/**
+ * This middleware sets up the context object with some values that are
+ * necessary for {@link createApi} to work properly.
+ */
 export function* queryCtx<Ctx extends ApiCtx = ApiCtx>(ctx: Ctx, next: Next) {
   if (!ctx.req) {
     ctx.req = (r?: ApiRequest): RequiredApiRequest =>
@@ -53,6 +57,9 @@ export function* queryCtx<Ctx extends ApiCtx = ApiCtx>(ctx: Ctx, next: Next) {
   yield next();
 }
 
+/**
+ * This middleware converts the name provided to {@link createApi} into data for the fetch request.
+ */
 export function* urlParser<Ctx extends ApiCtx = ApiCtx>(ctx: Ctx, next: Next) {
   const httpMethods = [
     'get',
@@ -94,6 +101,14 @@ export function* urlParser<Ctx extends ApiCtx = ApiCtx>(ctx: Ctx, next: Next) {
   yield next();
 }
 
+/**
+ * This middleware will take the result of `ctx.actions` and dispatch them
+ * as a single batch.
+ *
+ * @remarks This is useful because sometimes there are a lot of actions that need dispatched
+ * within the pipeline of the middleware and instead of dispatching them serially this
+ * improves performance by only hitting the reducers once.
+ */
 export function* dispatchActions(ctx: { actions: Action[] }, next: Next) {
   if (!ctx.actions) ctx.actions = [];
   yield next();
@@ -101,6 +116,36 @@ export function* dispatchActions(ctx: { actions: Action[] }, next: Next) {
   yield put(batchActions(ctx.actions));
 }
 
+/**
+ * This middleware creates a loader for a generator function which allows us to track
+ * the status of a pipeline function.
+ */
+export function* loadingMonitorSimple<Ctx extends LoaderCtx = LoaderCtx>(
+  ctx: Ctx,
+  next: Next,
+) {
+  yield put(
+    batchActions([
+      setLoaderStart({ id: ctx.name }),
+      setLoaderStart({ id: ctx.key }),
+    ]),
+  );
+  if (!ctx.loader) ctx.loader = {} as any;
+
+  yield next();
+
+  const payload = ctx.loader || {};
+  yield put(
+    batchActions([
+      setLoaderSuccess({ id: ctx.name, ...payload }),
+      setLoaderSuccess({ id: ctx.key, ...payload }),
+    ]),
+  );
+}
+
+/**
+ * This middleware will track the status of a fetch request.
+ */
 export function loadingMonitor<Ctx extends ApiCtx = ApiCtx>(
   errorFn: (ctx: Ctx) => string = (ctx) => ctx.json?.data?.message || '',
 ) {
@@ -142,6 +187,10 @@ export interface UndoCtx<P = any, S = any, E = any> extends ApiCtx<P, S, E> {
 
 export const doIt = createAction('DO_IT');
 export const undo = createAction('UNDO');
+/**
+ * This middleware will allow pipeline functions to be undoable which means before they are activated
+ * we have a timeout that allows the function to be cancelled.
+ */
 export function undoer<Ctx extends UndoCtx = UndoCtx>(
   doItType = `${doIt}`,
   undoType = `${undo}`,
@@ -167,65 +216,6 @@ export function undoer<Ctx extends UndoCtx = UndoCtx>(
   };
 }
 
-/**
- * This function will create a cache timer for each `key` inside
- * of a saga-query api endpoint.  `key` is a hash of the action type and payload.
- *
- * Why do we want this?  If we have an api endpoint to fetch a single app: `fetchApp({ id: 1 })`
- * if we don't set a timer per key then all calls to `fetchApp` will be on a timer.
- * So if we call `fetchApp({ id: 1 })` and then `fetchApp({ id: 2 })` if we use a normal
- * cache timer then the second call will not send an http request.
- */
-export function timer(timer: number = 5 * MINUTES) {
-  return function* onTimer(
-    actionType: string,
-    saga: any,
-    ...args: any[]
-  ): SagaIterator<void> {
-    const map: { [key: string]: Task } = {};
-
-    function* activate(action: ActionWithPayload<CreateActionPayload>) {
-      yield call(saga, action, ...args);
-      yield delay(timer);
-      delete map[action.payload.key];
-    }
-
-    while (true) {
-      const action: ActionWithPayload<CreateActionPayload> = yield take(
-        `${actionType}`,
-      );
-      const key = action.payload.key;
-      const notRunning = map[key] && !map[key].isRunning();
-      if (!map[key] || notRunning) {
-        const task = yield fork(activate, action);
-        map[key] = task;
-      }
-    }
-  };
-}
-
-export function poll(parentTimer?: number, cancelType?: string) {
-  return function* poller(
-    actionType: string,
-    saga: any,
-    ...args: any[]
-  ): SagaIterator<void> {
-    const cancel = cancelType || actionType;
-    function* fire(action: { type: string }, timer: number) {
-      while (true) {
-        yield call(saga, action, ...args);
-        yield delay(timer);
-      }
-    }
-
-    while (true) {
-      const action = yield take(`${actionType}`);
-      const timer = action.payload?.timer || parentTimer;
-      yield race([call(fire, action, timer), take(`${cancel}`)]);
-    }
-  };
-}
-
 export interface OptimisticCtx<A extends Action = any, R extends Action = any>
   extends ApiCtx {
   optimistic: {
@@ -234,6 +224,13 @@ export interface OptimisticCtx<A extends Action = any, R extends Action = any>
   };
 }
 
+/**
+ * This middleware performs an optimistic update for a middleware pipeline.
+ * It accepts an `apply` and `revert` action.
+ *
+ * @remarks This means that we will first `apply` and then if the request is successful we
+ * keep the change or we `revert` if there's an error.
+ */
 export function* optimistic<
   Ctx extends OptimisticCtx<any, any> = OptimisticCtx<any, any>,
 >(ctx: Ctx, next: Next) {
@@ -253,17 +250,38 @@ export function* optimistic<
   }
 }
 
+/**
+ * This middleware will automatically cache any data found inside `ctx.json`
+ * which is where we store JSON data from the `fetcher` middleware.
+ */
 export function* simpleCache<Ctx extends ApiCtx = ApiCtx>(
   ctx: Ctx,
   next: Next,
-) {
+): SagaIterator {
+  ctx.cacheData = yield select(selectDataById, { id: ctx.key });
   yield next();
   if (!ctx.cache) return;
   const { data } = ctx.json;
-  const key = ctx.key;
-  ctx.actions.push(addData({ [key]: data }));
+  ctx.actions.push(addData({ [ctx.key]: data }));
+  ctx.cacheData = data;
 }
 
+/**
+ * This middleware allows the user to override the default key provided to every pipeline function
+ * and instead use whatever they want.
+ *
+ * @example
+ * ```ts
+ * import { createPipe } from 'saga-query';
+ *
+ * const thunk = createPipe();
+ * thunk.use(customKey);
+ *
+ * const doit = thunk.create('some-action', function*(ctx, next) {
+ *   ctx.key = 'something-i-want';
+ * })
+ * ```
+ */
 export function* customKey<Ctx extends ApiCtx = ApiCtx>(ctx: Ctx, next: Next) {
   if (
     ctx?.key &&
@@ -277,6 +295,9 @@ export function* customKey<Ctx extends ApiCtx = ApiCtx>(ctx: Ctx, next: Next) {
   yield next();
 }
 
+/**
+ * This middleware is a composition of many middleware used to faciliate the {@link createApi}
+ */
 export function requestMonitor<Ctx extends ApiCtx = ApiCtx>(
   errorFn?: (ctx: Ctx) => string,
 ) {
@@ -295,6 +316,9 @@ export interface PerfCtx<P = any> extends PipeCtx<P> {
   performance: number;
 }
 
+/**
+ * This middleware will add `performance.now()` before and after your middleware pipeline.
+ */
 export function* performanceMonitor<Ctx extends PerfCtx = PerfCtx>(
   ctx: Ctx,
   next: Next,
@@ -305,6 +329,9 @@ export function* performanceMonitor<Ctx extends PerfCtx = PerfCtx>(
   ctx.performance = t1 - t0;
 }
 
+/**
+ * This middleware will call the `saga` provided with the action sent to the middleware pipeline.
+ */
 export function wrap<Ctx extends PipeCtx = PipeCtx>(
   saga: (...args: any[]) => any,
 ) {
