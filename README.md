@@ -66,8 +66,7 @@ interface Repo {
 }
 
 const App = () => {
-  const { data, isInitialLoading, isError, message } =
-  useCache<Repo>(fetchRepo());
+  const { data, isInitialLoading, isError, message } = useCache<Repo>(fetchRepo());
 
   if (isInitialLoading) return <div>Loading ...</div>;
   if (isError) return <div>{message}</div>;
