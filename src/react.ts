@@ -145,7 +145,7 @@ export function useQuery<P = any, A extends SagaAction = SagaAction<P>>(
 }
 
 /**
- * useCache uses {@link useApi} and automatically selects the cached data associated
+ * useCache uses {@link useQuery} and automatically selects the cached data associated
  * with the action creator or action provided.
  *
  * @example
@@ -157,7 +157,7 @@ export function useQuery<P = any, A extends SagaAction = SagaAction<P>>(
  * const fetchUsers = api.get('/users', api.cache());
  *
  * const View = () => {
- *   const { isLoading, data } = useCache(fetchUsers);
+ *   const { isLoading, data } = useCache(fetchUsers());
  *   return <div>{isLoading ? : 'Loading' : data.length}</div>
  * }
  * ```
@@ -167,8 +167,8 @@ export function useCache<D = any, A extends SagaAction = SagaAction>(
 ): UseCacheResult<D, A> {
   const id = action.payload.key;
   const data = useSelector((s: any) => selectDataById(s, { id }));
-  const api = useApi(action);
-  return { ...api, data: data || null };
+  const query = useQuery(action);
+  return { ...query, data: data || null };
 }
 
 /**
@@ -200,7 +200,6 @@ export function useCache<D = any, A extends SagaAction = SagaAction>(
  * }
  * ```
  */
-
 export function useLoaderSuccess(
   cur: Pick<LoadingState, 'isLoading' | 'isSuccess'>,
   success: () => any,
