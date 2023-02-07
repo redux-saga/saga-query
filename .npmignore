@@ -5,3 +5,5 @@ yarn-error.log
 .husky/
 *.test.ts
 *.test.js
+*.test.d.ts
+.github

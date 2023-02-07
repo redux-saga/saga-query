@@ -65,18 +65,9 @@ interface Repo {
   stargazers_count: number;
 }
 
-const useRepo = () => {
-  const cache = useCache<Repo>(fetchRepo());
-
-  useEffect(() => {
-    cache.trigger();
-  }, []);
-
-  return cache;
-};
-
 const App = () => {
-  const { data, isInitialLoading, isError, message } = useRepo();
+  const { data, isInitialLoading, isError, message } =
+  useCache<Repo>(fetchRepo());
 
   if (isInitialLoading) return <div>Loading ...</div>;
   if (isError) return <div>{message}</div>;
@@ -436,11 +427,7 @@ interface User {
 }
 
 const useUsers = () => {
-  const cache = useCache<{ users: User[] }>(fetchUsers);
-  useEffect(() => {
-    cache.trigger();
-  }, []);
-  return cache;
+  return useCache<{ users: User[] }>(fetchUsers());
 };
 
 export const App = () => {
