@@ -10,6 +10,7 @@ import { createApi } from './api';
 import { setupStore, sleep } from './util';
 import { createKey } from './create-key';
 import type { ApiCtx } from './types';
+import { poll } from './saga';
 
 interface User {
   id: string;
@@ -72,7 +73,7 @@ test('createApi - POST', async (t) => {
   const reducers = createReducerMap(cache);
   const store = setupStore(query.saga(), reducers);
   store.dispatch(createUser({ email: mockUser.email }));
-  await await sleep(150);
+  await sleep(150);
   t.deepEqual(store.getState().users, {
     '1': { id: '1', name: 'test', email: 'test@test.com' },
   });
@@ -175,7 +176,7 @@ test('run() from a normal saga', (t) => {
     const payload = { name: '/users/:id [GET]', options: { id: '1' } };
     t.like(ctx, {
       action: {
-        type: '@@saga-query/users/:id [GET]',
+        type: `@@saga-query${action1}`,
         payload,
       },
       name: '/users/:id [GET]',
@@ -231,9 +232,12 @@ test('createApi with hash key on a large post', async (t) => {
   const reducers = createReducerMap();
   const store = setupStore(query.saga(), reducers);
   store.dispatch(createUserDefaultKey({ email, largetext }));
-  await await sleep(150);
-  const s = await store.getState();
-  const expectedKey = createKey('/users [POST]', { email, largetext });
+  await sleep(150);
+  const s = store.getState();
+  const expectedKey = createKey(`${createUserDefaultKey}`, {
+    email,
+    largetext,
+  });
 
   t.assert(
     [8, 9].includes(expectedKey.split('|')[1].length),
@@ -244,4 +248,37 @@ test('createApi with hash key on a large post', async (t) => {
   t.deepEqual(s['@@saga-query/data'][expectedKey], {
     '1': { id: '1', name: 'test', email: email, largetext: largetext },
   });
+});
+
+test('createApi - two identical endpoints', async (t) => {
+  const actual: string[] = [];
+  const api = createApi();
+  api.use(queryCtx);
+  api.use(urlParser);
+  api.use(api.routes());
+
+  const first = api.get('/health', function* (ctx, next) {
+    actual.push(ctx.request?.url || '');
+    yield next();
+  });
+
+  const second = api.get(
+    ['/health', 'poll'],
+    { saga: poll(1 * 1000) },
+    function* (ctx, next) {
+      actual.push(ctx.request?.url || '');
+      yield next();
+    },
+  );
+
+  const store = setupStore(api.saga());
+  store.dispatch(first());
+  store.dispatch(second());
+
+  await sleep(150);
+
+  // stop poll
+  store.dispatch(second());
+
+  t.deepEqual(actual, ['/health', '/health']);
 });
