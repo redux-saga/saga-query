@@ -179,6 +179,62 @@ test('fetch - POST', async (t) => {
   await delay();
 });
 
+test('fetch - POST multiple endpoints with same uri', async (t) => {
+  t.plan(4);
+  nock(baseUrl).post('/users/1/something').reply(200, mockUser).persist();
+
+  const api = createApi();
+  api.use(requestMonitor());
+  api.use(api.routes());
+  api.use(fetcher({ baseUrl }));
+
+  const fetchUsers = api.post<{ id: string }>(
+    '/users/:id/something',
+    function* (ctx, next) {
+      ctx.cache = true;
+      ctx.request = ctx.req({ body: JSON.stringify(mockUser) });
+      yield next();
+
+      t.deepEqual(ctx.req(), {
+        url: `${baseUrl}/users/1/something`,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        method: 'POST',
+        body: JSON.stringify(mockUser),
+      });
+
+      t.deepEqual(ctx.json, { ok: true, data: mockUser });
+    },
+  );
+
+  const fetchUsersSecond = api.post<{ id: string }>(
+    ['/users/:id/something', 'next'],
+    function* (ctx, next) {
+      ctx.cache = true;
+      ctx.request = ctx.req({ body: JSON.stringify(mockUser) });
+      yield next();
+
+      t.deepEqual(ctx.req(), {
+        url: `${baseUrl}/users/1/something`,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        method: 'POST',
+        body: JSON.stringify(mockUser),
+      });
+
+      t.deepEqual(ctx.json, { ok: true, data: mockUser });
+    },
+  );
+
+  const store = setupStore(api.saga());
+  store.dispatch(fetchUsers({ id: '1' }));
+  store.dispatch(fetchUsersSecond({ id: '1' }));
+
+  await delay();
+});
+
 test('fetch - slug in url but payload has empty string for slug value', async (t) => {
   t.plan(1);
 

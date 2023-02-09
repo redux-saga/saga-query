@@ -253,12 +253,11 @@ test('createApi with hash key on a large post', async (t) => {
 test('createApi - two identical endpoints', async (t) => {
   const actual: string[] = [];
   const api = createApi();
-  api.use(queryCtx);
-  api.use(urlParser);
+  api.use(requestMonitor());
   api.use(api.routes());
 
   const first = api.get('/health', function* (ctx, next) {
-    actual.push(ctx.request?.url || '');
+    actual.push(ctx.req().url);
     yield next();
   });
 
@@ -266,7 +265,7 @@ test('createApi - two identical endpoints', async (t) => {
     ['/health', 'poll'],
     { saga: poll(1 * 1000) },
     function* (ctx, next) {
-      actual.push(ctx.request?.url || '');
+      actual.push(ctx.req().url);
       yield next();
     },
   );
