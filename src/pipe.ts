@@ -98,7 +98,8 @@ export function createPipe<Ctx extends PipeCtx = PipeCtx<any>>({
     yield next();
   }
 
-  const createType = (post: string) => `${API_ACTION_PREFIX}${post}`;
+  const createType = (post: string) =>
+    `${API_ACTION_PREFIX}${post.startsWith('/') ? '' : '/'}${post}`;
 
   function* onApi(action: ActionWithPayload<any>): SagaIterator<Ctx> {
     const { name, key, options } = action.payload;
@@ -115,12 +116,11 @@ export function createPipe<Ctx extends PipeCtx = PipeCtx<any>>({
     return ctx;
   }
 
-  function create(createName: string, ...args: any[]) {
-    const type = createType(createName);
+  function create(name: string, ...args: any[]) {
+    const type = createType(name);
     const action = (payload?: any) => {
       return { type, payload };
     };
-    action.toString = () => `${type}`;
     let req = null;
     let fn = null;
     if (args.length === 2) {
@@ -148,21 +148,27 @@ export function createPipe<Ctx extends PipeCtx = PipeCtx<any>>({
       throw new Error('Middleware must be a function');
     }
 
-    middlewareMap[`${createName}`] = fn || defaultMiddleware;
+    if (middlewareMap[name]) {
+      console.warn(
+        `[${name}] already exists which means you have two functions with the same name`,
+      );
+    }
+
+    middlewareMap[name] = fn || defaultMiddleware;
 
     const tt = req ? (req as any).saga : saga;
     function* curSaga(): SagaIterator<void> {
-      yield tt(`${action}`, onApi);
+      yield tt(type, onApi);
     }
-    sagas[`${createName}`] = curSaga;
+    sagas[name] = curSaga;
 
     const actionFn = (options?: any) => {
-      const key = createKey(createName, options);
-      return action({ name: createName, key, options });
+      const key = createKey(name, options);
+      return action({ name, key, options });
     };
     actionFn.run = onApi as any;
-    actionFn.toString = () => createName;
-    actionMap[`${createName}`] = actionFn;
+    actionFn.toString = () => name;
+    actionMap[name] = actionFn;
     return actionFn;
   }
 

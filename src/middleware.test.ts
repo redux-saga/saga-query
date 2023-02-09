@@ -352,7 +352,7 @@ test('undo', (t) => {
     ...createQueryState({
       [LOADERS_NAME]: {
         [`${createUser}`]: defaultLoadingItem(),
-        [action.payload.key]: defaultLoadingItem(),
+        [action.payload.name]: defaultLoadingItem(),
       },
     }),
   });

@@ -85,7 +85,7 @@ export function* urlParser<Ctx extends ApiCtx = ApiCtx>(ctx: Ctx, next: Next) {
 
   let method = '';
   httpMethods.forEach((curMethod) => {
-    const pattern = new RegExp(`\\s*\\[` + curMethod + `\\]\\s*`, 'i');
+    const pattern = new RegExp(`\\s*\\[` + curMethod + `\\]\\s*\\w*`, 'i');
     const tmpUrl = url.replace(pattern, '');
     if (tmpUrl.length !== url.length) {
       method = curMethod.toLocaleUpperCase();

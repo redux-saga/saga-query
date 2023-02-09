@@ -295,7 +295,7 @@ test('run() on endpoint action - should run the effect', (t) => {
       t.assert(acc === 'ab');
       t.like(curCtx, {
         action: {
-          type: '@@saga-query/users',
+          type: `@@saga-query${action1}`,
           payload: {
             name: '/users',
           },
@@ -341,7 +341,7 @@ test('middleware order of execution', async (t) => {
   const store = setupStore(api.saga());
   store.dispatch(action());
 
-  await await sleep(150);
+  await sleep(150);
   t.assert(acc === 'abcdefg');
 });
 
@@ -367,7 +367,7 @@ test('retry with actionFn', async (t) => {
   const store = setupStore(api.saga());
   store.dispatch(action());
 
-  await await sleep(150);
+  await sleep(150);
   t.deepEqual(acc, 'agag');
 });
 
@@ -393,6 +393,6 @@ test('retry with actionFn with payload', async (t) => {
   const store = setupStore(api.saga());
   store.dispatch(action({ page: 1 }));
 
-  await await sleep(150);
+  await sleep(150);
   t.deepEqual(acc, 'aagg');
 });
