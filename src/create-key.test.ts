@@ -30,7 +30,9 @@ test('options object keys order for action key identity - 1: simple object', (t)
   const api = createApi();
   api.use(api.routes());
   // no param
-  const action0 = api.get<any>(
+  const action0 = api.get<{
+    [key: string]: string | boolean | number | null | undefined;
+  }>(
     '/users',
     { saga: poll(5 * 1000) }, // with poll middleware
     function* (ctx, next) {
@@ -269,7 +271,9 @@ test('options object keys order for action key identity - 5: other', (t) => {
   const api = createApi();
   api.use(api.routes());
   //array options
-  const action5 = api.post<any>('/users/:allRecords', function* (ctx, next) {
+  const action5 = api.post<
+    number | boolean | string | undefined | null | any[]
+  >('/users/:allRecords', function* (ctx, next) {
     ctx.request = {
       method: 'POST',
       body: JSON.stringify(ctx.action.payload),

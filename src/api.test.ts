@@ -290,7 +290,7 @@ interface TestCtx<P = any, S = any, E = any> extends ApiCtx<P, S, E> {
 }
 
 // this is strictly for testing types
-test.only('ensure types for get() endpoint', (t) => {
+test('ensure types for get() endpoint', (t) => {
   t.plan(1);
   const api = createApi<TestCtx>();
   api.use(api.routes());
@@ -325,7 +325,7 @@ interface FetchUserProps {
 type FetchUserCtx = TestCtx<FetchUserProps>;
 
 // this is strictly for testing types
-test.only('ensure ability to case `ctx` in function definition', (t) => {
+test('ensure ability to cast `ctx` in function definition', (t) => {
   t.plan(1);
   const api = createApi<TestCtx>();
   api.use(api.routes());
@@ -352,4 +352,32 @@ test.only('ensure ability to case `ctx` in function definition', (t) => {
   const store = setupStore(api.saga());
   store.dispatch(action1({ id: '1' }));
   t.deepEqual(acc, ['1', 'wow']);
+});
+
+type FetchUserSecondCtx = TestCtx<any, { result: string }>;
+
+// this is strictly for testing types
+test('ensure ability to cast `ctx` in function definition with no props', (t) => {
+  t.plan(1);
+  const api = createApi<TestCtx>();
+  api.use(api.routes());
+  api.use(function* (ctx, next) {
+    yield next();
+    ctx.json = { ok: true, data: { result: 'wow' } };
+  });
+
+  const acc: string[] = [];
+  const action1 = api.get('/users', function* (ctx: FetchUserSecondCtx, next) {
+    ctx.something = false;
+
+    yield next();
+
+    if (ctx.json.ok) {
+      acc.push(ctx.json.data.result);
+    }
+  });
+
+  const store = setupStore(api.saga());
+  store.dispatch(action1());
+  t.deepEqual(acc, ['wow']);
 });

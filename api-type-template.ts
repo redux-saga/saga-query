@@ -36,7 +36,10 @@ ${method}<P, ApiSuccess, ApiError = any>(req: {
 /**
 * Middleware only
 */
-${method}(fn: MiddlewareCo<Ctx>): CreateAction<Ctx>;
+${method}(fn: MiddlewareApiCo<Ctx>): CreateAction<Ctx>;
+${method}<Gtx extends Ctx = Ctx>(
+  fn: MiddlewareApiCo<Gtx>,
+): CreateAction<Gtx>;
 ${method}<P>(
   fn: MiddlewareApiCo<Omit<Ctx, 'payload'> & Payload<P>>,
 ): CreateActionWithPayload<Omit<Ctx, 'payload'> & Payload<P>, P>;
@@ -44,7 +47,7 @@ ${method}<P, Gtx extends Ctx = Ctx>(
   fn: MiddlewareApiCo<Gtx>,
 ): CreateActionWithPayload<Gtx, P>;
 ${method}<P, ApiSuccess, ApiError = any>(
-  fn: MiddlewareCo<Ctx>,
+  fn: MiddlewareApiCo<Ctx>,
 ): CreateActionWithPayload<
   Omit<Ctx, 'payload' | 'json'> &
     Payload<P> &
@@ -55,7 +58,11 @@ ${method}<P, ApiSuccess, ApiError = any>(
 /**
 * Options and Middleware
 */
-${method}(req: { saga?: any }, fn: MiddlewareCo<Ctx>): CreateAction<Ctx>;
+${method}(req: { saga?: any }, fn: MiddlewareApiCo<Ctx>): CreateAction<Ctx>;
+${method}<Gtx extends Ctx = Ctx>(
+  req: { saga?: any },
+  fn: MiddlewareApiCo<Gtx>,
+): CreateAction<Gtx>;
 ${method}<P>(
   req: { saga?: any },
   fn: MiddlewareApiCo<Omit<Ctx, 'payload'> & Payload<P>>,
@@ -66,7 +73,7 @@ ${method}<P, Gtx extends Ctx = Ctx>(
 ): CreateActionWithPayload<Gtx, P>;
 ${method}<P, ApiSuccess, ApiError = any>(
   req: { saga?: any },
-  fn: MiddlewareCo<Ctx>,
+  fn: MiddlewareApiCo<Ctx>,
 ): CreateActionWithPayload<
   Omit<Ctx, 'payload' | 'json'> &
     Payload<P> &
@@ -117,6 +124,10 @@ ${method}<P, ApiSuccess, ApiError = any>(
  * Name and middleware
  */
 ${method}(name: ApiName, fn: MiddlewareApiCo<Ctx>): CreateAction<Ctx>;
+${method}<Gtx extends Ctx = Ctx>(
+  name: ApiName,
+  fn: MiddlewareApiCo<Gtx>,
+): CreateAction<Gtx>;
 ${method}<P>(
   name: ApiName,
   fn: MiddlewareApiCo<Omit<Ctx, 'payload'> & Payload<P>>,
@@ -147,6 +158,11 @@ ${method}(
   req: { saga?: any },
   fn: MiddlewareApiCo<Ctx>,
 ): CreateAction<Ctx>;
+${method}<Gtx extends Ctx = Ctx>(
+  name: ApiName,
+  req: { saga?: any },
+  fn: MiddlewareApiCo<Gtx>,
+): CreateAction<Gtx>;
 ${method}<P>(
   name: ApiName,
   req: { saga?: any },
@@ -183,7 +199,6 @@ import type {
   ApiCtx,
   CreateAction,
   CreateActionWithPayload,
-  MiddlewareCo,
   Next,
   FetchJson,
   MiddlewareApiCo,
