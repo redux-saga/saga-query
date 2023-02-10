@@ -82,7 +82,7 @@ test('middleware - basic', (t) => {
     {
       saga: latest,
     },
-    function* processUser(ctx: ApiCtx<User>, next) {
+    function* processUser(ctx, next) {
       ctx.request = ctx.req({ method: 'POST' });
       yield next();
       if (!ctx.json.ok) return;

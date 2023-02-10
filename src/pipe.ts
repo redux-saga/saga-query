@@ -12,6 +12,7 @@ import type {
   CreateAction,
   CreateActionWithPayload,
   PipeCtx,
+  Payload,
 } from './types';
 import { API_ACTION_PREFIX } from './constant';
 import { compose } from './compose';
@@ -21,25 +22,63 @@ export interface SagaApi<Ctx extends PipeCtx> {
   use: (fn: Middleware<Ctx>) => void;
   routes: () => Middleware<Ctx>;
 
+  /**
+   * Name only
+   */
   create(name: string): CreateAction<Ctx>;
-  create<P>(name: string): CreateActionWithPayload<Ctx, P>;
-  create(name: string, req: { saga?: any }): CreateAction<Ctx>;
-  create<P>(name: string, req: { saga?: any }): CreateActionWithPayload<Ctx, P>;
-  create(name: string, fn: MiddlewareCo<Ctx>): CreateAction<Ctx>;
   create<P>(
     name: string,
-    fn: MiddlewareCo<Ctx>,
-  ): CreateActionWithPayload<Ctx, P>;
+  ): CreateActionWithPayload<Omit<Ctx, 'payload'> & Payload<P>, P>;
+
+  /**
+   * Name and options
+   */
+  create(name: string, req: { saga?: any }): CreateAction<Ctx>;
+  create<P>(
+    name: string,
+    req: { saga?: any },
+  ): CreateActionWithPayload<Omit<Ctx, 'payload'> & Payload<P>, P>;
+
+  /**
+   * Name and middleware
+   */
+  create(name: string, fn: MiddlewareCo<Ctx>): CreateAction<Ctx>;
+  create<Gtx extends Ctx = Ctx>(
+    name: string,
+    fn: MiddlewareCo<Gtx>,
+  ): CreateAction<Gtx>;
+  create<P>(
+    name: string,
+    fn: MiddlewareCo<Omit<Ctx, 'payload'> & Payload<P>>,
+  ): CreateActionWithPayload<Omit<Ctx, 'payload'> & Payload<P>, P>;
+  create<P, Gtx extends Ctx = Ctx>(
+    name: string,
+    fn: MiddlewareCo<Gtx>,
+  ): CreateActionWithPayload<Gtx, P>;
+
+  /*
+   * Name, options, and middleware
+   */
   create(
     name: string,
     req: { saga?: any },
     fn: MiddlewareCo<Ctx>,
   ): CreateAction<Ctx>;
+  create<Gtx extends Ctx = Ctx>(
+    name: string,
+    req: { saga?: any },
+    fn: MiddlewareCo<Gtx>,
+  ): CreateAction<Gtx>;
   create<P>(
     name: string,
     req: { saga?: any },
-    fn: MiddlewareCo<Ctx>,
-  ): CreateActionWithPayload<Ctx, P>;
+    fn: MiddlewareCo<Omit<Ctx, 'payload'> & Payload<P>>,
+  ): CreateActionWithPayload<Omit<Ctx, 'payload'> & Payload<P>, P>;
+  create<P, Gtx extends Ctx = Ctx>(
+    name: string,
+    req: { saga?: any },
+    fn: MiddlewareCo<Gtx>,
+  ): CreateActionWithPayload<Gtx, P>;
 }
 
 export const defaultOnError = (err: Error) => {
