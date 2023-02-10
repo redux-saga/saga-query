@@ -183,7 +183,7 @@ const increment = thunks.create('increment', function* (ctx, next) {
   console.log('waiting 1s');
   yield delay(1000);
   console.log('incrementing!');
-  yield put({ type: 'INCREMENT' });
+  yield* put({ type: 'INCREMENT' });
 });
 
 store.dispatch(increment());
@@ -300,7 +300,7 @@ const fetchUsers = api.get(
     }, {});
 
     // save the data to our redux slice called `users`
-    yield put(users.actions.add(curUsers));
+    yield* put(users.actions.add(curUsers));
   },
 );
 
@@ -326,7 +326,13 @@ store.dispatch(fetchUsers());
 
 ## Typescript
 
-This library was built with typescript in mind.
+This library was built with typescript in mind.  One advantage this library has
+over `redux-saga` is that we leverage [typed-redux-saga](https://github.com/agiledigital/typed-redux-saga).
+
+By leveraging yield delegates `yield*` we can now get fully typed results from
+our yield statements!  So if you're coming from `redux-saga` and don't know
+what that means, just add `yield*` to your call effects (e.g. call, put,
+select, etc.) and enjoy the better types.
 
 ### createApi
 
@@ -402,7 +408,7 @@ const createUser = api.post<{ id: string; email: string }>(
     const curUser = ctx.json.data;
     const curUsers = { [curUser.id]: curUser };
 
-    yield put(users.actions.add(curUsers));
+    yield* put(users.actions.add(curUsers));
   },
 );
 
@@ -510,7 +516,7 @@ const fetchMailboxes = api.get('/mailboxes');
 
 const fetchMessages = api.get('/mailboxes/:id/messages', function* (ctx, next) {
   // The return value of a `.run` is the entire `ctx` object.
-  const mailCtx = yield call(fetchMailboxes.run, fetchMailboxes());
+  const mailCtx = yield* call(fetchMailboxes.run, fetchMailboxes());
 
   if (!mailCtx.json.ok) {
     yield next();
@@ -544,7 +550,7 @@ api.post<{ message: string }>(
   'create-message',
   function* onCreateMsg(ctx, next) {
     // made up selector that grabs a mailbox
-    const mailbox = yield select(selectMailbox);
+    const mailbox = yield* select(selectMailbox);
     const message = ctx.payload.message;
 
     ctx.request = ctx.req({
@@ -786,23 +792,23 @@ const updateUser = api.patch<UpdateUser>(
     });
 
     // save the current user record in a variable
-    const prevUser = yield select(selectUserById, { id }));
+    const prevUser = yield* select(selectUserById, { id }));
     // optimistically update user
-    yield put(users.actions.patch({ [user.id]: { email } }));
+    yield* put(users.actions.patch({ [user.id]: { email } }));
 
     // activate PATCH request
     yield next();
 
     // oops something went wrong, revert!
     if (!ctx.json.ok) {
-      yield put(users.actions.add({ [prevUser.id]: prevUser });
+      yield* put(users.actions.add({ [prevUser.id]: prevUser });
       return;
     }
 
     // even though we know what was updated, it's still a good habit to
     // update our local cache with what the server sent us
     const nextUser = ctx.json.data;
-    yield put(users.actions.add({ [nextUser.id]: nextUser }));
+    yield* put(users.actions.add({ [nextUser.id]: nextUser }));
   },
 )
 ```
@@ -827,7 +833,7 @@ api.use(optimistic);
 api.patch(
   function* (ctx: OptimisticCtx<PatchEntity<User>, MapEntity<User>>, next) {
     const { id, email } = ctx.payload;
-    const prevUser = yield select(selectUserById, { id }));
+    const prevUser = yield* select(selectUserById, { id }));
 
     ctx.optimistic = {
       apply: users.actions.patch({ [id]: { email } }),
@@ -925,7 +931,7 @@ function* undoer<Ctx extends UndoCtx = UndoCtx>() {
     return;
   }
 
-  const winner = yield race({
+  const winner = yield* race({
     timer: delay(3 * 1000),
     undo: take(`${undo}`),
   });
@@ -997,7 +1003,7 @@ const fetchUsers = api.get<{ users: User[] }>('/users', function* (ctx, next) {
   yield next();
   if (!ctx.json.ok) return;
   const { data } = ctx.json.data;
-  yield put(users.actions.add(data.users));
+  yield* put(users.actions.add(data.users));
 });
 
 const prepared = prepareStore({
