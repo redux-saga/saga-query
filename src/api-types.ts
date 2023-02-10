@@ -31,6 +31,9 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
     get<P>(req: {
       saga?: any;
     }): CreateActionWithPayload<Omit<Ctx, 'payload'> & Payload<P>, P>;
+    get<P extends never, ApiSuccess, ApiError = any>(req: {
+      saga?: any;
+    }): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
     get<P, ApiSuccess, ApiError = any>(req: {
       saga?: any;
     }): CreateActionWithPayload<
@@ -51,6 +54,9 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
     get<P, Gtx extends Ctx = Ctx>(
       fn: MiddlewareApiCo<Gtx>,
     ): CreateActionWithPayload<Gtx, P>;
+    get<P extends never, ApiSuccess, ApiError = any>(
+      fn: MiddlewareApiCo<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>,
+    ): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
     get<P, ApiSuccess, ApiError = any>(
       fn: MiddlewareApiCo<Ctx>,
     ): CreateActionWithPayload<
@@ -76,6 +82,10 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
       req: { saga?: any },
       fn: MiddlewareApiCo<Gtx>,
     ): CreateActionWithPayload<Gtx, P>;
+    get<P extends never, ApiSuccess, ApiError = any>(
+      req: { saga?: any },
+      fn: MiddlewareApiCo<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>,
+    ): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
     get<P, ApiSuccess, ApiError = any>(
       req: { saga?: any },
       fn: MiddlewareApiCo<Ctx>,
@@ -93,6 +103,9 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
     post<P>(req: {
       saga?: any;
     }): CreateActionWithPayload<Omit<Ctx, 'payload'> & Payload<P>, P>;
+    post<P extends never, ApiSuccess, ApiError = any>(req: {
+      saga?: any;
+    }): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
     post<P, ApiSuccess, ApiError = any>(req: {
       saga?: any;
     }): CreateActionWithPayload<
@@ -113,6 +126,9 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
     post<P, Gtx extends Ctx = Ctx>(
       fn: MiddlewareApiCo<Gtx>,
     ): CreateActionWithPayload<Gtx, P>;
+    post<P extends never, ApiSuccess, ApiError = any>(
+      fn: MiddlewareApiCo<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>,
+    ): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
     post<P, ApiSuccess, ApiError = any>(
       fn: MiddlewareApiCo<Ctx>,
     ): CreateActionWithPayload<
@@ -138,6 +154,10 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
       req: { saga?: any },
       fn: MiddlewareApiCo<Gtx>,
     ): CreateActionWithPayload<Gtx, P>;
+    post<P extends never, ApiSuccess, ApiError = any>(
+      req: { saga?: any },
+      fn: MiddlewareApiCo<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>,
+    ): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
     post<P, ApiSuccess, ApiError = any>(
       req: { saga?: any },
       fn: MiddlewareApiCo<Ctx>,
@@ -155,6 +175,9 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
     put<P>(req: {
       saga?: any;
     }): CreateActionWithPayload<Omit<Ctx, 'payload'> & Payload<P>, P>;
+    put<P extends never, ApiSuccess, ApiError = any>(req: {
+      saga?: any;
+    }): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
     put<P, ApiSuccess, ApiError = any>(req: {
       saga?: any;
     }): CreateActionWithPayload<
@@ -175,6 +198,9 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
     put<P, Gtx extends Ctx = Ctx>(
       fn: MiddlewareApiCo<Gtx>,
     ): CreateActionWithPayload<Gtx, P>;
+    put<P extends never, ApiSuccess, ApiError = any>(
+      fn: MiddlewareApiCo<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>,
+    ): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
     put<P, ApiSuccess, ApiError = any>(
       fn: MiddlewareApiCo<Ctx>,
     ): CreateActionWithPayload<
@@ -200,6 +226,10 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
       req: { saga?: any },
       fn: MiddlewareApiCo<Gtx>,
     ): CreateActionWithPayload<Gtx, P>;
+    put<P extends never, ApiSuccess, ApiError = any>(
+      req: { saga?: any },
+      fn: MiddlewareApiCo<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>,
+    ): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
     put<P, ApiSuccess, ApiError = any>(
       req: { saga?: any },
       fn: MiddlewareApiCo<Ctx>,
@@ -217,6 +247,9 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
     patch<P>(req: {
       saga?: any;
     }): CreateActionWithPayload<Omit<Ctx, 'payload'> & Payload<P>, P>;
+    patch<P extends never, ApiSuccess, ApiError = any>(req: {
+      saga?: any;
+    }): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
     patch<P, ApiSuccess, ApiError = any>(req: {
       saga?: any;
     }): CreateActionWithPayload<
@@ -237,6 +270,9 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
     patch<P, Gtx extends Ctx = Ctx>(
       fn: MiddlewareApiCo<Gtx>,
     ): CreateActionWithPayload<Gtx, P>;
+    patch<P extends never, ApiSuccess, ApiError = any>(
+      fn: MiddlewareApiCo<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>,
+    ): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
     patch<P, ApiSuccess, ApiError = any>(
       fn: MiddlewareApiCo<Ctx>,
     ): CreateActionWithPayload<
@@ -262,6 +298,10 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
       req: { saga?: any },
       fn: MiddlewareApiCo<Gtx>,
     ): CreateActionWithPayload<Gtx, P>;
+    patch<P extends never, ApiSuccess, ApiError = any>(
+      req: { saga?: any },
+      fn: MiddlewareApiCo<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>,
+    ): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
     patch<P, ApiSuccess, ApiError = any>(
       req: { saga?: any },
       fn: MiddlewareApiCo<Ctx>,
@@ -279,6 +319,9 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
     delete<P>(req: {
       saga?: any;
     }): CreateActionWithPayload<Omit<Ctx, 'payload'> & Payload<P>, P>;
+    delete<P extends never, ApiSuccess, ApiError = any>(req: {
+      saga?: any;
+    }): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
     delete<P, ApiSuccess, ApiError = any>(req: {
       saga?: any;
     }): CreateActionWithPayload<
@@ -299,6 +342,9 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
     delete<P, Gtx extends Ctx = Ctx>(
       fn: MiddlewareApiCo<Gtx>,
     ): CreateActionWithPayload<Gtx, P>;
+    delete<P extends never, ApiSuccess, ApiError = any>(
+      fn: MiddlewareApiCo<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>,
+    ): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
     delete<P, ApiSuccess, ApiError = any>(
       fn: MiddlewareApiCo<Ctx>,
     ): CreateActionWithPayload<
@@ -324,6 +370,10 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
       req: { saga?: any },
       fn: MiddlewareApiCo<Gtx>,
     ): CreateActionWithPayload<Gtx, P>;
+    delete<P extends never, ApiSuccess, ApiError = any>(
+      req: { saga?: any },
+      fn: MiddlewareApiCo<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>,
+    ): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
     delete<P, ApiSuccess, ApiError = any>(
       req: { saga?: any },
       fn: MiddlewareApiCo<Ctx>,
@@ -341,6 +391,9 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
     options<P>(req: {
       saga?: any;
     }): CreateActionWithPayload<Omit<Ctx, 'payload'> & Payload<P>, P>;
+    options<P extends never, ApiSuccess, ApiError = any>(req: {
+      saga?: any;
+    }): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
     options<P, ApiSuccess, ApiError = any>(req: {
       saga?: any;
     }): CreateActionWithPayload<
@@ -361,6 +414,9 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
     options<P, Gtx extends Ctx = Ctx>(
       fn: MiddlewareApiCo<Gtx>,
     ): CreateActionWithPayload<Gtx, P>;
+    options<P extends never, ApiSuccess, ApiError = any>(
+      fn: MiddlewareApiCo<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>,
+    ): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
     options<P, ApiSuccess, ApiError = any>(
       fn: MiddlewareApiCo<Ctx>,
     ): CreateActionWithPayload<
@@ -386,6 +442,10 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
       req: { saga?: any },
       fn: MiddlewareApiCo<Gtx>,
     ): CreateActionWithPayload<Gtx, P>;
+    options<P extends never, ApiSuccess, ApiError = any>(
+      req: { saga?: any },
+      fn: MiddlewareApiCo<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>,
+    ): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
     options<P, ApiSuccess, ApiError = any>(
       req: { saga?: any },
       fn: MiddlewareApiCo<Ctx>,
@@ -403,6 +463,9 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
     head<P>(req: {
       saga?: any;
     }): CreateActionWithPayload<Omit<Ctx, 'payload'> & Payload<P>, P>;
+    head<P extends never, ApiSuccess, ApiError = any>(req: {
+      saga?: any;
+    }): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
     head<P, ApiSuccess, ApiError = any>(req: {
       saga?: any;
     }): CreateActionWithPayload<
@@ -423,6 +486,9 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
     head<P, Gtx extends Ctx = Ctx>(
       fn: MiddlewareApiCo<Gtx>,
     ): CreateActionWithPayload<Gtx, P>;
+    head<P extends never, ApiSuccess, ApiError = any>(
+      fn: MiddlewareApiCo<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>,
+    ): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
     head<P, ApiSuccess, ApiError = any>(
       fn: MiddlewareApiCo<Ctx>,
     ): CreateActionWithPayload<
@@ -448,6 +514,10 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
       req: { saga?: any },
       fn: MiddlewareApiCo<Gtx>,
     ): CreateActionWithPayload<Gtx, P>;
+    head<P extends never, ApiSuccess, ApiError = any>(
+      req: { saga?: any },
+      fn: MiddlewareApiCo<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>,
+    ): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
     head<P, ApiSuccess, ApiError = any>(
       req: { saga?: any },
       fn: MiddlewareApiCo<Ctx>,
@@ -465,6 +535,9 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
     connect<P>(req: {
       saga?: any;
     }): CreateActionWithPayload<Omit<Ctx, 'payload'> & Payload<P>, P>;
+    connect<P extends never, ApiSuccess, ApiError = any>(req: {
+      saga?: any;
+    }): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
     connect<P, ApiSuccess, ApiError = any>(req: {
       saga?: any;
     }): CreateActionWithPayload<
@@ -485,6 +558,9 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
     connect<P, Gtx extends Ctx = Ctx>(
       fn: MiddlewareApiCo<Gtx>,
     ): CreateActionWithPayload<Gtx, P>;
+    connect<P extends never, ApiSuccess, ApiError = any>(
+      fn: MiddlewareApiCo<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>,
+    ): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
     connect<P, ApiSuccess, ApiError = any>(
       fn: MiddlewareApiCo<Ctx>,
     ): CreateActionWithPayload<
@@ -510,6 +586,10 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
       req: { saga?: any },
       fn: MiddlewareApiCo<Gtx>,
     ): CreateActionWithPayload<Gtx, P>;
+    connect<P extends never, ApiSuccess, ApiError = any>(
+      req: { saga?: any },
+      fn: MiddlewareApiCo<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>,
+    ): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
     connect<P, ApiSuccess, ApiError = any>(
       req: { saga?: any },
       fn: MiddlewareApiCo<Ctx>,
@@ -527,6 +607,9 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
     trace<P>(req: {
       saga?: any;
     }): CreateActionWithPayload<Omit<Ctx, 'payload'> & Payload<P>, P>;
+    trace<P extends never, ApiSuccess, ApiError = any>(req: {
+      saga?: any;
+    }): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
     trace<P, ApiSuccess, ApiError = any>(req: {
       saga?: any;
     }): CreateActionWithPayload<
@@ -547,6 +630,9 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
     trace<P, Gtx extends Ctx = Ctx>(
       fn: MiddlewareApiCo<Gtx>,
     ): CreateActionWithPayload<Gtx, P>;
+    trace<P extends never, ApiSuccess, ApiError = any>(
+      fn: MiddlewareApiCo<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>,
+    ): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
     trace<P, ApiSuccess, ApiError = any>(
       fn: MiddlewareApiCo<Ctx>,
     ): CreateActionWithPayload<
@@ -572,6 +658,10 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
       req: { saga?: any },
       fn: MiddlewareApiCo<Gtx>,
     ): CreateActionWithPayload<Gtx, P>;
+    trace<P extends never, ApiSuccess, ApiError = any>(
+      req: { saga?: any },
+      fn: MiddlewareApiCo<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>,
+    ): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
     trace<P, ApiSuccess, ApiError = any>(
       req: { saga?: any },
       fn: MiddlewareApiCo<Ctx>,
@@ -590,6 +680,9 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
   get<P>(
     name: ApiName,
   ): CreateActionWithPayload<Omit<Ctx, 'payload'> & Payload<P>, P>;
+  get<P extends never, ApiSuccess, ApiError = any>(
+    name: ApiName,
+  ): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
   get<P, ApiSuccess, ApiError = any>(
     name: ApiName,
   ): CreateActionWithPayload<
@@ -611,6 +704,10 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
     name: ApiName,
     req: { saga?: any },
   ): CreateActionWithPayload<Gtx, P>;
+  get<P extends never, ApiSuccess, ApiError = any>(
+    name: ApiName,
+    req: { saga?: any },
+  ): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
   get<P, ApiSuccess, ApiError = any>(
     name: ApiName,
     req: { saga?: any },
@@ -637,6 +734,10 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
     name: ApiName,
     fn: MiddlewareApiCo<Gtx>,
   ): CreateActionWithPayload<Gtx, P>;
+  get<P extends never, ApiSuccess, ApiError = any>(
+    name: ApiName,
+    fn: MiddlewareApiCo<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>,
+  ): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
   get<P, ApiSuccess, ApiError = any>(
     name: ApiName,
     fn: MiddlewareApiCo<
@@ -674,6 +775,11 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
     req: { saga?: any },
     fn: MiddlewareApiCo<Gtx>,
   ): CreateActionWithPayload<Gtx, P>;
+  get<P extends never, ApiSuccess, ApiError = any>(
+    name: ApiName,
+    req: { saga?: any },
+    fn: MiddlewareApiCo<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>,
+  ): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
   get<P, ApiSuccess, ApiError = any>(
     name: ApiName,
     req: { saga?: any },
@@ -696,6 +802,9 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
   post<P>(
     name: ApiName,
   ): CreateActionWithPayload<Omit<Ctx, 'payload'> & Payload<P>, P>;
+  post<P extends never, ApiSuccess, ApiError = any>(
+    name: ApiName,
+  ): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
   post<P, ApiSuccess, ApiError = any>(
     name: ApiName,
   ): CreateActionWithPayload<
@@ -717,6 +826,10 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
     name: ApiName,
     req: { saga?: any },
   ): CreateActionWithPayload<Gtx, P>;
+  post<P extends never, ApiSuccess, ApiError = any>(
+    name: ApiName,
+    req: { saga?: any },
+  ): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
   post<P, ApiSuccess, ApiError = any>(
     name: ApiName,
     req: { saga?: any },
@@ -743,6 +856,10 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
     name: ApiName,
     fn: MiddlewareApiCo<Gtx>,
   ): CreateActionWithPayload<Gtx, P>;
+  post<P extends never, ApiSuccess, ApiError = any>(
+    name: ApiName,
+    fn: MiddlewareApiCo<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>,
+  ): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
   post<P, ApiSuccess, ApiError = any>(
     name: ApiName,
     fn: MiddlewareApiCo<
@@ -780,6 +897,11 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
     req: { saga?: any },
     fn: MiddlewareApiCo<Gtx>,
   ): CreateActionWithPayload<Gtx, P>;
+  post<P extends never, ApiSuccess, ApiError = any>(
+    name: ApiName,
+    req: { saga?: any },
+    fn: MiddlewareApiCo<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>,
+  ): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
   post<P, ApiSuccess, ApiError = any>(
     name: ApiName,
     req: { saga?: any },
@@ -802,6 +924,9 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
   put<P>(
     name: ApiName,
   ): CreateActionWithPayload<Omit<Ctx, 'payload'> & Payload<P>, P>;
+  put<P extends never, ApiSuccess, ApiError = any>(
+    name: ApiName,
+  ): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
   put<P, ApiSuccess, ApiError = any>(
     name: ApiName,
   ): CreateActionWithPayload<
@@ -823,6 +948,10 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
     name: ApiName,
     req: { saga?: any },
   ): CreateActionWithPayload<Gtx, P>;
+  put<P extends never, ApiSuccess, ApiError = any>(
+    name: ApiName,
+    req: { saga?: any },
+  ): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
   put<P, ApiSuccess, ApiError = any>(
     name: ApiName,
     req: { saga?: any },
@@ -849,6 +978,10 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
     name: ApiName,
     fn: MiddlewareApiCo<Gtx>,
   ): CreateActionWithPayload<Gtx, P>;
+  put<P extends never, ApiSuccess, ApiError = any>(
+    name: ApiName,
+    fn: MiddlewareApiCo<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>,
+  ): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
   put<P, ApiSuccess, ApiError = any>(
     name: ApiName,
     fn: MiddlewareApiCo<
@@ -886,6 +1019,11 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
     req: { saga?: any },
     fn: MiddlewareApiCo<Gtx>,
   ): CreateActionWithPayload<Gtx, P>;
+  put<P extends never, ApiSuccess, ApiError = any>(
+    name: ApiName,
+    req: { saga?: any },
+    fn: MiddlewareApiCo<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>,
+  ): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
   put<P, ApiSuccess, ApiError = any>(
     name: ApiName,
     req: { saga?: any },
@@ -908,6 +1046,9 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
   patch<P>(
     name: ApiName,
   ): CreateActionWithPayload<Omit<Ctx, 'payload'> & Payload<P>, P>;
+  patch<P extends never, ApiSuccess, ApiError = any>(
+    name: ApiName,
+  ): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
   patch<P, ApiSuccess, ApiError = any>(
     name: ApiName,
   ): CreateActionWithPayload<
@@ -929,6 +1070,10 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
     name: ApiName,
     req: { saga?: any },
   ): CreateActionWithPayload<Gtx, P>;
+  patch<P extends never, ApiSuccess, ApiError = any>(
+    name: ApiName,
+    req: { saga?: any },
+  ): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
   patch<P, ApiSuccess, ApiError = any>(
     name: ApiName,
     req: { saga?: any },
@@ -955,6 +1100,10 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
     name: ApiName,
     fn: MiddlewareApiCo<Gtx>,
   ): CreateActionWithPayload<Gtx, P>;
+  patch<P extends never, ApiSuccess, ApiError = any>(
+    name: ApiName,
+    fn: MiddlewareApiCo<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>,
+  ): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
   patch<P, ApiSuccess, ApiError = any>(
     name: ApiName,
     fn: MiddlewareApiCo<
@@ -992,6 +1141,11 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
     req: { saga?: any },
     fn: MiddlewareApiCo<Gtx>,
   ): CreateActionWithPayload<Gtx, P>;
+  patch<P extends never, ApiSuccess, ApiError = any>(
+    name: ApiName,
+    req: { saga?: any },
+    fn: MiddlewareApiCo<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>,
+  ): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
   patch<P, ApiSuccess, ApiError = any>(
     name: ApiName,
     req: { saga?: any },
@@ -1014,6 +1168,9 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
   delete<P>(
     name: ApiName,
   ): CreateActionWithPayload<Omit<Ctx, 'payload'> & Payload<P>, P>;
+  delete<P extends never, ApiSuccess, ApiError = any>(
+    name: ApiName,
+  ): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
   delete<P, ApiSuccess, ApiError = any>(
     name: ApiName,
   ): CreateActionWithPayload<
@@ -1035,6 +1192,10 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
     name: ApiName,
     req: { saga?: any },
   ): CreateActionWithPayload<Gtx, P>;
+  delete<P extends never, ApiSuccess, ApiError = any>(
+    name: ApiName,
+    req: { saga?: any },
+  ): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
   delete<P, ApiSuccess, ApiError = any>(
     name: ApiName,
     req: { saga?: any },
@@ -1061,6 +1222,10 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
     name: ApiName,
     fn: MiddlewareApiCo<Gtx>,
   ): CreateActionWithPayload<Gtx, P>;
+  delete<P extends never, ApiSuccess, ApiError = any>(
+    name: ApiName,
+    fn: MiddlewareApiCo<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>,
+  ): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
   delete<P, ApiSuccess, ApiError = any>(
     name: ApiName,
     fn: MiddlewareApiCo<
@@ -1098,6 +1263,11 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
     req: { saga?: any },
     fn: MiddlewareApiCo<Gtx>,
   ): CreateActionWithPayload<Gtx, P>;
+  delete<P extends never, ApiSuccess, ApiError = any>(
+    name: ApiName,
+    req: { saga?: any },
+    fn: MiddlewareApiCo<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>,
+  ): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
   delete<P, ApiSuccess, ApiError = any>(
     name: ApiName,
     req: { saga?: any },
@@ -1120,6 +1290,9 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
   options<P>(
     name: ApiName,
   ): CreateActionWithPayload<Omit<Ctx, 'payload'> & Payload<P>, P>;
+  options<P extends never, ApiSuccess, ApiError = any>(
+    name: ApiName,
+  ): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
   options<P, ApiSuccess, ApiError = any>(
     name: ApiName,
   ): CreateActionWithPayload<
@@ -1141,6 +1314,10 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
     name: ApiName,
     req: { saga?: any },
   ): CreateActionWithPayload<Gtx, P>;
+  options<P extends never, ApiSuccess, ApiError = any>(
+    name: ApiName,
+    req: { saga?: any },
+  ): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
   options<P, ApiSuccess, ApiError = any>(
     name: ApiName,
     req: { saga?: any },
@@ -1167,6 +1344,10 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
     name: ApiName,
     fn: MiddlewareApiCo<Gtx>,
   ): CreateActionWithPayload<Gtx, P>;
+  options<P extends never, ApiSuccess, ApiError = any>(
+    name: ApiName,
+    fn: MiddlewareApiCo<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>,
+  ): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
   options<P, ApiSuccess, ApiError = any>(
     name: ApiName,
     fn: MiddlewareApiCo<
@@ -1204,6 +1385,11 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
     req: { saga?: any },
     fn: MiddlewareApiCo<Gtx>,
   ): CreateActionWithPayload<Gtx, P>;
+  options<P extends never, ApiSuccess, ApiError = any>(
+    name: ApiName,
+    req: { saga?: any },
+    fn: MiddlewareApiCo<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>,
+  ): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
   options<P, ApiSuccess, ApiError = any>(
     name: ApiName,
     req: { saga?: any },
@@ -1226,6 +1412,9 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
   head<P>(
     name: ApiName,
   ): CreateActionWithPayload<Omit<Ctx, 'payload'> & Payload<P>, P>;
+  head<P extends never, ApiSuccess, ApiError = any>(
+    name: ApiName,
+  ): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
   head<P, ApiSuccess, ApiError = any>(
     name: ApiName,
   ): CreateActionWithPayload<
@@ -1247,6 +1436,10 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
     name: ApiName,
     req: { saga?: any },
   ): CreateActionWithPayload<Gtx, P>;
+  head<P extends never, ApiSuccess, ApiError = any>(
+    name: ApiName,
+    req: { saga?: any },
+  ): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
   head<P, ApiSuccess, ApiError = any>(
     name: ApiName,
     req: { saga?: any },
@@ -1273,6 +1466,10 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
     name: ApiName,
     fn: MiddlewareApiCo<Gtx>,
   ): CreateActionWithPayload<Gtx, P>;
+  head<P extends never, ApiSuccess, ApiError = any>(
+    name: ApiName,
+    fn: MiddlewareApiCo<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>,
+  ): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
   head<P, ApiSuccess, ApiError = any>(
     name: ApiName,
     fn: MiddlewareApiCo<
@@ -1310,6 +1507,11 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
     req: { saga?: any },
     fn: MiddlewareApiCo<Gtx>,
   ): CreateActionWithPayload<Gtx, P>;
+  head<P extends never, ApiSuccess, ApiError = any>(
+    name: ApiName,
+    req: { saga?: any },
+    fn: MiddlewareApiCo<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>,
+  ): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
   head<P, ApiSuccess, ApiError = any>(
     name: ApiName,
     req: { saga?: any },
@@ -1332,6 +1534,9 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
   connect<P>(
     name: ApiName,
   ): CreateActionWithPayload<Omit<Ctx, 'payload'> & Payload<P>, P>;
+  connect<P extends never, ApiSuccess, ApiError = any>(
+    name: ApiName,
+  ): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
   connect<P, ApiSuccess, ApiError = any>(
     name: ApiName,
   ): CreateActionWithPayload<
@@ -1353,6 +1558,10 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
     name: ApiName,
     req: { saga?: any },
   ): CreateActionWithPayload<Gtx, P>;
+  connect<P extends never, ApiSuccess, ApiError = any>(
+    name: ApiName,
+    req: { saga?: any },
+  ): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
   connect<P, ApiSuccess, ApiError = any>(
     name: ApiName,
     req: { saga?: any },
@@ -1379,6 +1588,10 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
     name: ApiName,
     fn: MiddlewareApiCo<Gtx>,
   ): CreateActionWithPayload<Gtx, P>;
+  connect<P extends never, ApiSuccess, ApiError = any>(
+    name: ApiName,
+    fn: MiddlewareApiCo<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>,
+  ): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
   connect<P, ApiSuccess, ApiError = any>(
     name: ApiName,
     fn: MiddlewareApiCo<
@@ -1416,6 +1629,11 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
     req: { saga?: any },
     fn: MiddlewareApiCo<Gtx>,
   ): CreateActionWithPayload<Gtx, P>;
+  connect<P extends never, ApiSuccess, ApiError = any>(
+    name: ApiName,
+    req: { saga?: any },
+    fn: MiddlewareApiCo<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>,
+  ): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
   connect<P, ApiSuccess, ApiError = any>(
     name: ApiName,
     req: { saga?: any },
@@ -1438,6 +1656,9 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
   trace<P>(
     name: ApiName,
   ): CreateActionWithPayload<Omit<Ctx, 'payload'> & Payload<P>, P>;
+  trace<P extends never, ApiSuccess, ApiError = any>(
+    name: ApiName,
+  ): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
   trace<P, ApiSuccess, ApiError = any>(
     name: ApiName,
   ): CreateActionWithPayload<
@@ -1459,6 +1680,10 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
     name: ApiName,
     req: { saga?: any },
   ): CreateActionWithPayload<Gtx, P>;
+  trace<P extends never, ApiSuccess, ApiError = any>(
+    name: ApiName,
+    req: { saga?: any },
+  ): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
   trace<P, ApiSuccess, ApiError = any>(
     name: ApiName,
     req: { saga?: any },
@@ -1485,6 +1710,10 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
     name: ApiName,
     fn: MiddlewareApiCo<Gtx>,
   ): CreateActionWithPayload<Gtx, P>;
+  trace<P extends never, ApiSuccess, ApiError = any>(
+    name: ApiName,
+    fn: MiddlewareApiCo<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>,
+  ): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
   trace<P, ApiSuccess, ApiError = any>(
     name: ApiName,
     fn: MiddlewareApiCo<
@@ -1522,6 +1751,11 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
     req: { saga?: any },
     fn: MiddlewareApiCo<Gtx>,
   ): CreateActionWithPayload<Gtx, P>;
+  trace<P extends never, ApiSuccess, ApiError = any>(
+    name: ApiName,
+    req: { saga?: any },
+    fn: MiddlewareApiCo<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>,
+  ): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
   trace<P, ApiSuccess, ApiError = any>(
     name: ApiName,
     req: { saga?: any },

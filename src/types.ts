@@ -102,12 +102,17 @@ export interface CreateActionPayload<P = any> {
   options: P;
 }
 
-export interface CreateAction<Ctx> {
-  (): ActionWithPayload<CreateActionPayload<{}>>;
+export type CreateActionFn = () => ActionWithPayload<CreateActionPayload<{}>>;
+
+export interface CreateAction<Ctx> extends CreateActionFn {
   run: (p: ActionWithPayload<CreateActionPayload<{}>>) => SagaIterator<Ctx>;
 }
 
-export interface CreateActionWithPayload<Ctx, P> {
-  (p: P): ActionWithPayload<CreateActionPayload<P>>;
+export type CreateActionFnWithPayload<P = any> = (
+  p: P,
+) => ActionWithPayload<CreateActionPayload<P>>;
+
+export interface CreateActionWithPayload<Ctx, P>
+  extends CreateActionFnWithPayload<P> {
   run: (a: ActionWithPayload<CreateActionPayload<P>>) => SagaIterator<Ctx>;
 }

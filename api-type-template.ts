@@ -24,6 +24,9 @@ ${method}(req: { saga?: any }): CreateAction<Ctx>;
 ${method}<P>(
   req: { saga?: any }
 ): CreateActionWithPayload<Omit<Ctx, 'payload'> & Payload<P>, P>;
+${method}<P extends never, ApiSuccess, ApiError = any>(
+  req: { saga?: any }
+): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
 ${method}<P, ApiSuccess, ApiError = any>(req: {
   saga?: any;
 }): CreateActionWithPayload<
@@ -46,6 +49,9 @@ ${method}<P>(
 ${method}<P, Gtx extends Ctx = Ctx>(
   fn: MiddlewareApiCo<Gtx>,
 ): CreateActionWithPayload<Gtx, P>;
+${method}<P extends never, ApiSuccess, ApiError = any>(
+  fn: MiddlewareApiCo<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>,
+): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
 ${method}<P, ApiSuccess, ApiError = any>(
   fn: MiddlewareApiCo<Ctx>,
 ): CreateActionWithPayload<
@@ -71,6 +77,10 @@ ${method}<P, Gtx extends Ctx = Ctx>(
   req: { saga?: any },
   fn: MiddlewareApiCo<Gtx>,
 ): CreateActionWithPayload<Gtx, P>;
+${method}<P extends never, ApiSuccess, ApiError = any>(
+  req: { saga?: any },
+  fn: MiddlewareApiCo<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>,
+): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
 ${method}<P, ApiSuccess, ApiError = any>(
   req: { saga?: any },
   fn: MiddlewareApiCo<Ctx>,
@@ -89,6 +99,9 @@ ${method}(name: ApiName): CreateAction<Ctx>;
 ${method}<P>(
   name: ApiName,
 ): CreateActionWithPayload<Omit<Ctx, 'payload'> & Payload<P>, P>;
+${method}<P extends never, ApiSuccess, ApiError = any>(
+  name: ApiName,
+): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
 ${method}<P, ApiSuccess, ApiError = any>(
   name: ApiName,
 ): CreateActionWithPayload<
@@ -110,6 +123,10 @@ ${method}<P, Gtx extends Ctx = Ctx>(
   name: ApiName,
   req: { saga?: any }
 ): CreateActionWithPayload<Gtx, P>;
+${method}<P extends never, ApiSuccess, ApiError = any>(
+  name: ApiName,
+  req: { saga?: any }
+): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
 ${method}<P, ApiSuccess, ApiError = any>(
   name: ApiName,
   req: { saga?: any },
@@ -136,6 +153,10 @@ ${method}<P, Gtx extends Ctx = Ctx>(
   name: ApiName,
   fn: MiddlewareApiCo<Gtx>,
 ): CreateActionWithPayload<Gtx, P>;
+${method}<P extends never, ApiSuccess, ApiError = any>(
+  name: ApiName,
+  fn: MiddlewareApiCo<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>,
+): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
 ${method}<P, ApiSuccess, ApiError = any>(
   name: ApiName,
   fn: MiddlewareApiCo<
@@ -173,6 +194,11 @@ ${method}<P, Gtx extends Ctx = Ctx>(
   req: { saga?: any },
   fn: MiddlewareApiCo<Gtx>,
 ): CreateActionWithPayload<Gtx, P>;
+${method}<P extends never, ApiSuccess, ApiError = any>(
+  name: ApiName,
+  req: { saga?: any },
+  fn: MiddlewareApiCo<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>,
+): CreateAction<Omit<Ctx, 'json'> & FetchJson<ApiSuccess, ApiError>>;
 ${method}<P, ApiSuccess, ApiError = any>(
   name: ApiName,
   req: { saga?: any },

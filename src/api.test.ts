@@ -1,6 +1,6 @@
 import test from 'ava';
 import type { SagaIterator } from 'redux-saga';
-import { takeEvery, put, call } from 'redux-saga/effects';
+import { takeEvery, put, call } from 'typed-redux-saga';
 import { createAction, createReducerMap, createTable } from 'robodux';
 import type { MapEntity } from 'robodux';
 import { Buffer } from 'buffer';
@@ -135,6 +135,7 @@ test('middleware - with request fn', (t) => {
   query.use(function* (ctx, next) {
     t.deepEqual(ctx.req().method, 'POST');
     t.deepEqual(ctx.req().url, '/users');
+    yield next();
   });
   const createUser = query.create('/users', query.request({ method: 'POST' }));
   const store = setupStore(query.saga());
@@ -148,12 +149,12 @@ test('run() on endpoint action - should run the effect', (t) => {
   let acc = '';
   const action1 = api.get<{ id: string }, { result: boolean }>(
     '/users/:id',
-    function* (ctx, next) {
+    function* (_, next) {
       yield next();
       acc += 'a';
     },
   );
-  const action2 = api.get('/users2', function* (ctx, next) {
+  const action2 = api.get('/users2', function* (_, next) {
     yield next();
     yield call(action1.run, action1({ id: '1' }));
     acc += 'b';
@@ -169,13 +170,13 @@ test('run() from a normal saga', (t) => {
   const api = createApi();
   api.use(api.routes());
   let acc = '';
-  const action1 = api.get<{ id: string }>('/users/:id', function* (ctx, next) {
+  const action1 = api.get<{ id: string }>('/users/:id', function* (_, next) {
     yield next();
     acc += 'a';
   });
   const action2 = createAction('ACTION');
   function* onAction(): SagaIterator {
-    const ctx = yield call(action1.run, action1({ id: '1' }));
+    const ctx = yield* call(action1.run, action1({ id: '1' }));
     const payload = { name: '/users/:id [GET]', options: { id: '1' } };
     t.like(ctx, {
       action: {
