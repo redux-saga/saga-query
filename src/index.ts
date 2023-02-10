@@ -1,6 +1,6 @@
 export { BATCH, batchActions } from 'redux-batched-actions';
-export * from 'redux-saga/effects';
 export type { SagaIterator } from 'redux-saga';
+export * from 'typed-redux-saga';
 
 export * from './pipe';
 export * from './api';

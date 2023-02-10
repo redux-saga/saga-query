@@ -1,6 +1,6 @@
 import test from 'ava';
 import type { SagaIterator } from 'redux-saga';
-import { put, call, delay } from 'redux-saga/effects';
+import { put, call, delay } from 'typed-redux-saga';
 import { createTable, createReducerMap } from 'robodux';
 import type { Action, MapEntity } from 'robodux';
 
@@ -196,7 +196,7 @@ test('error handling', (t) => {
   t.plan(1);
   const api = createPipe<RoboCtx>();
   api.use(api.routes());
-  api.use(function* upstream(ctx, next) {
+  api.use(function* upstream(_, next) {
     try {
       yield next();
     } catch (err) {
@@ -220,7 +220,7 @@ test('error handling inside create', (t) => {
     throw new Error('some error');
   });
 
-  const action = api.create(`/error`, function* (ctx, next) {
+  const action = api.create(`/error`, function* (_, next) {
     try {
       yield next();
     } catch (err) {
@@ -288,9 +288,9 @@ test('run() on endpoint action - should run the effect', (t) => {
   });
   const action2 = api.create(
     '/users2',
-    function* (ctx, next): SagaIterator<void> {
+    function* (_, next): SagaIterator<void> {
       yield next();
-      const curCtx = yield call(action1.run, action1());
+      const curCtx = yield* call(action1.run, action1());
       acc += 'b';
       t.assert(acc === 'ab');
       t.like(curCtx, {
@@ -316,7 +316,7 @@ test('middleware order of execution', async (t) => {
   const api = createPipe();
   api.use(api.routes());
 
-  api.use(function* (ctx, next) {
+  api.use(function* (_, next) {
     yield delay(10);
     acc += 'b';
     yield next();
@@ -324,7 +324,7 @@ test('middleware order of execution', async (t) => {
     acc += 'f';
   });
 
-  api.use(function* (ctx, next) {
+  api.use(function* (_, next) {
     acc += 'c';
     yield next();
     acc += 'd';
@@ -332,7 +332,7 @@ test('middleware order of execution', async (t) => {
     acc += 'e';
   });
 
-  const action = api.create('/api', function* (ctx, next) {
+  const action = api.create('/api', function* (_, next) {
     acc += 'a';
     yield next();
     acc += 'g';
@@ -384,7 +384,7 @@ test('retry with actionFn with payload', async (t) => {
     }
   });
 
-  const action = api.create<{ page: number }>('/api', function* (ctx, next) {
+  const action = api.create<{ page: number }>('/api', function* (_, next) {
     acc += 'a';
     yield next();
     acc += 'g';
