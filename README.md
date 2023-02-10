@@ -12,6 +12,7 @@ state.**
 
 - [Examples](#examples)
 - [Control your data cache](#control-your-data-cache)
+- [Typescript](#typescript)
 - [Manipulating the request](#manipulating-the-request)
 - [Auto caching](#auto-caching)
 - [Dispatching many actions](#dispatching-many-actions)
@@ -240,20 +241,20 @@ const users = createSlice({
 // something awesome happens in here
 // The default generic value here is `ApiCtx` which includes a `payload`,
 // `request`, and `response`.
-// The generic passed to `createApi` must extend `ApiCtx` to be accepted.
+// The type passed to `createApi` must extend `ApiCtx` to be accepted.
 const api = createApi<ApiCtx>();
 
 // This middleware monitors the lifecycle of the request.  It needs to be
 // loaded before `.routes()` because it needs to be around after everything
-// else.
+// else finishes.
+// [queryCtx] sets up the ctx object with `ctx.request` and `ctx.response`
+//  required for `createApi` to function properly.
 // [dispatchActions]  This middleware leverages `redux-batched-actions` to
 //  dispatch all the actions stored within `ctx.actions` which get added by
 //  other middleware during the lifecycle of the request.
 // [loadingMonitor] This middleware will monitor the lifecycle of a request and
 //  attach the appropriate loading states to the loader associated with the
 //  endpoint.
-// [queryCtx] sets up the ctx object with `ctx.request` and `ctx.response`
-//  required for `createApi` to function properly.
 // [urlParser] is a middleware that will take the name of `api.create(name)` and
 //  replace it with the values passed into the action.
 // [simpleCache] is a middleware that will automatically store the response of
@@ -267,7 +268,7 @@ api.use(requestMonitor());
 api.use(api.routes());
 
 // Under the hood this is a middleware that handles fetching
-// and endpoint using window.fetch.  It also automatically
+// an endpoint using window.fetch.  It also automatically
 // processes JSON and stores it in `ctx.json`.
 api.use(fetcher({ baseUrl: 'https://...' }));
 
@@ -321,6 +322,49 @@ const store = createStore(
 prepared.run();
 
 store.dispatch(fetchUsers());
+```
+
+## Typescript
+
+This library was built with typescript in mind.
+
+### createApi
+
+```ts
+import { createApi, ApiCtx } from 'saga-query';
+
+interface Ctx<P = any, S = any, E = any> extends ApiCtx<P, S, E> {
+  something: boolean;
+};
+
+interface Props { id: string }
+interface Success { result: string }
+interface Err { message: string }
+
+// set the context object here to have it apply to 
+// all endpoints by default
+const api = createApi<Ctx>();
+
+const fetchUser = api.get<Props, Success, Err>(
+    '/users/:id',
+    function*(ctx, next) {
+        // access `Ctx` properties
+        ctx.something;
+
+        // will be set to `Props`
+        ctx.payload;
+
+        yield next();
+
+        if (ctx.json.ok) {
+            // will be set to `Success`
+            ctx.json.data;
+        } else {
+            // will be set to `Err`
+            ctx.json.data;
+        }
+    },
+);
 ```
 
 ## Recipes
@@ -425,9 +469,7 @@ interface User {
   name: string;
 }
 
-const useUsers = () => {
-  return useCache<{ users: User[] }>(fetchUsers());
-};
+const useUsers = () => useCache<{ users: User[] }>(fetchUsers());
 
 export const App = () => {
   const { data = [], isInitialLoading, isError, message } = useUsers();

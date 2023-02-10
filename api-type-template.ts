@@ -17,36 +17,105 @@ function createSagaQueryApi() {
     'trace',
   ];
 
-  const uriTmpl = (method: string) => `
-${method}(req: { saga?: any }): CreateAction<Ctx>;
-${method}<P>(req: { saga?: any }): CreateActionWithPayload<Ctx, P>;
+  const uriTmpl = (
+    method: string,
+  ) => `${method}(req: { saga?: any }): CreateAction<Ctx>;
+${method}<P, ApiSuccess = any, ApiError = any>(req: {
+  saga?: any;
+}): CreateActionWithPayload<
+  Omit<Ctx, 'payload' | 'json'> &
+    Payload<P> &
+    FetchJson<ApiSuccess, ApiError>,
+  P
+>;
 ${method}(fn: MiddlewareCo<Ctx>): CreateAction<Ctx>;
-${method}<P>(fn: MiddlewareCo<Ctx>): CreateActionWithPayload<Ctx, P>;
+${method}<P, ApiSuccess = any, ApiError = any>(
+  fn: MiddlewareCo<Ctx>,
+): CreateActionWithPayload<
+  Omit<Ctx, 'payload' | 'json'> &
+    Payload<P> &
+    FetchJson<ApiSuccess, ApiError>,
+  P
+>;
 ${method}(req: { saga?: any }, fn: MiddlewareCo<Ctx>): CreateAction<Ctx>;
-${method}<P>(
+${method}<P, ApiSuccess = any, ApiError = any>(
   req: { saga?: any },
   fn: MiddlewareCo<Ctx>,
-): CreateActionWithPayload<Ctx, P>;`;
+): CreateActionWithPayload<
+  Omit<Ctx, 'payload' | 'json'> &
+    Payload<P> &
+    FetchJson<ApiSuccess, ApiError>,
+  P
+>;`;
   const uriMethods = methods.map((m) => uriTmpl(m)).join('\n\n');
 
-  const methodTmpl = (
-    method: string,
-  ) => `${method}(name: ApiName): CreateAction<Ctx>;
-${method}<P>(name: ApiName): CreateActionWithPayload<Ctx, P>;
+  const methodTmpl = (method: string) => `/**
+ * Only name
+ */
+${method}(name: ApiName): CreateAction<Ctx>;
+${method}<P, ApiSuccess = any, ApiError = any>(
+  name: ApiName,
+): CreateActionWithPayload<
+  Omit<Ctx, 'payload' | 'json'> &
+    Payload<P> &
+    FetchJson<ApiSuccess, ApiError>,
+  P
+>;
+
+/**
+ * Name and options
+ */
 ${method}(name: ApiName, req: { saga?: any }): CreateAction<Ctx>;
-${method}<P>(name: ApiName, req: { saga?: any }): CreateActionWithPayload<Ctx, P>;
-${method}(name: ApiName, fn: MiddlewareCo<Ctx>): CreateAction<Ctx>;
-${method}<P>(name: ApiName, fn: MiddlewareCo<Ctx>): CreateActionWithPayload<Ctx, P>;
+${method}<P, ApiSuccess = any, ApiError = any>(
+  name: ApiName,
+  req: { saga?: any },
+): CreateActionWithPayload<
+  Omit<Ctx, 'payload' | 'json'> &
+    Payload<P> &
+    FetchJson<ApiSuccess, ApiError>,
+  P
+>;
+
+/**
+ * Name and middleware
+ */
+${method}(name: ApiName, fn: MiddlewareApiCo<Ctx>): CreateAction<Ctx>;
+${method}<P, ApiSuccess = any, ApiError = any>(
+  name: ApiName,
+  fn: MiddlewareApiCo<
+    Omit<Ctx, 'payload' | 'json'> &
+      Payload<P> &
+      FetchJson<ApiSuccess, ApiError>
+  >,
+): CreateActionWithPayload<
+  Omit<Ctx, 'payload' | 'json'> &
+    Payload<P> &
+    FetchJson<ApiSuccess, ApiError>,
+  P
+>;
+
+/**
+ * Name, options, and middleware
+ */
 ${method}(
   name: ApiName,
   req: { saga?: any },
-  fn: MiddlewareCo<Ctx>,
+  fn: MiddlewareApiCo<Ctx>,
 ): CreateAction<Ctx>;
-${method}<P>(
+${method}<P, ApiSuccess = any, ApiError = any>(
   name: ApiName,
   req: { saga?: any },
-  fn: MiddlewareCo<Ctx>,
-): CreateActionWithPayload<Ctx, P>;`;
+  fn: MiddlewareApiCo<
+    Omit<Ctx, 'payload' | 'json'> &
+      Payload<P> &
+      FetchJson<ApiSuccess, ApiError>
+  >,
+): CreateActionWithPayload<
+  Omit<Ctx, 'payload' | 'json'> &
+    Payload<P> &
+    FetchJson<ApiSuccess, ApiError>,
+  P
+>;`;
   const regMethods = methods.map((m) => methodTmpl(m)).join('\n\n');
 
   const tmpl = `/**
@@ -55,7 +124,16 @@ ${method}<P>(
 */
 import type { SagaIterator } from "redux-saga";
 import type { SagaApi } from "./pipe";
-import type { ApiCtx, CreateAction, CreateActionWithPayload, MiddlewareCo, Next } from "./types";
+import type {
+  ApiCtx,
+  CreateAction,
+  CreateActionWithPayload,
+  MiddlewareCo,
+  Next,
+  FetchJson,
+  MiddlewareApiCo,
+  Payload,
+} from "./types";
 
 export type ApiName = string | string[];
 

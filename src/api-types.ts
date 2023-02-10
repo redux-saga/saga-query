@@ -10,6 +10,9 @@ import type {
   CreateActionWithPayload,
   MiddlewareCo,
   Next,
+  FetchJson,
+  MiddlewareApiCo,
+  Payload,
 } from './types';
 
 export type ApiName = string | string[];
@@ -23,276 +26,876 @@ export interface SagaQueryApi<Ctx extends ApiCtx = ApiCtx>
 
   uri: (uri: string) => {
     get(req: { saga?: any }): CreateAction<Ctx>;
-    get<P>(req: { saga?: any }): CreateActionWithPayload<Ctx, P>;
+    get<P, ApiSuccess = any, ApiError = any>(req: {
+      saga?: any;
+    }): CreateActionWithPayload<
+      Omit<Ctx, 'payload' | 'json'> &
+        Payload<P> &
+        FetchJson<ApiSuccess, ApiError>,
+      P
+    >;
     get(fn: MiddlewareCo<Ctx>): CreateAction<Ctx>;
-    get<P>(fn: MiddlewareCo<Ctx>): CreateActionWithPayload<Ctx, P>;
+    get<P, ApiSuccess = any, ApiError = any>(
+      fn: MiddlewareCo<Ctx>,
+    ): CreateActionWithPayload<
+      Omit<Ctx, 'payload' | 'json'> &
+        Payload<P> &
+        FetchJson<ApiSuccess, ApiError>,
+      P
+    >;
     get(req: { saga?: any }, fn: MiddlewareCo<Ctx>): CreateAction<Ctx>;
-    get<P>(
+    get<P, ApiSuccess = any, ApiError = any>(
       req: { saga?: any },
       fn: MiddlewareCo<Ctx>,
-    ): CreateActionWithPayload<Ctx, P>;
+    ): CreateActionWithPayload<
+      Omit<Ctx, 'payload' | 'json'> &
+        Payload<P> &
+        FetchJson<ApiSuccess, ApiError>,
+      P
+    >;
 
     post(req: { saga?: any }): CreateAction<Ctx>;
-    post<P>(req: { saga?: any }): CreateActionWithPayload<Ctx, P>;
+    post<P, ApiSuccess = any, ApiError = any>(req: {
+      saga?: any;
+    }): CreateActionWithPayload<
+      Omit<Ctx, 'payload' | 'json'> &
+        Payload<P> &
+        FetchJson<ApiSuccess, ApiError>,
+      P
+    >;
     post(fn: MiddlewareCo<Ctx>): CreateAction<Ctx>;
-    post<P>(fn: MiddlewareCo<Ctx>): CreateActionWithPayload<Ctx, P>;
+    post<P, ApiSuccess = any, ApiError = any>(
+      fn: MiddlewareCo<Ctx>,
+    ): CreateActionWithPayload<
+      Omit<Ctx, 'payload' | 'json'> &
+        Payload<P> &
+        FetchJson<ApiSuccess, ApiError>,
+      P
+    >;
     post(req: { saga?: any }, fn: MiddlewareCo<Ctx>): CreateAction<Ctx>;
-    post<P>(
+    post<P, ApiSuccess = any, ApiError = any>(
       req: { saga?: any },
       fn: MiddlewareCo<Ctx>,
-    ): CreateActionWithPayload<Ctx, P>;
+    ): CreateActionWithPayload<
+      Omit<Ctx, 'payload' | 'json'> &
+        Payload<P> &
+        FetchJson<ApiSuccess, ApiError>,
+      P
+    >;
 
     put(req: { saga?: any }): CreateAction<Ctx>;
-    put<P>(req: { saga?: any }): CreateActionWithPayload<Ctx, P>;
+    put<P, ApiSuccess = any, ApiError = any>(req: {
+      saga?: any;
+    }): CreateActionWithPayload<
+      Omit<Ctx, 'payload' | 'json'> &
+        Payload<P> &
+        FetchJson<ApiSuccess, ApiError>,
+      P
+    >;
     put(fn: MiddlewareCo<Ctx>): CreateAction<Ctx>;
-    put<P>(fn: MiddlewareCo<Ctx>): CreateActionWithPayload<Ctx, P>;
+    put<P, ApiSuccess = any, ApiError = any>(
+      fn: MiddlewareCo<Ctx>,
+    ): CreateActionWithPayload<
+      Omit<Ctx, 'payload' | 'json'> &
+        Payload<P> &
+        FetchJson<ApiSuccess, ApiError>,
+      P
+    >;
     put(req: { saga?: any }, fn: MiddlewareCo<Ctx>): CreateAction<Ctx>;
-    put<P>(
+    put<P, ApiSuccess = any, ApiError = any>(
       req: { saga?: any },
       fn: MiddlewareCo<Ctx>,
-    ): CreateActionWithPayload<Ctx, P>;
+    ): CreateActionWithPayload<
+      Omit<Ctx, 'payload' | 'json'> &
+        Payload<P> &
+        FetchJson<ApiSuccess, ApiError>,
+      P
+    >;
 
     patch(req: { saga?: any }): CreateAction<Ctx>;
-    patch<P>(req: { saga?: any }): CreateActionWithPayload<Ctx, P>;
+    patch<P, ApiSuccess = any, ApiError = any>(req: {
+      saga?: any;
+    }): CreateActionWithPayload<
+      Omit<Ctx, 'payload' | 'json'> &
+        Payload<P> &
+        FetchJson<ApiSuccess, ApiError>,
+      P
+    >;
     patch(fn: MiddlewareCo<Ctx>): CreateAction<Ctx>;
-    patch<P>(fn: MiddlewareCo<Ctx>): CreateActionWithPayload<Ctx, P>;
+    patch<P, ApiSuccess = any, ApiError = any>(
+      fn: MiddlewareCo<Ctx>,
+    ): CreateActionWithPayload<
+      Omit<Ctx, 'payload' | 'json'> &
+        Payload<P> &
+        FetchJson<ApiSuccess, ApiError>,
+      P
+    >;
     patch(req: { saga?: any }, fn: MiddlewareCo<Ctx>): CreateAction<Ctx>;
-    patch<P>(
+    patch<P, ApiSuccess = any, ApiError = any>(
       req: { saga?: any },
       fn: MiddlewareCo<Ctx>,
-    ): CreateActionWithPayload<Ctx, P>;
+    ): CreateActionWithPayload<
+      Omit<Ctx, 'payload' | 'json'> &
+        Payload<P> &
+        FetchJson<ApiSuccess, ApiError>,
+      P
+    >;
 
     delete(req: { saga?: any }): CreateAction<Ctx>;
-    delete<P>(req: { saga?: any }): CreateActionWithPayload<Ctx, P>;
+    delete<P, ApiSuccess = any, ApiError = any>(req: {
+      saga?: any;
+    }): CreateActionWithPayload<
+      Omit<Ctx, 'payload' | 'json'> &
+        Payload<P> &
+        FetchJson<ApiSuccess, ApiError>,
+      P
+    >;
     delete(fn: MiddlewareCo<Ctx>): CreateAction<Ctx>;
-    delete<P>(fn: MiddlewareCo<Ctx>): CreateActionWithPayload<Ctx, P>;
+    delete<P, ApiSuccess = any, ApiError = any>(
+      fn: MiddlewareCo<Ctx>,
+    ): CreateActionWithPayload<
+      Omit<Ctx, 'payload' | 'json'> &
+        Payload<P> &
+        FetchJson<ApiSuccess, ApiError>,
+      P
+    >;
     delete(req: { saga?: any }, fn: MiddlewareCo<Ctx>): CreateAction<Ctx>;
-    delete<P>(
+    delete<P, ApiSuccess = any, ApiError = any>(
       req: { saga?: any },
       fn: MiddlewareCo<Ctx>,
-    ): CreateActionWithPayload<Ctx, P>;
+    ): CreateActionWithPayload<
+      Omit<Ctx, 'payload' | 'json'> &
+        Payload<P> &
+        FetchJson<ApiSuccess, ApiError>,
+      P
+    >;
 
     options(req: { saga?: any }): CreateAction<Ctx>;
-    options<P>(req: { saga?: any }): CreateActionWithPayload<Ctx, P>;
+    options<P, ApiSuccess = any, ApiError = any>(req: {
+      saga?: any;
+    }): CreateActionWithPayload<
+      Omit<Ctx, 'payload' | 'json'> &
+        Payload<P> &
+        FetchJson<ApiSuccess, ApiError>,
+      P
+    >;
     options(fn: MiddlewareCo<Ctx>): CreateAction<Ctx>;
-    options<P>(fn: MiddlewareCo<Ctx>): CreateActionWithPayload<Ctx, P>;
+    options<P, ApiSuccess = any, ApiError = any>(
+      fn: MiddlewareCo<Ctx>,
+    ): CreateActionWithPayload<
+      Omit<Ctx, 'payload' | 'json'> &
+        Payload<P> &
+        FetchJson<ApiSuccess, ApiError>,
+      P
+    >;
     options(req: { saga?: any }, fn: MiddlewareCo<Ctx>): CreateAction<Ctx>;
-    options<P>(
+    options<P, ApiSuccess = any, ApiError = any>(
       req: { saga?: any },
       fn: MiddlewareCo<Ctx>,
-    ): CreateActionWithPayload<Ctx, P>;
+    ): CreateActionWithPayload<
+      Omit<Ctx, 'payload' | 'json'> &
+        Payload<P> &
+        FetchJson<ApiSuccess, ApiError>,
+      P
+    >;
 
     head(req: { saga?: any }): CreateAction<Ctx>;
-    head<P>(req: { saga?: any }): CreateActionWithPayload<Ctx, P>;
+    head<P, ApiSuccess = any, ApiError = any>(req: {
+      saga?: any;
+    }): CreateActionWithPayload<
+      Omit<Ctx, 'payload' | 'json'> &
+        Payload<P> &
+        FetchJson<ApiSuccess, ApiError>,
+      P
+    >;
     head(fn: MiddlewareCo<Ctx>): CreateAction<Ctx>;
-    head<P>(fn: MiddlewareCo<Ctx>): CreateActionWithPayload<Ctx, P>;
+    head<P, ApiSuccess = any, ApiError = any>(
+      fn: MiddlewareCo<Ctx>,
+    ): CreateActionWithPayload<
+      Omit<Ctx, 'payload' | 'json'> &
+        Payload<P> &
+        FetchJson<ApiSuccess, ApiError>,
+      P
+    >;
     head(req: { saga?: any }, fn: MiddlewareCo<Ctx>): CreateAction<Ctx>;
-    head<P>(
+    head<P, ApiSuccess = any, ApiError = any>(
       req: { saga?: any },
       fn: MiddlewareCo<Ctx>,
-    ): CreateActionWithPayload<Ctx, P>;
+    ): CreateActionWithPayload<
+      Omit<Ctx, 'payload' | 'json'> &
+        Payload<P> &
+        FetchJson<ApiSuccess, ApiError>,
+      P
+    >;
 
     connect(req: { saga?: any }): CreateAction<Ctx>;
-    connect<P>(req: { saga?: any }): CreateActionWithPayload<Ctx, P>;
+    connect<P, ApiSuccess = any, ApiError = any>(req: {
+      saga?: any;
+    }): CreateActionWithPayload<
+      Omit<Ctx, 'payload' | 'json'> &
+        Payload<P> &
+        FetchJson<ApiSuccess, ApiError>,
+      P
+    >;
     connect(fn: MiddlewareCo<Ctx>): CreateAction<Ctx>;
-    connect<P>(fn: MiddlewareCo<Ctx>): CreateActionWithPayload<Ctx, P>;
+    connect<P, ApiSuccess = any, ApiError = any>(
+      fn: MiddlewareCo<Ctx>,
+    ): CreateActionWithPayload<
+      Omit<Ctx, 'payload' | 'json'> &
+        Payload<P> &
+        FetchJson<ApiSuccess, ApiError>,
+      P
+    >;
     connect(req: { saga?: any }, fn: MiddlewareCo<Ctx>): CreateAction<Ctx>;
-    connect<P>(
+    connect<P, ApiSuccess = any, ApiError = any>(
       req: { saga?: any },
       fn: MiddlewareCo<Ctx>,
-    ): CreateActionWithPayload<Ctx, P>;
+    ): CreateActionWithPayload<
+      Omit<Ctx, 'payload' | 'json'> &
+        Payload<P> &
+        FetchJson<ApiSuccess, ApiError>,
+      P
+    >;
 
     trace(req: { saga?: any }): CreateAction<Ctx>;
-    trace<P>(req: { saga?: any }): CreateActionWithPayload<Ctx, P>;
+    trace<P, ApiSuccess = any, ApiError = any>(req: {
+      saga?: any;
+    }): CreateActionWithPayload<
+      Omit<Ctx, 'payload' | 'json'> &
+        Payload<P> &
+        FetchJson<ApiSuccess, ApiError>,
+      P
+    >;
     trace(fn: MiddlewareCo<Ctx>): CreateAction<Ctx>;
-    trace<P>(fn: MiddlewareCo<Ctx>): CreateActionWithPayload<Ctx, P>;
+    trace<P, ApiSuccess = any, ApiError = any>(
+      fn: MiddlewareCo<Ctx>,
+    ): CreateActionWithPayload<
+      Omit<Ctx, 'payload' | 'json'> &
+        Payload<P> &
+        FetchJson<ApiSuccess, ApiError>,
+      P
+    >;
     trace(req: { saga?: any }, fn: MiddlewareCo<Ctx>): CreateAction<Ctx>;
-    trace<P>(
+    trace<P, ApiSuccess = any, ApiError = any>(
       req: { saga?: any },
       fn: MiddlewareCo<Ctx>,
-    ): CreateActionWithPayload<Ctx, P>;
+    ): CreateActionWithPayload<
+      Omit<Ctx, 'payload' | 'json'> &
+        Payload<P> &
+        FetchJson<ApiSuccess, ApiError>,
+      P
+    >;
   };
 
+  /**
+   * Only name
+   */
   get(name: ApiName): CreateAction<Ctx>;
-  get<P>(name: ApiName): CreateActionWithPayload<Ctx, P>;
+  get<P, ApiSuccess = any, ApiError = any>(
+    name: ApiName,
+  ): CreateActionWithPayload<
+    Omit<Ctx, 'payload' | 'json'> &
+      Payload<P> &
+      FetchJson<ApiSuccess, ApiError>,
+    P
+  >;
+
+  /**
+   * Name and options
+   */
   get(name: ApiName, req: { saga?: any }): CreateAction<Ctx>;
-  get<P>(name: ApiName, req: { saga?: any }): CreateActionWithPayload<Ctx, P>;
-  get(name: ApiName, fn: MiddlewareCo<Ctx>): CreateAction<Ctx>;
-  get<P>(name: ApiName, fn: MiddlewareCo<Ctx>): CreateActionWithPayload<Ctx, P>;
+  get<P, ApiSuccess = any, ApiError = any>(
+    name: ApiName,
+    req: { saga?: any },
+  ): CreateActionWithPayload<
+    Omit<Ctx, 'payload' | 'json'> &
+      Payload<P> &
+      FetchJson<ApiSuccess, ApiError>,
+    P
+  >;
+
+  /**
+   * Name and middleware
+   */
+  get(name: ApiName, fn: MiddlewareApiCo<Ctx>): CreateAction<Ctx>;
+  get<P, ApiSuccess = any, ApiError = any>(
+    name: ApiName,
+    fn: MiddlewareApiCo<
+      Omit<Ctx, 'payload' | 'json'> &
+        Payload<P> &
+        FetchJson<ApiSuccess, ApiError>
+    >,
+  ): CreateActionWithPayload<
+    Omit<Ctx, 'payload' | 'json'> &
+      Payload<P> &
+      FetchJson<ApiSuccess, ApiError>,
+    P
+  >;
+
+  /**
+   * Name, options, and middleware
+   */
   get(
     name: ApiName,
     req: { saga?: any },
-    fn: MiddlewareCo<Ctx>,
+    fn: MiddlewareApiCo<Ctx>,
   ): CreateAction<Ctx>;
-  get<P>(
+  get<P, ApiSuccess = any, ApiError = any>(
     name: ApiName,
     req: { saga?: any },
-    fn: MiddlewareCo<Ctx>,
-  ): CreateActionWithPayload<Ctx, P>;
+    fn: MiddlewareApiCo<
+      Omit<Ctx, 'payload' | 'json'> &
+        Payload<P> &
+        FetchJson<ApiSuccess, ApiError>
+    >,
+  ): CreateActionWithPayload<
+    Omit<Ctx, 'payload' | 'json'> &
+      Payload<P> &
+      FetchJson<ApiSuccess, ApiError>,
+    P
+  >;
 
+  /**
+   * Only name
+   */
   post(name: ApiName): CreateAction<Ctx>;
-  post<P>(name: ApiName): CreateActionWithPayload<Ctx, P>;
-  post(name: ApiName, req: { saga?: any }): CreateAction<Ctx>;
-  post<P>(name: ApiName, req: { saga?: any }): CreateActionWithPayload<Ctx, P>;
-  post(name: ApiName, fn: MiddlewareCo<Ctx>): CreateAction<Ctx>;
-  post<P>(
+  post<P, ApiSuccess = any, ApiError = any>(
     name: ApiName,
-    fn: MiddlewareCo<Ctx>,
-  ): CreateActionWithPayload<Ctx, P>;
+  ): CreateActionWithPayload<
+    Omit<Ctx, 'payload' | 'json'> &
+      Payload<P> &
+      FetchJson<ApiSuccess, ApiError>,
+    P
+  >;
+
+  /**
+   * Name and options
+   */
+  post(name: ApiName, req: { saga?: any }): CreateAction<Ctx>;
+  post<P, ApiSuccess = any, ApiError = any>(
+    name: ApiName,
+    req: { saga?: any },
+  ): CreateActionWithPayload<
+    Omit<Ctx, 'payload' | 'json'> &
+      Payload<P> &
+      FetchJson<ApiSuccess, ApiError>,
+    P
+  >;
+
+  /**
+   * Name and middleware
+   */
+  post(name: ApiName, fn: MiddlewareApiCo<Ctx>): CreateAction<Ctx>;
+  post<P, ApiSuccess = any, ApiError = any>(
+    name: ApiName,
+    fn: MiddlewareApiCo<
+      Omit<Ctx, 'payload' | 'json'> &
+        Payload<P> &
+        FetchJson<ApiSuccess, ApiError>
+    >,
+  ): CreateActionWithPayload<
+    Omit<Ctx, 'payload' | 'json'> &
+      Payload<P> &
+      FetchJson<ApiSuccess, ApiError>,
+    P
+  >;
+
+  /**
+   * Name, options, and middleware
+   */
   post(
     name: ApiName,
     req: { saga?: any },
-    fn: MiddlewareCo<Ctx>,
+    fn: MiddlewareApiCo<Ctx>,
   ): CreateAction<Ctx>;
-  post<P>(
+  post<P, ApiSuccess = any, ApiError = any>(
     name: ApiName,
     req: { saga?: any },
-    fn: MiddlewareCo<Ctx>,
-  ): CreateActionWithPayload<Ctx, P>;
+    fn: MiddlewareApiCo<
+      Omit<Ctx, 'payload' | 'json'> &
+        Payload<P> &
+        FetchJson<ApiSuccess, ApiError>
+    >,
+  ): CreateActionWithPayload<
+    Omit<Ctx, 'payload' | 'json'> &
+      Payload<P> &
+      FetchJson<ApiSuccess, ApiError>,
+    P
+  >;
 
+  /**
+   * Only name
+   */
   put(name: ApiName): CreateAction<Ctx>;
-  put<P>(name: ApiName): CreateActionWithPayload<Ctx, P>;
+  put<P, ApiSuccess = any, ApiError = any>(
+    name: ApiName,
+  ): CreateActionWithPayload<
+    Omit<Ctx, 'payload' | 'json'> &
+      Payload<P> &
+      FetchJson<ApiSuccess, ApiError>,
+    P
+  >;
+
+  /**
+   * Name and options
+   */
   put(name: ApiName, req: { saga?: any }): CreateAction<Ctx>;
-  put<P>(name: ApiName, req: { saga?: any }): CreateActionWithPayload<Ctx, P>;
-  put(name: ApiName, fn: MiddlewareCo<Ctx>): CreateAction<Ctx>;
-  put<P>(name: ApiName, fn: MiddlewareCo<Ctx>): CreateActionWithPayload<Ctx, P>;
+  put<P, ApiSuccess = any, ApiError = any>(
+    name: ApiName,
+    req: { saga?: any },
+  ): CreateActionWithPayload<
+    Omit<Ctx, 'payload' | 'json'> &
+      Payload<P> &
+      FetchJson<ApiSuccess, ApiError>,
+    P
+  >;
+
+  /**
+   * Name and middleware
+   */
+  put(name: ApiName, fn: MiddlewareApiCo<Ctx>): CreateAction<Ctx>;
+  put<P, ApiSuccess = any, ApiError = any>(
+    name: ApiName,
+    fn: MiddlewareApiCo<
+      Omit<Ctx, 'payload' | 'json'> &
+        Payload<P> &
+        FetchJson<ApiSuccess, ApiError>
+    >,
+  ): CreateActionWithPayload<
+    Omit<Ctx, 'payload' | 'json'> &
+      Payload<P> &
+      FetchJson<ApiSuccess, ApiError>,
+    P
+  >;
+
+  /**
+   * Name, options, and middleware
+   */
   put(
     name: ApiName,
     req: { saga?: any },
-    fn: MiddlewareCo<Ctx>,
+    fn: MiddlewareApiCo<Ctx>,
   ): CreateAction<Ctx>;
-  put<P>(
+  put<P, ApiSuccess = any, ApiError = any>(
     name: ApiName,
     req: { saga?: any },
-    fn: MiddlewareCo<Ctx>,
-  ): CreateActionWithPayload<Ctx, P>;
+    fn: MiddlewareApiCo<
+      Omit<Ctx, 'payload' | 'json'> &
+        Payload<P> &
+        FetchJson<ApiSuccess, ApiError>
+    >,
+  ): CreateActionWithPayload<
+    Omit<Ctx, 'payload' | 'json'> &
+      Payload<P> &
+      FetchJson<ApiSuccess, ApiError>,
+    P
+  >;
 
+  /**
+   * Only name
+   */
   patch(name: ApiName): CreateAction<Ctx>;
-  patch<P>(name: ApiName): CreateActionWithPayload<Ctx, P>;
-  patch(name: ApiName, req: { saga?: any }): CreateAction<Ctx>;
-  patch<P>(name: ApiName, req: { saga?: any }): CreateActionWithPayload<Ctx, P>;
-  patch(name: ApiName, fn: MiddlewareCo<Ctx>): CreateAction<Ctx>;
-  patch<P>(
+  patch<P, ApiSuccess = any, ApiError = any>(
     name: ApiName,
-    fn: MiddlewareCo<Ctx>,
-  ): CreateActionWithPayload<Ctx, P>;
+  ): CreateActionWithPayload<
+    Omit<Ctx, 'payload' | 'json'> &
+      Payload<P> &
+      FetchJson<ApiSuccess, ApiError>,
+    P
+  >;
+
+  /**
+   * Name and options
+   */
+  patch(name: ApiName, req: { saga?: any }): CreateAction<Ctx>;
+  patch<P, ApiSuccess = any, ApiError = any>(
+    name: ApiName,
+    req: { saga?: any },
+  ): CreateActionWithPayload<
+    Omit<Ctx, 'payload' | 'json'> &
+      Payload<P> &
+      FetchJson<ApiSuccess, ApiError>,
+    P
+  >;
+
+  /**
+   * Name and middleware
+   */
+  patch(name: ApiName, fn: MiddlewareApiCo<Ctx>): CreateAction<Ctx>;
+  patch<P, ApiSuccess = any, ApiError = any>(
+    name: ApiName,
+    fn: MiddlewareApiCo<
+      Omit<Ctx, 'payload' | 'json'> &
+        Payload<P> &
+        FetchJson<ApiSuccess, ApiError>
+    >,
+  ): CreateActionWithPayload<
+    Omit<Ctx, 'payload' | 'json'> &
+      Payload<P> &
+      FetchJson<ApiSuccess, ApiError>,
+    P
+  >;
+
+  /**
+   * Name, options, and middleware
+   */
   patch(
     name: ApiName,
     req: { saga?: any },
-    fn: MiddlewareCo<Ctx>,
+    fn: MiddlewareApiCo<Ctx>,
   ): CreateAction<Ctx>;
-  patch<P>(
+  patch<P, ApiSuccess = any, ApiError = any>(
     name: ApiName,
     req: { saga?: any },
-    fn: MiddlewareCo<Ctx>,
-  ): CreateActionWithPayload<Ctx, P>;
+    fn: MiddlewareApiCo<
+      Omit<Ctx, 'payload' | 'json'> &
+        Payload<P> &
+        FetchJson<ApiSuccess, ApiError>
+    >,
+  ): CreateActionWithPayload<
+    Omit<Ctx, 'payload' | 'json'> &
+      Payload<P> &
+      FetchJson<ApiSuccess, ApiError>,
+    P
+  >;
 
+  /**
+   * Only name
+   */
   delete(name: ApiName): CreateAction<Ctx>;
-  delete<P>(name: ApiName): CreateActionWithPayload<Ctx, P>;
+  delete<P, ApiSuccess = any, ApiError = any>(
+    name: ApiName,
+  ): CreateActionWithPayload<
+    Omit<Ctx, 'payload' | 'json'> &
+      Payload<P> &
+      FetchJson<ApiSuccess, ApiError>,
+    P
+  >;
+
+  /**
+   * Name and options
+   */
   delete(name: ApiName, req: { saga?: any }): CreateAction<Ctx>;
-  delete<P>(
+  delete<P, ApiSuccess = any, ApiError = any>(
     name: ApiName,
     req: { saga?: any },
-  ): CreateActionWithPayload<Ctx, P>;
-  delete(name: ApiName, fn: MiddlewareCo<Ctx>): CreateAction<Ctx>;
-  delete<P>(
+  ): CreateActionWithPayload<
+    Omit<Ctx, 'payload' | 'json'> &
+      Payload<P> &
+      FetchJson<ApiSuccess, ApiError>,
+    P
+  >;
+
+  /**
+   * Name and middleware
+   */
+  delete(name: ApiName, fn: MiddlewareApiCo<Ctx>): CreateAction<Ctx>;
+  delete<P, ApiSuccess = any, ApiError = any>(
     name: ApiName,
-    fn: MiddlewareCo<Ctx>,
-  ): CreateActionWithPayload<Ctx, P>;
+    fn: MiddlewareApiCo<
+      Omit<Ctx, 'payload' | 'json'> &
+        Payload<P> &
+        FetchJson<ApiSuccess, ApiError>
+    >,
+  ): CreateActionWithPayload<
+    Omit<Ctx, 'payload' | 'json'> &
+      Payload<P> &
+      FetchJson<ApiSuccess, ApiError>,
+    P
+  >;
+
+  /**
+   * Name, options, and middleware
+   */
   delete(
     name: ApiName,
     req: { saga?: any },
-    fn: MiddlewareCo<Ctx>,
+    fn: MiddlewareApiCo<Ctx>,
   ): CreateAction<Ctx>;
-  delete<P>(
+  delete<P, ApiSuccess = any, ApiError = any>(
     name: ApiName,
     req: { saga?: any },
-    fn: MiddlewareCo<Ctx>,
-  ): CreateActionWithPayload<Ctx, P>;
+    fn: MiddlewareApiCo<
+      Omit<Ctx, 'payload' | 'json'> &
+        Payload<P> &
+        FetchJson<ApiSuccess, ApiError>
+    >,
+  ): CreateActionWithPayload<
+    Omit<Ctx, 'payload' | 'json'> &
+      Payload<P> &
+      FetchJson<ApiSuccess, ApiError>,
+    P
+  >;
 
+  /**
+   * Only name
+   */
   options(name: ApiName): CreateAction<Ctx>;
-  options<P>(name: ApiName): CreateActionWithPayload<Ctx, P>;
+  options<P, ApiSuccess = any, ApiError = any>(
+    name: ApiName,
+  ): CreateActionWithPayload<
+    Omit<Ctx, 'payload' | 'json'> &
+      Payload<P> &
+      FetchJson<ApiSuccess, ApiError>,
+    P
+  >;
+
+  /**
+   * Name and options
+   */
   options(name: ApiName, req: { saga?: any }): CreateAction<Ctx>;
-  options<P>(
+  options<P, ApiSuccess = any, ApiError = any>(
     name: ApiName,
     req: { saga?: any },
-  ): CreateActionWithPayload<Ctx, P>;
-  options(name: ApiName, fn: MiddlewareCo<Ctx>): CreateAction<Ctx>;
-  options<P>(
+  ): CreateActionWithPayload<
+    Omit<Ctx, 'payload' | 'json'> &
+      Payload<P> &
+      FetchJson<ApiSuccess, ApiError>,
+    P
+  >;
+
+  /**
+   * Name and middleware
+   */
+  options(name: ApiName, fn: MiddlewareApiCo<Ctx>): CreateAction<Ctx>;
+  options<P, ApiSuccess = any, ApiError = any>(
     name: ApiName,
-    fn: MiddlewareCo<Ctx>,
-  ): CreateActionWithPayload<Ctx, P>;
+    fn: MiddlewareApiCo<
+      Omit<Ctx, 'payload' | 'json'> &
+        Payload<P> &
+        FetchJson<ApiSuccess, ApiError>
+    >,
+  ): CreateActionWithPayload<
+    Omit<Ctx, 'payload' | 'json'> &
+      Payload<P> &
+      FetchJson<ApiSuccess, ApiError>,
+    P
+  >;
+
+  /**
+   * Name, options, and middleware
+   */
   options(
     name: ApiName,
     req: { saga?: any },
-    fn: MiddlewareCo<Ctx>,
+    fn: MiddlewareApiCo<Ctx>,
   ): CreateAction<Ctx>;
-  options<P>(
+  options<P, ApiSuccess = any, ApiError = any>(
     name: ApiName,
     req: { saga?: any },
-    fn: MiddlewareCo<Ctx>,
-  ): CreateActionWithPayload<Ctx, P>;
+    fn: MiddlewareApiCo<
+      Omit<Ctx, 'payload' | 'json'> &
+        Payload<P> &
+        FetchJson<ApiSuccess, ApiError>
+    >,
+  ): CreateActionWithPayload<
+    Omit<Ctx, 'payload' | 'json'> &
+      Payload<P> &
+      FetchJson<ApiSuccess, ApiError>,
+    P
+  >;
 
+  /**
+   * Only name
+   */
   head(name: ApiName): CreateAction<Ctx>;
-  head<P>(name: ApiName): CreateActionWithPayload<Ctx, P>;
-  head(name: ApiName, req: { saga?: any }): CreateAction<Ctx>;
-  head<P>(name: ApiName, req: { saga?: any }): CreateActionWithPayload<Ctx, P>;
-  head(name: ApiName, fn: MiddlewareCo<Ctx>): CreateAction<Ctx>;
-  head<P>(
+  head<P, ApiSuccess = any, ApiError = any>(
     name: ApiName,
-    fn: MiddlewareCo<Ctx>,
-  ): CreateActionWithPayload<Ctx, P>;
+  ): CreateActionWithPayload<
+    Omit<Ctx, 'payload' | 'json'> &
+      Payload<P> &
+      FetchJson<ApiSuccess, ApiError>,
+    P
+  >;
+
+  /**
+   * Name and options
+   */
+  head(name: ApiName, req: { saga?: any }): CreateAction<Ctx>;
+  head<P, ApiSuccess = any, ApiError = any>(
+    name: ApiName,
+    req: { saga?: any },
+  ): CreateActionWithPayload<
+    Omit<Ctx, 'payload' | 'json'> &
+      Payload<P> &
+      FetchJson<ApiSuccess, ApiError>,
+    P
+  >;
+
+  /**
+   * Name and middleware
+   */
+  head(name: ApiName, fn: MiddlewareApiCo<Ctx>): CreateAction<Ctx>;
+  head<P, ApiSuccess = any, ApiError = any>(
+    name: ApiName,
+    fn: MiddlewareApiCo<
+      Omit<Ctx, 'payload' | 'json'> &
+        Payload<P> &
+        FetchJson<ApiSuccess, ApiError>
+    >,
+  ): CreateActionWithPayload<
+    Omit<Ctx, 'payload' | 'json'> &
+      Payload<P> &
+      FetchJson<ApiSuccess, ApiError>,
+    P
+  >;
+
+  /**
+   * Name, options, and middleware
+   */
   head(
     name: ApiName,
     req: { saga?: any },
-    fn: MiddlewareCo<Ctx>,
+    fn: MiddlewareApiCo<Ctx>,
   ): CreateAction<Ctx>;
-  head<P>(
+  head<P, ApiSuccess = any, ApiError = any>(
     name: ApiName,
     req: { saga?: any },
-    fn: MiddlewareCo<Ctx>,
-  ): CreateActionWithPayload<Ctx, P>;
+    fn: MiddlewareApiCo<
+      Omit<Ctx, 'payload' | 'json'> &
+        Payload<P> &
+        FetchJson<ApiSuccess, ApiError>
+    >,
+  ): CreateActionWithPayload<
+    Omit<Ctx, 'payload' | 'json'> &
+      Payload<P> &
+      FetchJson<ApiSuccess, ApiError>,
+    P
+  >;
 
+  /**
+   * Only name
+   */
   connect(name: ApiName): CreateAction<Ctx>;
-  connect<P>(name: ApiName): CreateActionWithPayload<Ctx, P>;
+  connect<P, ApiSuccess = any, ApiError = any>(
+    name: ApiName,
+  ): CreateActionWithPayload<
+    Omit<Ctx, 'payload' | 'json'> &
+      Payload<P> &
+      FetchJson<ApiSuccess, ApiError>,
+    P
+  >;
+
+  /**
+   * Name and options
+   */
   connect(name: ApiName, req: { saga?: any }): CreateAction<Ctx>;
-  connect<P>(
+  connect<P, ApiSuccess = any, ApiError = any>(
     name: ApiName,
     req: { saga?: any },
-  ): CreateActionWithPayload<Ctx, P>;
-  connect(name: ApiName, fn: MiddlewareCo<Ctx>): CreateAction<Ctx>;
-  connect<P>(
+  ): CreateActionWithPayload<
+    Omit<Ctx, 'payload' | 'json'> &
+      Payload<P> &
+      FetchJson<ApiSuccess, ApiError>,
+    P
+  >;
+
+  /**
+   * Name and middleware
+   */
+  connect(name: ApiName, fn: MiddlewareApiCo<Ctx>): CreateAction<Ctx>;
+  connect<P, ApiSuccess = any, ApiError = any>(
     name: ApiName,
-    fn: MiddlewareCo<Ctx>,
-  ): CreateActionWithPayload<Ctx, P>;
+    fn: MiddlewareApiCo<
+      Omit<Ctx, 'payload' | 'json'> &
+        Payload<P> &
+        FetchJson<ApiSuccess, ApiError>
+    >,
+  ): CreateActionWithPayload<
+    Omit<Ctx, 'payload' | 'json'> &
+      Payload<P> &
+      FetchJson<ApiSuccess, ApiError>,
+    P
+  >;
+
+  /**
+   * Name, options, and middleware
+   */
   connect(
     name: ApiName,
     req: { saga?: any },
-    fn: MiddlewareCo<Ctx>,
+    fn: MiddlewareApiCo<Ctx>,
   ): CreateAction<Ctx>;
-  connect<P>(
+  connect<P, ApiSuccess = any, ApiError = any>(
     name: ApiName,
     req: { saga?: any },
-    fn: MiddlewareCo<Ctx>,
-  ): CreateActionWithPayload<Ctx, P>;
+    fn: MiddlewareApiCo<
+      Omit<Ctx, 'payload' | 'json'> &
+        Payload<P> &
+        FetchJson<ApiSuccess, ApiError>
+    >,
+  ): CreateActionWithPayload<
+    Omit<Ctx, 'payload' | 'json'> &
+      Payload<P> &
+      FetchJson<ApiSuccess, ApiError>,
+    P
+  >;
 
+  /**
+   * Only name
+   */
   trace(name: ApiName): CreateAction<Ctx>;
-  trace<P>(name: ApiName): CreateActionWithPayload<Ctx, P>;
-  trace(name: ApiName, req: { saga?: any }): CreateAction<Ctx>;
-  trace<P>(name: ApiName, req: { saga?: any }): CreateActionWithPayload<Ctx, P>;
-  trace(name: ApiName, fn: MiddlewareCo<Ctx>): CreateAction<Ctx>;
-  trace<P>(
+  trace<P, ApiSuccess = any, ApiError = any>(
     name: ApiName,
-    fn: MiddlewareCo<Ctx>,
-  ): CreateActionWithPayload<Ctx, P>;
+  ): CreateActionWithPayload<
+    Omit<Ctx, 'payload' | 'json'> &
+      Payload<P> &
+      FetchJson<ApiSuccess, ApiError>,
+    P
+  >;
+
+  /**
+   * Name and options
+   */
+  trace(name: ApiName, req: { saga?: any }): CreateAction<Ctx>;
+  trace<P, ApiSuccess = any, ApiError = any>(
+    name: ApiName,
+    req: { saga?: any },
+  ): CreateActionWithPayload<
+    Omit<Ctx, 'payload' | 'json'> &
+      Payload<P> &
+      FetchJson<ApiSuccess, ApiError>,
+    P
+  >;
+
+  /**
+   * Name and middleware
+   */
+  trace(name: ApiName, fn: MiddlewareApiCo<Ctx>): CreateAction<Ctx>;
+  trace<P, ApiSuccess = any, ApiError = any>(
+    name: ApiName,
+    fn: MiddlewareApiCo<
+      Omit<Ctx, 'payload' | 'json'> &
+        Payload<P> &
+        FetchJson<ApiSuccess, ApiError>
+    >,
+  ): CreateActionWithPayload<
+    Omit<Ctx, 'payload' | 'json'> &
+      Payload<P> &
+      FetchJson<ApiSuccess, ApiError>,
+    P
+  >;
+
+  /**
+   * Name, options, and middleware
+   */
   trace(
     name: ApiName,
     req: { saga?: any },
-    fn: MiddlewareCo<Ctx>,
+    fn: MiddlewareApiCo<Ctx>,
   ): CreateAction<Ctx>;
-  trace<P>(
+  trace<P, ApiSuccess = any, ApiError = any>(
     name: ApiName,
     req: { saga?: any },
-    fn: MiddlewareCo<Ctx>,
-  ): CreateActionWithPayload<Ctx, P>;
+    fn: MiddlewareApiCo<
+      Omit<Ctx, 'payload' | 'json'> &
+        Payload<P> &
+        FetchJson<ApiSuccess, ApiError>
+    >,
+  ): CreateActionWithPayload<
+    Omit<Ctx, 'payload' | 'json'> &
+      Payload<P> &
+      FetchJson<ApiSuccess, ApiError>,
+    P
+  >;
 }

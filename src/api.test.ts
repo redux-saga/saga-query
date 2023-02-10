@@ -143,13 +143,16 @@ test('middleware - with request fn', (t) => {
 
 test('run() on endpoint action - should run the effect', (t) => {
   t.plan(1);
-  const api = createApi();
+  const api = createApi<TestCtx>();
   api.use(api.routes());
   let acc = '';
-  const action1 = api.get<{ id: string }>('/users/:id', function* (ctx, next) {
-    yield next();
-    acc += 'a';
-  });
+  const action1 = api.get<{ id: string }, { result: boolean }>(
+    '/users/:id',
+    function* (ctx, next) {
+      yield next();
+      acc += 'a';
+    },
+  );
   const action2 = api.get('/users2', function* (ctx, next) {
     yield next();
     yield call(action1.run, action1({ id: '1' }));
@@ -280,4 +283,38 @@ test('createApi - two identical endpoints', async (t) => {
   store.dispatch(second());
 
   t.deepEqual(actual, ['/health', '/health']);
+});
+
+interface TestCtx extends ApiCtx {
+  something: boolean;
+}
+
+// this is strictly for testing types
+test.only('ensure types for get() endpoint', (t) => {
+  t.plan(1);
+  const api = createApi<TestCtx>();
+  api.use(api.routes());
+  api.use(function* (ctx, next) {
+    yield next();
+    ctx.json = { ok: true, data: { result: 'wow' } };
+  });
+
+  const acc: string[] = [];
+  const action1 = api.get<{ id: string }, { result: string }>(
+    '/users/:id',
+    function* (ctx, next) {
+      ctx.something = false;
+      acc.push(ctx.payload.id);
+
+      yield next();
+
+      if (ctx.json.ok) {
+        acc.push(ctx.json.data.result);
+      }
+    },
+  );
+
+  const store = setupStore(api.saga());
+  store.dispatch(action1({ id: '1' }));
+  t.deepEqual(acc, ['1', 'wow']);
 });

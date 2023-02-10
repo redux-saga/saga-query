@@ -9,10 +9,13 @@ export type { LoadingState, LoadingItemState };
 
 type IfAny<T, Y, N> = 0 extends 1 & T ? Y : N;
 
-export interface PipeCtx<P = any> {
+export interface Payload<P = any> {
+  payload: P;
+}
+
+export interface PipeCtx<P = any> extends Payload<P> {
   name: string;
   key: string;
-  payload: P;
   action: ActionWithPayload<CreateActionPayload<P>>;
   actionFn: IfAny<
     P,
@@ -25,19 +28,19 @@ export interface LoaderCtx<P = any> extends PipeCtx<P> {
   loader: LoadingMapPayload<Record<string, any>> | null;
 }
 
-export interface ApiFetchSuccess<S = any> {
+export interface ApiFetchSuccess<ApiSuccess = any> {
   ok: true;
-  data: S;
+  data: ApiSuccess;
 }
 
-export interface ApiFetchError<E = any> {
+export interface ApiFetchError<ApiError = any> {
   ok: false;
-  data: E;
+  data: ApiError;
 }
 
-export type ApiFetchResponse<S = any, E = any> =
-  | ApiFetchSuccess<S>
-  | ApiFetchError<E>;
+export type ApiFetchResponse<ApiSuccess = any, ApiError = any> =
+  | ApiFetchSuccess<ApiSuccess>
+  | ApiFetchError<ApiError>;
 
 export type ApiRequest = Partial<{ url: string } & RequestInit>;
 export type RequiredApiRequest = {
@@ -51,12 +54,16 @@ export interface FetchCtx<P = any> extends PipeCtx<P> {
   response: Response | null;
 }
 
-export interface FetchJsonCtx<P = any, S = any, E = any> extends FetchCtx<P> {
-  json: ApiFetchResponse<S, E>;
+export interface FetchJson<ApiSuccess = any, ApiError = any> {
+  json: ApiFetchResponse<ApiSuccess, ApiError>;
 }
 
-export interface ApiCtx<Payload = any, State = any, Err = any>
-  extends FetchJsonCtx<Payload, State, Err> {
+export interface FetchJsonCtx<P = any, ApiSuccess = any, ApiError = any>
+  extends FetchCtx<P>,
+    FetchJson<ApiSuccess, ApiError> {}
+
+export interface ApiCtx<Payload = any, ApiSuccess = any, ApiError = any>
+  extends FetchJsonCtx<Payload, ApiSuccess, ApiError> {
   actions: Action[];
   loader: LoadingMapPayload<Record<string, any>> | null;
   cache: boolean;
@@ -68,6 +75,14 @@ export type Middleware<Ctx extends PipeCtx = PipeCtx> = (
   next: Next,
 ) => any;
 export type MiddlewareCo<Ctx extends PipeCtx = PipeCtx> =
+  | Middleware<Ctx>
+  | Middleware<Ctx>[];
+
+export type MiddlewareApi<Ctx extends ApiCtx = ApiCtx> = (
+  ctx: Ctx,
+  next: Next,
+) => any;
+export type MiddlewareApiCo<Ctx extends ApiCtx = ApiCtx> =
   | Middleware<Ctx>
   | Middleware<Ctx>[];
 
