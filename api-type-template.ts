@@ -27,7 +27,7 @@ ${method}<P>(
   req: { saga?: any },
   fn: MiddlewareCo<Ctx>,
 ): CreateActionWithPayload<Ctx, P>;`;
-  const uriMethods = methods.map((m) => uriTmpl(m)).join('\n');
+  const uriMethods = methods.map((m) => uriTmpl(m)).join('\n\n');
 
   const methodTmpl = (
     method: string,
@@ -47,7 +47,7 @@ ${method}<P>(
   req: { saga?: any },
   fn: MiddlewareCo<Ctx>,
 ): CreateActionWithPayload<Ctx, P>;`;
-  const regMethods = methods.map((m) => methodTmpl(m)).join('\n');
+  const regMethods = methods.map((m) => methodTmpl(m)).join('\n\n');
 
   const tmpl = `/**
 * This is an auto-generated file, do not edit directly!
