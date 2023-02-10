@@ -285,7 +285,7 @@ test('createApi - two identical endpoints', async (t) => {
   t.deepEqual(actual, ['/health', '/health']);
 });
 
-interface TestCtx extends ApiCtx {
+interface TestCtx<P = any, S = any, E = any> extends ApiCtx<P, S, E> {
   something: boolean;
 }
 
@@ -303,6 +303,41 @@ test.only('ensure types for get() endpoint', (t) => {
   const action1 = api.get<{ id: string }, { result: string }>(
     '/users/:id',
     function* (ctx, next) {
+      ctx.something = false;
+      acc.push(ctx.payload.id);
+
+      yield next();
+
+      if (ctx.json.ok) {
+        acc.push(ctx.json.data.result);
+      }
+    },
+  );
+
+  const store = setupStore(api.saga());
+  store.dispatch(action1({ id: '1' }));
+  t.deepEqual(acc, ['1', 'wow']);
+});
+
+interface FetchUserProps {
+  id: string;
+}
+type FetchUserCtx = TestCtx<FetchUserProps>;
+
+// this is strictly for testing types
+test.only('ensure ability to case `ctx` in function definition', (t) => {
+  t.plan(1);
+  const api = createApi<TestCtx>();
+  api.use(api.routes());
+  api.use(function* (ctx, next) {
+    yield next();
+    ctx.json = { ok: true, data: { result: 'wow' } };
+  });
+
+  const acc: string[] = [];
+  const action1 = api.get<FetchUserProps>(
+    '/users/:id',
+    function* (ctx: FetchUserCtx, next) {
       ctx.something = false;
       acc.push(ctx.payload.id);
 
