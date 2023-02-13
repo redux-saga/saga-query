@@ -1,6 +1,7 @@
 # saga-query
 
 [![ci](https://github.com/redux-saga/saga-query/actions/workflows/test.yml/badge.svg)](https://github.com/redux-saga/saga-query/actions/workflows/test.yml)
+[![Discord Shield](https://img.shields.io/discord/740090768164651008?style=flat&colorA=000000&colorB=000000&label=discord&logo=discord&logoColor=ffffff)](https://discord.gg/AKz29HvK2h)
 
 Control your data cache on the front-end.
 
