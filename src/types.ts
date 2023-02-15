@@ -52,6 +52,7 @@ export interface FetchCtx<P = any> extends PipeCtx<P> {
   request: ApiRequest | null;
   req: (r?: ApiRequest) => RequiredApiRequest;
   response: Response | null;
+  bodyType: 'arrayBuffer' | 'blob' | 'formData' | 'json' | 'text';
 }
 
 export interface FetchJson<ApiSuccess = any, ApiError = any> {

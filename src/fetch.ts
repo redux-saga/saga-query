@@ -22,6 +22,19 @@ export function* headersMdw<CurCtx extends FetchCtx = FetchCtx>(
   yield next();
 }
 
+/**
+ * This middleware takes the `ctx.response` and sets `ctx.json` to the body representation
+ * requested.  It uses the `ctx.bodyType` property to determine how to represent the body.
+ * The default is set to `json` which calls `Response.json()`.
+ *
+ * @example
+ * ```ts
+ * const fetchUsers = api.get('/users', function*(ctx, next) {
+ *  ctx.bodyType = 'text'; // calls Response.text();
+ *  yield next();
+ * })
+ * ```
+ */
 export function* jsonMdw<CurCtx extends FetchJsonCtx = FetchJsonCtx>(
   ctx: CurCtx,
   next: Next,
@@ -41,7 +54,7 @@ export function* jsonMdw<CurCtx extends FetchJsonCtx = FetchJsonCtx>(
   }
 
   try {
-    const data = yield call([ctx.response, 'json']);
+    const data = yield call([ctx.response, ctx.bodyType]);
     ctx.json = {
       ok: ctx.response.ok,
       data,

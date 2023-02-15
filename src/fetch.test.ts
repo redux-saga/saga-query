@@ -48,6 +48,30 @@ test('fetch - should be able to fetch a resource and save automatically', async 
   t.deepEqual(state['@@saga-query/data'][action.payload.key], mockUser);
 });
 
+test('fetch - should be able to fetch a resource and parse as text instead of json', async (t) => {
+  t.plan(1);
+
+  nock(baseUrl).get('/users').reply(200, 'this is some text');
+
+  const api = createApi();
+  api.use(requestMonitor());
+  api.use(api.routes());
+  api.use(fetcher({ baseUrl }));
+
+  const fetchUsers = api.get('/users', function* (ctx, next) {
+    ctx.cache = true;
+    ctx.bodyType = 'text';
+    yield next();
+    t.deepEqual(ctx.json, { ok: true, data: 'this is some text' });
+  });
+
+  const store = setupStore(api.saga());
+  const action = fetchUsers();
+  store.dispatch(action);
+
+  await delay();
+});
+
 test('fetch - error handling', async (t) => {
   t.plan(2);
   const errMsg = { message: 'something happened' };

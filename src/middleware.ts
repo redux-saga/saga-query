@@ -54,6 +54,7 @@ export function* queryCtx<Ctx extends ApiCtx = ApiCtx>(ctx: Ctx, next: Next) {
   if (!ctx.response) ctx.response = null;
   if (!ctx.json) ctx.json = { ok: false, data: {} };
   if (!ctx.actions) ctx.actions = [];
+  if (!ctx.bodyType) ctx.bodyType = 'json';
   yield next();
 }
 
