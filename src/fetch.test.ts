@@ -1,6 +1,6 @@
 import test from 'ava';
 import nock from 'nock';
-import { fetcher } from './fetch';
+import { fetcher, fetchRetry } from './fetch';
 import { createApi } from './api';
 import { setupStore } from './util';
 import { requestMonitor } from './middleware';
@@ -284,6 +284,72 @@ test('fetch - slug in url but payload has empty string for slug value', async (t
 
   const store = setupStore(api.saga());
   const action = fetchUsers({ id: '' });
+  store.dispatch(action);
+
+  await delay();
+});
+
+test('fetch retry - with success - should keep retrying fetch request', async (t) => {
+  t.plan(2);
+
+  nock(baseUrl).get('/users').reply(400, { message: 'error' });
+  nock(baseUrl).get('/users').reply(400, { message: 'error' });
+  nock(baseUrl).get('/users').reply(400, { message: 'error' });
+  nock(baseUrl).get('/users').reply(400, { message: 'error' });
+  nock(baseUrl).get('/users').reply(200, mockUser);
+
+  const api = createApi();
+  api.use(requestMonitor());
+  api.use(api.routes());
+  api.use(fetcher({ baseUrl }));
+
+  const fetchUsers = api.get('/users', [
+    function* (ctx, next) {
+      ctx.cache = true;
+      yield next();
+
+      if (!ctx.json.ok) {
+        t.fail();
+      }
+
+      t.deepEqual(ctx.json, { ok: true, data: mockUser });
+    },
+    fetchRetry((n) => (n > 4 ? -1 : 10)),
+  ]);
+
+  const store = setupStore(api.saga());
+  const action = fetchUsers();
+  store.dispatch(action);
+
+  await delay();
+
+  const state = store.getState();
+  t.deepEqual(state['@@saga-query/data'][action.payload.key], mockUser);
+});
+
+test('fetch retry - with failure - should keep retrying and then quit', async (t) => {
+  t.plan(1);
+
+  nock(baseUrl).get('/users').reply(400, { message: 'error' });
+  nock(baseUrl).get('/users').reply(400, { message: 'error' });
+  nock(baseUrl).get('/users').reply(400, { message: 'error' });
+
+  const api = createApi();
+  api.use(requestMonitor());
+  api.use(api.routes());
+  api.use(fetcher({ baseUrl }));
+
+  const fetchUsers = api.get('/users', [
+    function* (ctx, next) {
+      ctx.cache = true;
+      yield next();
+      t.deepEqual(ctx.json, { ok: false, data: { message: 'error' } });
+    },
+    fetchRetry((n) => (n > 2 ? -1 : 10)),
+  ]);
+
+  const store = setupStore(api.saga());
+  const action = fetchUsers();
   store.dispatch(action);
 
   await delay();

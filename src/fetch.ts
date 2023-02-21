@@ -1,8 +1,13 @@
 import { SagaIterator } from 'redux-saga';
-import { call } from 'redux-saga/effects';
+import { call, delay } from 'redux-saga/effects';
 import { compose } from './compose';
+import { noop } from './util';
 import type { FetchCtx, FetchJsonCtx, Next } from './types';
 
+/**
+ * Automatically sets `content-type` to `application/json` when
+ * that header is not already present.
+ */
 export function* headersMdw<CurCtx extends FetchCtx = FetchCtx>(
   ctx: CurCtx,
   next: Next,
@@ -69,6 +74,10 @@ export function* jsonMdw<CurCtx extends FetchJsonCtx = FetchJsonCtx>(
   yield next();
 }
 
+/*
+ * This middleware takes the `baseUrl` provided to `fetcher()` and combines it
+ * with the url from `ctx.request.url`.
+ */
 export function apiUrlMdw<CurCtx extends FetchJsonCtx = FetchJsonCtx>(
   baseUrl: string = '',
 ) {
@@ -120,6 +129,10 @@ export function* payloadMdw<CurCtx extends FetchJsonCtx = FetchJsonCtx>(
   yield next();
 }
 
+/*
+ * This middleware makes the `fetch` http request using `ctx.request` and
+ * assigns the response to `ctx.response`.
+ */
 export function* fetchMdw<CurCtx extends FetchCtx = FetchCtx>(
   ctx: CurCtx,
   next: Next,
@@ -129,6 +142,76 @@ export function* fetchMdw<CurCtx extends FetchCtx = FetchCtx>(
   const response: Response = yield call(fetch, request);
   ctx.response = response;
   yield next();
+}
+
+function backoffExp(attempt: number): number {
+  if (attempt > 5) return -1;
+  // 1s, 1s, 1s, 2s, 4s
+  return Math.max(2 ** attempt * 125, 1000);
+}
+
+/**
+ * This middleware will retry failed `Fetch` request if `response.ok` is `false`.
+ * It accepts a backoff function to determine how long to continue retrying.
+ * The default is an exponential backoff {@link backoffExp} where the minimum is
+ * 1sec between attempts and it'll reach 4s between attempts at the end with a
+ * max of 5 attempts.
+ *
+ * An example backoff:
+ * @example
+ * ```ts
+ *  // Any value less than 0 will stop the retry middleware.
+ *  // Each attempt will wait 1s
+ *  const backoff = (attempt: number) => {
+ *    if (attempt > 5) return -1;
+ *    return 1000;
+ *  }
+ *
+ * const api = createApi();
+ * api.use(requestMonitor());
+ * api.use(api.routes());
+ * api.use(fetcher());
+ *
+ * const fetchUsers = api.get('/users', [
+ *  function*(ctx, next) {
+ *    // ...
+ *    yield next();
+ *  },
+ *  // fetchRetry should be after your endpoint function because
+ *  // the retry middleware will update `ctx.json` before it reaches your middleware
+ *  fetchRetry(backoff),
+ * ])
+ * ```
+ */
+export function fetchRetry<CurCtx extends FetchJsonCtx = FetchJsonCtx>(
+  backoff: (attempt: number) => number = backoffExp,
+) {
+  return function* (ctx: CurCtx, next: Next) {
+    yield next();
+
+    if (!ctx.response) {
+      return;
+    }
+
+    if (ctx.response.ok) {
+      return;
+    }
+
+    let attempt = 1;
+    let waitFor = backoff(attempt);
+    while (waitFor >= 1) {
+      yield delay(waitFor);
+      yield call(fetchMdw, ctx, noop);
+      yield call(jsonMdw, ctx, noop);
+
+      if (ctx.response.ok) {
+        return;
+      }
+
+      attempt += 1;
+      waitFor = backoff(attempt);
+    }
+  };
 }
 
 /**
