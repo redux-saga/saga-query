@@ -22,6 +22,7 @@ state.**
 - [Error handling](#error-handling)
 - [Loading state](#loading-state)
 - [React](#react)
+- [React Native](#react-native)
 - [Cache timer](#cache-timer)
 - [Take leading](#take-leading)
 - [Polling](#polling)
@@ -689,6 +690,34 @@ want.
 
 This section is a WIP, for now you can
 [read the source](https://github.com/redux-saga/saga-query/blob/main/src/react.ts)
+
+### React Native
+
+In order to use imports from `saga-query/react` in React Native, a custom resolve request must be defined. This is due to Metro not currently supporting package exports. See [here](https://github.com/facebook/metro/issues/670) for details. Experimental support for package exports looks to be coming in 0.72. Below is an example of the workaround:
+
+```js
+// metro.config.js
+
+module.exports = {
+  // ...
+  resolver: {
+    // ...
+    resolveRequest: (context, moduleName, platform) => {
+      if (moduleName === "saga-query/react") {
+        return {
+          filePath: path.resolve(
+            __dirname,
+            "node_modules/saga-query/dist/react.js",
+          ),
+          type: "sourceFile",
+        };
+      }
+
+      return context.resolveRequest(context, moduleName, platform);
+    }
+  }
+}
+```
 
 ### Cache timer
 
