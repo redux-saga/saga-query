@@ -220,7 +220,7 @@ import {
   put,
   call,
 } from 'saga-query';
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice, configureStore } from '@reduxjs/toolkit';
 
 interface MapEntity<E> {
   [key: string]: E | undefined;
@@ -315,11 +315,10 @@ const prepared = prepareStore({
   reducers: { users: users.reducer },
   sagas: { api: api.saga() },
 });
-const store = createStore(
-  prepared.reducer,
-  undefined,
-  applyMiddleware(...prepared.middleware),
-);
+const store = configureStore({
+  reducer: prepared.reducer,
+  middleware: prepared.middleware,
+});
 // This runs the sagas
 prepared.run();
 
@@ -1008,9 +1007,8 @@ for is setting up the redux slice where we want to cache the API endpoint
 response data.
 
 ```ts
-import { createStore } from 'redux';
 import { prepareStore, createApi, requestMonitor, fetcher } from 'saga-query';
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice, configureStore } from '@reduxjs/toolkit';
 
 const users = createSlice({
   name: 'users',
@@ -1040,11 +1038,10 @@ const prepared = prepareStore({
   reducers: { users: users.reducer },
   sagas: { api: api.saga() },
 });
-const store = createStore(
-  prepared.reducer,
-  {},
-  applyMiddleware(...prepared.middleware),
-);
+const store = configureStore({
+  reducer: prepared.reducer,
+  middleware: prepared.middleware,
+});
 prepared.run();
 
 store.dispatch(fetchUsers());
