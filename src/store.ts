@@ -1,4 +1,4 @@
-import type { Reducer, Middleware } from 'redux';
+import type { Reducer, Middleware, Action } from 'redux';
 import { combineReducers } from 'redux';
 import type { Saga, Task } from 'redux-saga';
 import createSagaMiddleware, { stdChannel } from 'redux-saga';
@@ -79,6 +79,7 @@ interface Props<S extends { [key: string]: any } = { [key: string]: any }> {
  * @example
  * ```ts
  * import { prepareStore } from 'saga-query';
+ * import { configureStore } from '@reduxjs/toolkit';
  *
  * const { middleware, reducer, run } = prepareStore({
  *  reducers: { users: (state, action) => state },
@@ -86,7 +87,10 @@ interface Props<S extends { [key: string]: any } = { [key: string]: any }> {
  *  onError: (err) => console.error(err),
  * });
  *
- * const store = createStore(reducer, {}, applyMiddleware(...middleware));
+ * const store = configureStore({
+ *  reducer,
+ *  middleware,
+ * });
  *
  * // you must call `.run(...args: any[])` in order for the sagas to bootup.
  * run();
@@ -101,7 +105,7 @@ export function prepareStore<
 }: Props<S>): PrepareStore<S> {
   const middleware: Middleware<any, S, any>[] = [];
 
-  const channel = stdChannel();
+  const channel = stdChannel<Action>();
   const rawPut = channel.put;
   channel.put = (action: ActionWithPayload<any>) => {
     if (action.type === BATCH) {
@@ -111,7 +115,7 @@ export function prepareStore<
     rawPut(action);
   };
 
-  const sagaMiddleware = createSagaMiddleware({ channel } as any);
+  const sagaMiddleware = createSagaMiddleware({ channel });
   middleware.push(sagaMiddleware);
 
   const reducer = combineReducers({ ...sagaQueryReducers, ...reducers });
