@@ -374,7 +374,7 @@ test('fetch retry conditional - conditional retry', async (t) => {
   nock(baseUrl).get('/users').reply(200, mockUserNotVerif);
   nock(baseUrl).get('/users').reply(200, mockUserVerif);
 
-  const waitTime = 30;
+  const waitTime = 20;
   const attemtps = 5;
 
   const api = createApi();
