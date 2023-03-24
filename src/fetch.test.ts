@@ -354,3 +354,48 @@ test('fetch retry - with failure - should keep retrying and then quit', async (t
 
   await delay();
 });
+
+test('fetch retry conditional - conditional retry', async (t) => {
+  const mockUserNotVerif = {
+    id: '1',
+    email: 'test@saga-query.com',
+    email_verified: false,
+  };
+  const mockUserVerif = {
+    id: '1',
+    email: 'test@saga-query.com',
+    email_verified: true,
+  };
+  t.plan(1);
+
+  nock(baseUrl).get('/users').reply(200, mockUserNotVerif);
+  nock(baseUrl).get('/users').reply(200, mockUserNotVerif);
+  nock(baseUrl).get('/users').reply(200, mockUserNotVerif);
+  nock(baseUrl).get('/users').reply(200, mockUserNotVerif);
+  nock(baseUrl).get('/users').reply(200, mockUserVerif);
+
+  const waitTime = 30;
+  const attemtps = 5;
+
+  const api = createApi();
+  api.use(requestMonitor());
+  api.use(api.routes());
+  api.use(fetcher({ baseUrl }));
+
+  const fetchUsers = api.get('/users', [
+    function* (ctx, next) {
+      ctx.cache = true;
+      yield next();
+      t.deepEqual(ctx.json, { ok: true, data: mockUserVerif });
+    },
+    fetchRetry(
+      (n) => (n < attemtps ? waitTime : -1),
+      (vCtx) => vCtx.json.data.email_verified === true,
+    ),
+  ]);
+  const store = setupStore(api.saga());
+  const action = fetchUsers();
+  store.dispatch(action);
+
+  await delay();
+});

@@ -150,12 +150,17 @@ function backoffExp(attempt: number): number {
   return Math.max(2 ** attempt * 125, 1000);
 }
 
+function responseOkCond(ctx: FetchJsonCtx): boolean {
+  return ctx.json.ok;
+}
 /**
- * This middleware will retry failed `Fetch` request if `response.ok` is `false`.
+ * This middleware will retry any fetch if condition is not met, or by default the failed `Fetch` request if `response.ok` is `false`.
  * It accepts a backoff function to determine how long to continue retrying.
  * The default is an exponential backoff {@link backoffExp} where the minimum is
  * 1sec between attempts and it'll reach 4s between attempts at the end with a
  * max of 5 attempts.
+ * It along with the `cond` function will be called after each failed attempt.
+ * The default `cond` function is {@link responseOkCond} which will retry if `response.ok` is `false`.
  *
  * An example backoff:
  * @example
@@ -166,6 +171,11 @@ function backoffExp(attempt: number): number {
  *    if (attempt > 5) return -1;
  *    return 1000;
  *  }
+ *
+ * An example cond:
+ * @example
+ * ```ts
+ * // Retry if the emqil is not verified
  *
  * const api = createApi();
  * api.use(requestMonitor());
@@ -185,6 +195,7 @@ function backoffExp(attempt: number): number {
  */
 export function fetchRetry<CurCtx extends FetchJsonCtx = FetchJsonCtx>(
   backoff: (attempt: number) => number = backoffExp,
+  cond: (ctx: CurCtx) => boolean = responseOkCond,
 ) {
   return function* (ctx: CurCtx, next: Next) {
     yield next();
@@ -194,7 +205,9 @@ export function fetchRetry<CurCtx extends FetchJsonCtx = FetchJsonCtx>(
     }
 
     if (ctx.response.ok) {
-      return;
+      if (cond(ctx)) {
+        return;
+      }
     }
 
     let attempt = 1;
@@ -205,7 +218,9 @@ export function fetchRetry<CurCtx extends FetchJsonCtx = FetchJsonCtx>(
       yield call(jsonMdw, ctx, noop);
 
       if (ctx.response.ok) {
-        return;
+        if (cond(ctx)) {
+          return;
+        }
       }
 
       attempt += 1;
