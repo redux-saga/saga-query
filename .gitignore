@@ -6,6 +6,7 @@ dist
 *.bak
 .envrc
 .direnv/
+
 # Ignore yarn lock files
 yarn.lock
 
