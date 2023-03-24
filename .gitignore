@@ -12,3 +12,6 @@ yarn.lock
 
 # Ignore npm lock files
 package-lock.json
+
+# Ignore tar files
+*.tgz

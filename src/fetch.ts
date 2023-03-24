@@ -151,7 +151,7 @@ function backoffExp(attempt: number): number {
 }
 
 function responseOkCond(ctx: FetchJsonCtx): boolean {
-  return ctx.json.ok;
+  return !!ctx.response?.ok;
 }
 /**
  * This middleware will retry any fetch if condition is not met, or by default the failed `Fetch` request if `response.ok` is `false`.
@@ -171,11 +171,10 @@ function responseOkCond(ctx: FetchJsonCtx): boolean {
  *    if (attempt > 5) return -1;
  *    return 1000;
  *  }
- *
- * An example cond:
- * @example
- * ```ts
- * // Retry if the emqil is not verified
+ *  // Retry until the email is verified . We set the pass condition:
+ *  const cond = (pctx: FetchJsonCtx) => {
+ *    return pctx.json?.data?.email_verified === true;
+ *  }
  *
  * const api = createApi();
  * api.use(requestMonitor());
@@ -189,7 +188,7 @@ function responseOkCond(ctx: FetchJsonCtx): boolean {
  *  },
  *  // fetchRetry should be after your endpoint function because
  *  // the retry middleware will update `ctx.json` before it reaches your middleware
- *  fetchRetry(backoff),
+ *  fetchRetry(backoff, cond)
  * ])
  * ```
  */
