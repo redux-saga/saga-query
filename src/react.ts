@@ -4,6 +4,7 @@ import type { LoadingState } from 'robodux';
 
 import type { QueryState } from './slice';
 import { selectLoaderById, selectDataById } from './slice';
+import { Action } from './types';
 
 type ActionFn<P = any> = (p: P) => { toString: () => string };
 type ActionFnSimple = () => { toString: () => string };
@@ -43,7 +44,7 @@ interface UseCacheResult<D = any, A extends SagaAction = SagaAction>
  * @returns the loader object for an action creator or action
  *
  * @example
- * ```ts
+ * ```tsx
  * import { useLoader } from 'saga-query/react';
  *
  * import { api } from './api';
@@ -75,7 +76,7 @@ export function useLoader<S extends QueryState = QueryState>(
  * data from your redux state.
  *
  * @example
- * ```ts
+ * ```tsx
  * import { useApi } from 'saga-query/react';
  *
  * import { api } from './api';
@@ -119,7 +120,7 @@ export function useApi(action: any) {
  * useQuery uses {@link useApi} and automatically calls `useApi().trigger()`
  *
  * @example
- * ```ts
+ * ```tsx
  * import { useQuery } from 'saga-query/react';
  *
  * import { api } from './api';
@@ -149,7 +150,7 @@ export function useQuery<P = any, A extends SagaAction = SagaAction<P>>(
  * with the action creator or action provided.
  *
  * @example
- * ```ts
+ * ```tsx
  * import { useCache } from 'saga-query/react';
  *
  * import { api } from './api';
@@ -176,7 +177,7 @@ export function useCache<D = any, A extends SagaAction = SagaAction>(
  * from some state to success.
  *
  * @example
- * ```ts
+ * ```tsx
  * import { useLoaderSuccess, useApi } from 'saga-query/react';
  *
  * import { api } from './api';
@@ -212,4 +213,46 @@ export function useLoaderSuccess(
     }
     setPrev(cur);
   }, [cur.isSuccess, cur.isLoading]);
+}
+
+/**
+ * usePoller will properly setup and teardown a poller endpoint.
+ *
+ * @example
+ * ```ts
+ * import { poll, createPipe, PollProps } from 'saga-query';
+ * import { usePoller } from 'saga-query/react';
+ * import { createAction } from '@reduxjs/toolkit';
+ *
+ * const thunks = createPipe();
+ * thunks.use(thunks.routes());
+ *
+ * const cancelAppsPoll = createAction("cancel-apps-poll");
+ * const pollApps = thunks.create<PollProps>(
+ *  "poll-apps",
+ *  { saga: poll(5 * 1000, `${cancelAppsPoll}`) },
+ *  fetchApps,
+ * );
+ *
+ * const App = () => {
+ *  const data = usePoller(pollApps(), cancelAppsPoll());
+ * }
+ * ```
+ */
+export function usePoller<P = any, A extends SagaAction = SagaAction<P>>(
+  pollAction: A,
+  cancelAction: Action = pollAction,
+) {
+  const dispatch = useDispatch();
+  const apps = useQuery(pollAction);
+  useEffect(() => {
+    const cancel = () => dispatch(cancelAction);
+    cancel();
+    apps.trigger();
+    return () => {
+      cancel();
+    };
+  }, []);
+
+  return apps;
 }

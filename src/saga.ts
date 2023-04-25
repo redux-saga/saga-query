@@ -41,6 +41,20 @@ export interface PollProps {
   timer?: number;
 }
 
+/**
+ * poll() will create a poll endpoint that will continuously query the endpoint
+ * on an interval of your choice.
+ *
+ * poll() will also look for `timer` and `force` inside action.payload:
+ *
+ * @example
+ * ```ts
+ * import { PollProps, createAction } from 'saga-query';
+ *
+ * const myAction = createAction<{ id: string } & PollProps>('MY-ACTION');
+ * store.dispatch(myAction({ id: '123', timer: 1000 }));
+ * ```
+ */
 export function poll(parentTimer?: number, cancelType?: string) {
   return function* poller(
     actionType: string,
@@ -72,10 +86,21 @@ export interface TimerProps {
  * timer() will create a cache timer for each `key` inside
  * of a saga-query api endpoint.  `key` is a hash of the action type and payload.
  *
+ *
  * Why do we want this?  If we have an api endpoint to fetch a single app: `fetchApp({ id: 1 })`
  * if we don't set a timer per key then all calls to `fetchApp` will be on a timer.
  * So if we call `fetchApp({ id: 1 })` and then `fetchApp({ id: 2 })` if we use a normal
  * cache timer then the second call will not send an http request.
+ *
+ * timer() will also look for `timer` and `force` inside action.payload:
+ *
+ * @example
+ * ```ts
+ * import { TimerProps, createAction } from 'saga-query';
+ *
+ * const myAction = createAction<{ id: string } & TimerProps>('MY-ACTION');
+ * store.dispatch(myAction({ id: '123', force: true, timer: 1000 }));
+ * ```
  */
 export function timer(sagaTimer: number = 5 * MINUTES) {
   return function* onTimer(
