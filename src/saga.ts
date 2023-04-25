@@ -37,6 +37,10 @@ export function createDebounce(ms: number = 5 * SECONDS) {
   };
 }
 
+export interface PollProps {
+  timer?: number;
+}
+
 export function poll(parentTimer?: number, cancelType?: string) {
   return function* poller(
     actionType: string,
@@ -59,6 +63,11 @@ export function poll(parentTimer?: number, cancelType?: string) {
   };
 }
 
+export interface TimerProps {
+  timer?: number;
+  force?: boolean;
+}
+
 /**
  * timer() will create a cache timer for each `key` inside
  * of a saga-query api endpoint.  `key` is a hash of the action type and payload.
@@ -68,7 +77,7 @@ export function poll(parentTimer?: number, cancelType?: string) {
  * So if we call `fetchApp({ id: 1 })` and then `fetchApp({ id: 2 })` if we use a normal
  * cache timer then the second call will not send an http request.
  */
-export function timer(timer: number = 5 * MINUTES) {
+export function timer(sagaTimer: number = 5 * MINUTES) {
   return function* onTimer(
     actionType: string,
     saga: any,
@@ -78,17 +87,18 @@ export function timer(timer: number = 5 * MINUTES) {
 
     function* activate(action: ActionWithPayload<CreateActionPayload>) {
       yield call(saga, action, ...args);
-      yield delay(timer);
+        const { timer: actionTimer } = action.payload;
+      yield delay(actionTimer >= 0 ? actionTimer : sagaTimer);
       delete map[action.payload.key];
     }
 
     while (true) {
-      const action: ActionWithPayload<CreateActionPayload> = yield take(
+      const action: ActionWithPayload<CreateActionPayload<TimerProps>> = yield take(
         `${actionType}`,
       );
-      const key = action.payload.key;
+      const { key, force } = action.payload;
       const notRunning = map[key] && !map[key].isRunning();
-      if (!map[key] || notRunning) {
+      if (force || !map[key] || notRunning) {
         const task = yield fork(activate, action);
         map[key] = task;
       }
