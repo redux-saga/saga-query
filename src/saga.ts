@@ -85,17 +85,18 @@ export function timer(sagaTimer: number = 5 * MINUTES) {
   ): SagaIterator<void> {
     const map: { [key: string]: Task } = {};
 
-    function* activate(action: ActionWithPayload<CreateActionPayload>) {
+    function* activate(
+      action: ActionWithPayload<CreateActionPayload & TimerProps>,
+    ) {
       yield call(saga, action, ...args);
-        const { timer: actionTimer } = action.payload;
+      const { timer: actionTimer = 0 } = action.payload;
       yield delay(actionTimer >= 0 ? actionTimer : sagaTimer);
       delete map[action.payload.key];
     }
 
     while (true) {
-      const action: ActionWithPayload<CreateActionPayload<TimerProps>> = yield take(
-        `${actionType}`,
-      );
+      const action: ActionWithPayload<CreateActionPayload & TimerProps> =
+        yield take(`${actionType}`);
       const { key, force } = action.payload;
       const notRunning = map[key] && !map[key].isRunning();
       if (force || !map[key] || notRunning) {
