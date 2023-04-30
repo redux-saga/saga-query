@@ -17,10 +17,11 @@ import {
   setLoaderStart,
   setLoaderError,
   setLoaderSuccess,
-  resetLoaderById,
   addData,
   selectDataById,
+  selectLoaderById,
 } from './slice';
+import { Err, Ok } from './result';
 
 /**
  * This middleware will catch any errors in the pipeline
@@ -52,7 +53,7 @@ export function* queryCtx<Ctx extends ApiCtx = ApiCtx>(ctx: Ctx, next: Next) {
   }
   if (!ctx.request) ctx.request = ctx.req();
   if (!ctx.response) ctx.response = null;
-  if (!ctx.json) ctx.json = { ok: false, data: {} };
+  if (!ctx.json) ctx.json = Err(new Error('data not set'));
   if (!ctx.actions) ctx.actions = [];
   if (!ctx.bodyType) ctx.bodyType = 'json';
   yield next();
@@ -147,42 +148,44 @@ export function* loadingMonitorSimple<Ctx extends LoaderCtx = LoaderCtx>(
 /**
  * This middleware will track the status of a fetch request.
  */
-export function loadingMonitor<Ctx extends ApiCtx = ApiCtx>(
-  errorFn: (ctx: Ctx) => string = (ctx) => ctx.json?.data?.message || '',
+export function* loadingMonitor<Ctx extends ApiCtx = ApiCtx>(
+  ctx: Ctx,
+  next: Next,
 ) {
-  return function* trackLoading(ctx: Ctx, next: Next) {
-    yield put(
-      batchActions([
-        setLoaderStart({ id: ctx.name }),
-        setLoaderStart({ id: ctx.key }),
-      ]),
-    );
-    if (!ctx.loader) ctx.loader = {} as any;
+  yield put(
+    batchActions([
+      setLoaderStart({ id: ctx.name }),
+      setLoaderStart({ id: ctx.key }),
+    ]),
+  );
+  if (!ctx.loader) ctx.loader = {} as any;
 
-    yield next();
+  yield next();
 
-    if (!ctx.response) {
-      ctx.actions.push(resetLoaderById(ctx.name), resetLoaderById(ctx.key));
-      return;
-    }
-
-    const payload = ctx.loader || {};
-    if (!ctx.response.ok) {
-      ctx.actions.push(
-        setLoaderError({ id: ctx.name, message: errorFn(ctx), ...payload }),
-        setLoaderError({ id: ctx.key, message: errorFn(ctx), ...payload }),
-      );
-      return;
-    }
-
+  const payload = ctx.loader || {};
+  if (!ctx.json.ok) {
     ctx.actions.push(
-      setLoaderSuccess({ id: ctx.name, ...payload }),
-      setLoaderSuccess({ id: ctx.key, ...payload }),
+      setLoaderError({
+        id: ctx.name,
+        message: ctx.json.error.message,
+        ...payload,
+      }),
+      setLoaderError({
+        id: ctx.key,
+        message: ctx.json.error.message,
+        ...payload,
+      }),
     );
-  };
+    return;
+  }
+
+  ctx.actions.push(
+    setLoaderSuccess({ id: ctx.name, ...payload }),
+    setLoaderSuccess({ id: ctx.key, ...payload }),
+  );
 }
 
-export interface UndoCtx<P = any, S = any, E = any> extends ApiCtx<P, S, E> {
+export interface UndoCtx<P = any, S = any> extends ApiCtx<P, S> {
   undoable: boolean;
 }
 
@@ -259,12 +262,15 @@ export function* simpleCache<Ctx extends ApiCtx = ApiCtx>(
   ctx: Ctx,
   next: Next,
 ): SagaIterator {
-  ctx.cacheData = yield select(selectDataById, { id: ctx.key });
+  const loader = yield select(selectLoaderById, { id: ctx.key });
+  const data = yield select(selectDataById, { id: ctx.key });
+  ctx.json = loader.isSuccess ? Ok(data) : Err(data);
+
   yield next();
   if (!ctx.cache) return;
-  const { data } = ctx.json;
-  ctx.actions.push(addData({ [ctx.key]: data }));
-  ctx.cacheData = data;
+  ctx.actions.push(
+    addData({ [ctx.key]: ctx.json.ok ? ctx.json.value : ctx.json.error }),
+  );
 }
 
 /**
@@ -299,15 +305,13 @@ export function* customKey<Ctx extends ApiCtx = ApiCtx>(ctx: Ctx, next: Next) {
 /**
  * This middleware is a composition of many middleware used to faciliate the {@link createApi}
  */
-export function requestMonitor<Ctx extends ApiCtx = ApiCtx>(
-  errorFn?: (ctx: Ctx) => string,
-) {
+export function requestMonitor<Ctx extends ApiCtx = ApiCtx>() {
   return compose<Ctx>([
     errorHandler,
     queryCtx,
     urlParser,
     dispatchActions,
-    loadingMonitor(errorFn),
+    loadingMonitor,
     simpleCache,
     customKey,
   ]);

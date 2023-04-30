@@ -4,6 +4,7 @@ import { fetcher, fetchRetry } from './fetch';
 import { createApi } from './api';
 import { setupStore } from './util';
 import { requestMonitor } from './middleware';
+import { Err, Ok } from './result';
 
 const baseUrl = 'https://saga-query.com';
 const mockUser = { id: '1', email: 'test@saga-query.com' };
@@ -35,7 +36,7 @@ test('fetch - should be able to fetch a resource and save automatically', async 
       },
     });
 
-    t.deepEqual(ctx.json, { ok: true, data: mockUser });
+    t.deepEqual(ctx.json, Ok(mockUser));
   });
 
   const store = setupStore(api.saga());
@@ -62,7 +63,7 @@ test('fetch - should be able to fetch a resource and parse as text instead of js
     ctx.cache = true;
     ctx.bodyType = 'text';
     yield next();
-    t.deepEqual(ctx.json, { ok: true, data: 'this is some text' });
+    t.deepEqual(ctx.json, Ok('this is some text'));
   });
 
   const store = setupStore(api.saga());
@@ -74,7 +75,7 @@ test('fetch - should be able to fetch a resource and parse as text instead of js
 
 test('fetch - error handling', async (t) => {
   t.plan(2);
-  const errMsg = { message: 'something happened' };
+  const errMsg = { name: 'Error', message: 'something happened' };
 
   nock(baseUrl).get('/users').reply(500, errMsg);
 
@@ -92,7 +93,7 @@ test('fetch - error handling', async (t) => {
     ctx.cache = true;
     yield next();
 
-    t.deepEqual(ctx.json, { ok: false, data: errMsg });
+    t.deepEqual(ctx.json, Err(errMsg));
   });
 
   const store = setupStore(api.saga());
@@ -123,7 +124,7 @@ test('fetch - status 204', async (t) => {
     ctx.cache = true;
     yield next();
 
-    t.deepEqual(ctx.json, { ok: true, data: {} });
+    t.deepEqual(ctx.json, Ok({}));
   });
 
   const store = setupStore(api.saga());
@@ -154,13 +155,14 @@ test('fetch - malformed json', async (t) => {
     ctx.cache = true;
     yield next();
 
-    t.deepEqual(ctx.json, {
-      ok: false,
-      data: {
+    t.deepEqual(
+      ctx.json,
+      Err({
+        name: 'Error',
         message:
           'invalid json response body at https://saga-query.com/users reason: Unexpected token o in JSON at position 1',
-      },
-    });
+      }),
+    );
   });
 
   const store = setupStore(api.saga());
@@ -193,7 +195,7 @@ test('fetch - POST', async (t) => {
       body: JSON.stringify(mockUser),
     });
 
-    t.deepEqual(ctx.json, { ok: true, data: mockUser });
+    t.deepEqual(ctx.json, Ok(mockUser));
   });
 
   const store = setupStore(api.saga());
@@ -228,7 +230,7 @@ test('fetch - POST multiple endpoints with same uri', async (t) => {
         body: JSON.stringify(mockUser),
       });
 
-      t.deepEqual(ctx.json, { ok: true, data: mockUser });
+      t.deepEqual(ctx.json, Ok(mockUser));
     },
   );
 
@@ -248,7 +250,7 @@ test('fetch - POST multiple endpoints with same uri', async (t) => {
         body: JSON.stringify(mockUser),
       });
 
-      t.deepEqual(ctx.json, { ok: true, data: mockUser });
+      t.deepEqual(ctx.json, Ok(mockUser));
     },
   );
 
@@ -275,10 +277,14 @@ test('fetch - slug in url but payload has empty string for slug value', async (t
 
       yield next();
 
-      t.deepEqual(ctx.json, {
-        ok: false,
-        data: 'found :id in endpoint name (/users/:id [POST]) but payload has falsy value ()',
-      });
+      t.deepEqual(
+        ctx.json,
+        Err({
+          name: 'Error',
+          message:
+            'found :id in endpoint name (/users/:id [POST]) but payload has falsy value ()',
+        }),
+      );
     },
   );
 
@@ -312,7 +318,7 @@ test('fetch retry - with success - should keep retrying fetch request', async (t
         t.fail();
       }
 
-      t.deepEqual(ctx.json, { ok: true, data: mockUser });
+      t.deepEqual(ctx.json, Ok(mockUser));
     },
     fetchRetry((n) => (n > 4 ? -1 : 10)),
   ]);
@@ -343,7 +349,7 @@ test('fetch retry - with failure - should keep retrying and then quit', async (t
     function* (ctx, next) {
       ctx.cache = true;
       yield next();
-      t.deepEqual(ctx.json, { ok: false, data: { message: 'error' } });
+      t.deepEqual(ctx.json, Err({ name: 'Error', message: 'error' }));
     },
     fetchRetry((n) => (n > 2 ? -1 : 10)),
   ]);

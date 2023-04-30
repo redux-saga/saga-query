@@ -26,7 +26,7 @@ export const data = createTable<any>({ name: DATA_NAME });
 export const { add: addData, reset: resetData } = data.actions;
 
 export const { selectTable: selectData, selectById: selectDataById } =
-  data.getSelectors((s: any) => s[DATA_NAME] || {});
+  data.getSelectors((s: QueryState) => s[DATA_NAME] || {});
 
 /**
  * Returns data from the saga-query slice of redux from an action.

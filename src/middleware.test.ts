@@ -24,6 +24,7 @@ import {
   selectDataById,
 } from './slice';
 import { SagaIterator } from 'redux-saga';
+import { Ok } from './result';
 
 interface User {
   id: string;
@@ -52,14 +53,14 @@ test('middleware - basic', (t) => {
   query.use(query.routes());
   query.use(function* fetchApi(ctx, next) {
     if (`${ctx.req().url}`.startsWith('/users/')) {
-      ctx.json = { ok: true, data: mockUser2 };
+      ctx.json = Ok(mockUser2);
       yield next();
       return;
     }
     const data = {
       users: [mockUser],
     };
-    ctx.json = { ok: true, data };
+    ctx.json = Ok(data);
     yield next();
   });
 
@@ -68,7 +69,7 @@ test('middleware - basic', (t) => {
     function* processUsers(ctx: ApiCtx<any, { users: User[] }>, next) {
       yield next();
       if (!ctx.json.ok) return;
-      const { users } = ctx.json.data;
+      const { users } = ctx.json.value;
       const curUsers = users.reduce<MapEntity<User>>((acc, u) => {
         acc[u.id] = u;
         return acc;
@@ -86,7 +87,7 @@ test('middleware - basic', (t) => {
       ctx.request = ctx.req({ method: 'POST' });
       yield next();
       if (!ctx.json.ok) return;
-      const curUser = ctx.json.data;
+      const curUser = ctx.json.value;
       const curUsers = { [curUser.id]: curUser };
       yield put(cache.actions.add(curUsers));
     },
@@ -114,7 +115,7 @@ test('middleware - with loader', (t) => {
   api.use(api.routes());
   api.use(function* fetchApi(ctx, next) {
     ctx.response = new Response(jsonBlob(mockUser), { status: 200 });
-    ctx.json = { ok: true, data: { users: [mockUser] } };
+    ctx.json = Ok({ users: [mockUser] });
     yield next();
   });
 
@@ -124,8 +125,8 @@ test('middleware - with loader', (t) => {
       yield next();
       if (!ctx.json.ok) return;
 
-      const { data } = ctx.json;
-      const curUsers = data.users.reduce<MapEntity<User>>((acc, u) => {
+      const { value } = ctx.json;
+      const curUsers = value.users.reduce<MapEntity<User>>((acc, u) => {
         acc[u.id] = u;
         return acc;
       }, {});
@@ -156,7 +157,7 @@ test('middleware - with item loader', (t) => {
   api.use(api.routes());
   api.use(function* fetchApi(ctx, next) {
     ctx.response = new Response(jsonBlob(mockUser), { status: 200 });
-    ctx.json = { ok: true, data: { users: [mockUser] } };
+    ctx.json = Ok({ users: [mockUser] });
     yield next();
   });
 
@@ -166,8 +167,8 @@ test('middleware - with item loader', (t) => {
       yield next();
       if (!ctx.json.ok) return;
 
-      const { data } = ctx.json;
-      const curUsers = data.users.reduce<MapEntity<User>>((acc, u) => {
+      const { value } = ctx.json;
+      const curUsers = value.users.reduce<MapEntity<User>>((acc, u) => {
         acc[u.id] = u;
         return acc;
       }, {});
@@ -234,7 +235,7 @@ test('middleware - with POST', async (t) => {
 
       if (!ctx.json.ok) return;
 
-      const { users } = ctx.json.data;
+      const { users } = ctx.json.value;
       const curUsers = users.reduce<MapEntity<User>>((acc, u) => {
         acc[u.id] = u;
         return acc;
@@ -255,7 +256,7 @@ test('simpleCache', (t) => {
   api.use(function* fetchApi(ctx, next) {
     const data = { users: [mockUser] };
     ctx.response = new Response(jsonBlob(data));
-    ctx.json = { ok: true, data };
+    ctx.json = Ok(data);
     yield next();
   });
 
@@ -285,7 +286,7 @@ test('overriding default loader behavior', (t) => {
   api.use(function* fetchApi(ctx, next) {
     const data = { users: [mockUser] };
     ctx.response = new Response(jsonBlob(data));
-    ctx.json = { ok: true, data };
+    ctx.json = Ok(data);
     yield next();
   });
 
@@ -298,8 +299,8 @@ test('overriding default loader behavior', (t) => {
       if (!ctx.json.ok) {
         return;
       }
-      const { data } = ctx.json;
-      const curUsers = data.users.reduce<MapEntity<User>>((acc, u) => {
+      const { value } = ctx.json;
+      const curUsers = value.users.reduce<MapEntity<User>>((acc, u) => {
         acc[u.id] = u;
         return acc;
       }, {});
@@ -414,10 +415,7 @@ test('createApi with own key', async (t) => {
         return acc;
       }, {});
       ctx.response = new Response();
-      ctx.json = {
-        ok: true,
-        data: curUsers,
-      };
+      ctx.json = Ok(curUsers);
     },
   );
   const newUEmail = mockUser.email + '.org';
@@ -471,10 +469,7 @@ test('createApi with custom key but no payload', async (t) => {
         return acc;
       }, {});
       ctx.response = new Response();
-      ctx.json = {
-        ok: true,
-        data: curUsers,
-      };
+      ctx.json = Ok(curUsers);
     },
   );
 

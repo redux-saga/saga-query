@@ -11,6 +11,7 @@ import { setupStore, sleep } from './util';
 import { createKey } from './create-key';
 import type { ApiCtx } from './types';
 import { poll } from './saga';
+import { Ok } from './result';
 
 interface User {
   id: string;
@@ -113,7 +114,7 @@ test('createApi - POST with uri', async (t) => {
 
     yield next();
     if (!ctx.json.ok) return;
-    const { users } = ctx.json.data;
+    const { users } = ctx.json.value;
     const curUsers = users.reduce<MapEntity<User>>((acc, u) => {
       acc[u.id] = u;
       return acc;
@@ -224,10 +225,7 @@ test('createApi with hash key on a large post', async (t) => {
         return acc;
       }, {});
       ctx.response = new Response();
-      ctx.json = {
-        ok: true,
-        data: curUsers,
-      };
+      ctx.json = Ok(curUsers);
     },
   );
 
@@ -286,7 +284,7 @@ test('createApi - two identical endpoints', async (t) => {
   t.deepEqual(actual, ['/health', '/health']);
 });
 
-interface TestCtx<P = any, S = any, E = any> extends ApiCtx<P, S, E> {
+interface TestCtx<P = any, S = any> extends ApiCtx<P, S> {
   something: boolean;
 }
 
@@ -297,7 +295,7 @@ test('ensure types for get() endpoint', (t) => {
   api.use(api.routes());
   api.use(function* (ctx, next) {
     yield next();
-    ctx.json = { ok: true, data: { result: 'wow' } };
+    ctx.json = Ok({ result: 'wow' });
   });
 
   const acc: string[] = [];
@@ -310,7 +308,7 @@ test('ensure types for get() endpoint', (t) => {
       yield next();
 
       if (ctx.json.ok) {
-        acc.push(ctx.json.data.result);
+        acc.push(ctx.json.value.result);
       }
     },
   );
@@ -332,7 +330,7 @@ test('ensure ability to cast `ctx` in function definition', (t) => {
   api.use(api.routes());
   api.use(function* (ctx, next) {
     yield next();
-    ctx.json = { ok: true, data: { result: 'wow' } };
+    ctx.json = Ok({ result: 'wow' });
   });
 
   const acc: string[] = [];
@@ -345,7 +343,7 @@ test('ensure ability to cast `ctx` in function definition', (t) => {
       yield next();
 
       if (ctx.json.ok) {
-        acc.push(ctx.json.data.result);
+        acc.push(ctx.json.value.result);
       }
     },
   );
@@ -364,7 +362,7 @@ test('ensure ability to cast `ctx` in function definition with no props', (t) =>
   api.use(api.routes());
   api.use(function* (ctx, next) {
     yield next();
-    ctx.json = { ok: true, data: { result: 'wow' } };
+    ctx.json = Ok({ result: 'wow' });
   });
 
   const acc: string[] = [];
@@ -374,7 +372,7 @@ test('ensure ability to cast `ctx` in function definition with no props', (t) =>
     yield next();
 
     if (ctx.json.ok) {
-      acc.push(ctx.json.data.result);
+      acc.push(ctx.json.value.result);
     }
   });
 

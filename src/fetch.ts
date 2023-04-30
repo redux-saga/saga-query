@@ -3,6 +3,7 @@ import { call, delay } from 'redux-saga/effects';
 import { compose } from './compose';
 import { noop } from './util';
 import type { FetchCtx, FetchJsonCtx, Next } from './types';
+import { Err, Ok } from './result';
 
 /**
  * Automatically sets `content-type` to `application/json` when
@@ -50,25 +51,16 @@ export function* jsonMdw<CurCtx extends FetchJsonCtx = FetchJsonCtx>(
   }
 
   if (ctx.response.status === 204) {
-    ctx.json = {
-      ok: ctx.response.ok,
-      data: {},
-    };
+    ctx.json = Ok({});
     yield next();
     return;
   }
 
   try {
     const data = yield call([ctx.response, ctx.bodyType]);
-    ctx.json = {
-      ok: ctx.response.ok,
-      data,
-    };
+    ctx.json = Ok(data);
   } catch (err: any) {
-    ctx.json = {
-      ok: false,
-      data: { message: err.message },
-    };
+    ctx.json = Err(err);
   }
 
   yield next();
@@ -118,10 +110,11 @@ export function* payloadMdw<CurCtx extends FetchJsonCtx = FetchJsonCtx>(
 
     const val = payload[key];
     if (!val) {
-      ctx.json = {
-        ok: false,
-        data: `found :${key} in endpoint name (${ctx.name}) but payload has falsy value (${val})`,
-      };
+      ctx.json = Err(
+        new Error(
+          `found :${key} in endpoint name (${ctx.name}) but payload has falsy value (${val})`,
+        ),
+      );
       return;
     }
   }

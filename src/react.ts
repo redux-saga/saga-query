@@ -4,7 +4,7 @@ import type { LoadingState } from 'robodux';
 
 import type { QueryState } from './slice';
 import { selectLoaderById, selectDataById } from './slice';
-import { Action } from './types';
+import { Action, ErrorLike } from './types';
 
 type ActionFn<P = any> = (p: P) => { toString: () => string };
 type ActionFnSimple = () => { toString: () => string };
@@ -35,6 +35,7 @@ export type UseApiResult<P, A extends SagaAction = SagaAction> =
 interface UseCacheResult<D = any, A extends SagaAction = SagaAction>
   extends UseApiAction<A> {
   data: D | null;
+  error: ErrorLike | null;
 }
 
 /**
@@ -169,7 +170,15 @@ export function useCache<D = any, A extends SagaAction = SagaAction>(
   const id = action.payload.key;
   const data = useSelector((s: any) => selectDataById(s, { id }));
   const query = useQuery(action);
-  return { ...query, data: data || null };
+  if (!data) {
+    return { ...query, data: null, error: null };
+  }
+
+  if (data && data.ok) {
+    return { ...query, data: data.value || null, error: null };
+  }
+
+  return { ...query, data: null, error: data.error };
 }
 
 /**

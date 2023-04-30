@@ -9,10 +9,11 @@ import { createApi } from './api';
 import { requestMonitor } from './middleware';
 import { setupStore } from './util';
 import { useApi } from './react';
-import { delay } from 'redux-saga/effects';
+import { delay, put } from 'redux-saga/effects';
 import { selectDataById } from './slice';
 import { createKey } from './create-key';
 import { createAssign } from 'robodux';
+import { Ok } from './result';
 
 (global as any).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -37,7 +38,7 @@ const setupTest = () => {
   api.use(api.routes());
   api.use(function* (ctx, next) {
     yield delay(10);
-    ctx.json = { ok: true, data: mockUser };
+    ctx.json = Ok(mockUser);
     ctx.response = new Response(jsonBlob(mockUser), { status: 200 });
     yield next();
   });
@@ -46,7 +47,7 @@ const setupTest = () => {
     ctx.cache = true;
     yield next();
     if (!ctx.json.ok) return;
-    slice.actions.set(ctx.json.data);
+    yield put(slice.actions.set(ctx.json.value));
   });
 
   const store = setupStore(api.saga(), { user: slice.reducer });
@@ -62,6 +63,7 @@ test('useApi - with action', async (t) => {
     const user = useSelector((s: any) =>
       selectDataById(s, { id: action.payload.key }),
     );
+    console.log(user);
 
     return h('div', null, [
       h('div', { key: '1' }, user?.email || ''),
@@ -89,10 +91,8 @@ test('useApi - with action creator', async (t) => {
   const { fetchUser, store } = setupTest();
   const App = () => {
     const query = useApi(fetchUser);
-    const user = useSelector((s: any) => {
-      const id = createKey(`${fetchUser}`, { id: '1' });
-      return selectDataById(s, { id });
-    });
+    const id = createKey(`${fetchUser}`, { id: '1' });
+    const user = useSelector((s: any) => selectDataById(s, { id }));
     return h('div', null, [
       h('div', { key: '1' }, user?.email || 'no user'),
       h(
