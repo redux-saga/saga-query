@@ -2,7 +2,7 @@ import { call, takeEvery } from 'redux-saga/effects';
 import type { SagaIterator } from 'redux-saga';
 
 import { sagaCreator } from './store';
-import { isFn, isObject } from './util';
+import { isFn, isObject, noop } from './util';
 import { createKey } from './create-key';
 import type {
   Middleware,
@@ -151,7 +151,7 @@ export function createPipe<Ctx extends PipeCtx = PipeCtx<any>>({
       actionFn,
     };
     const fn = compose(middleware);
-    yield call(fn, ctx);
+    yield call(fn, ctx, noop);
     return ctx;
   }
 

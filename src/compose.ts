@@ -1,7 +1,7 @@
 import type { SagaIterator } from 'redux-saga';
 import { call } from 'redux-saga/effects';
 
-import type { Middleware, Next, PipeCtx } from './types';
+import type { Middleware, PipeCtx } from './types';
 
 export function compose<Ctx extends PipeCtx = PipeCtx>(
   middleware: Middleware<Ctx>[],
@@ -15,7 +15,10 @@ export function compose<Ctx extends PipeCtx = PipeCtx>(
     }
   }
 
-  return function* composeSaga(context: Ctx, next?: Next): SagaIterator<void> {
+  return function* composeSaga(
+    context: Ctx,
+    next: Middleware,
+  ): SagaIterator<void> {
     // last called middleware #
     let index = -1;
     yield call(dispatch, 0);
@@ -26,9 +29,17 @@ export function compose<Ctx extends PipeCtx = PipeCtx>(
       }
       index = i;
       let fn: any = middleware[i];
-      if (i === middleware.length) fn = next;
+      if (i === middleware.length) {
+        fn = next;
+      }
+      fn.cancel = () => {
+        console.log('CANCLEEDDDDD');
+      };
       if (!fn) return;
       yield call(fn, context, dispatch.bind(null, i + 1));
     }
+    dispatch.cancel = () => {
+      console.log('CANCEL CALLED');
+    };
   };
 }

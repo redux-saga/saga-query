@@ -85,7 +85,8 @@
     "require": [
       "ts-node/register",
       "cross-fetch/polyfill"
-    ]
+    ],
+    "nodeArguments": ["--no-experimental-fetch"]
   },
   "lint-staged": {
     "*.ts": "prettier --write"

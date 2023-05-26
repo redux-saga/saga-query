@@ -1,5 +1,6 @@
 import test from 'ava';
 import nock from 'nock';
+import { race, call, delay as sagaDelay, cancelled } from 'typed-redux-saga';
 import { fetcher, fetchRetry } from './fetch';
 import { createApi } from './api';
 import { setupStore } from './util';
@@ -353,4 +354,63 @@ test('fetch retry - with failure - should keep retrying and then quit', async (t
   store.dispatch(action);
 
   await delay();
+});
+
+test.only('race() with next()', async (t) => {
+  t.plan(1);
+
+  nock(baseUrl)
+    .get('/users')
+    .reply((_uri, _requestBody, cb) => {
+      console.log('did i get hit?');
+      setTimeout(() => {
+        console.log('timeout');
+        cb(null, [200, mockUser]);
+      }, 1000);
+    })
+    .persist();
+
+  const api = createApi();
+  api.use(function* (ctx, next) {
+    try {
+      yield next();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      console.log('task completed', ctx);
+      if (yield* cancelled()) {
+        console.log('was cancelled!');
+      }
+    }
+  });
+  api.use(requestMonitor());
+  api.use(api.routes());
+  api.use(fetcher({ baseUrl }));
+
+  const action = api.get('/users', function* myfn(ctx, next) {
+    const controller = new AbortController();
+    ctx.request = ctx.req({
+      signal: controller.signal,
+    });
+
+    const result = yield* race({
+      one: call(next),
+      two: sagaDelay(100),
+    });
+
+    console.log(result);
+    if (result.two) {
+      console.log('here i am');
+      controller.abort();
+      t.pass();
+      return;
+    }
+
+    t.fail();
+  });
+
+  const store = setupStore({ api: api.saga() });
+  store.dispatch(action());
+
+  await delay(1500);
 });

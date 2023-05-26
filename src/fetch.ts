@@ -1,5 +1,5 @@
 import { SagaIterator } from 'redux-saga';
-import { call, delay } from 'redux-saga/effects';
+import { call, cancelled, delay } from 'redux-saga/effects';
 import { compose } from './compose';
 import { noop } from './util';
 import type { FetchCtx, FetchJsonCtx, Next } from './types';
@@ -139,9 +139,17 @@ export function* fetchMdw<CurCtx extends FetchCtx = FetchCtx>(
 ): SagaIterator<any> {
   const { url, ...req } = ctx.req();
   const request = new Request(url, req);
-  const response: Response = yield call(fetch, request);
-  ctx.response = response;
-  yield next();
+  console.log(request);
+  try {
+    const response: Response = yield call(fetch, request);
+    ctx.response = response;
+    yield next();
+  } finally {
+    if (yield cancelled()) {
+      console.log('WAS CANCELLED');
+    }
+    console.log('FINALLY');
+  }
 }
 
 function backoffExp(attempt: number): number {
