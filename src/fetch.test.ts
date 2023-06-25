@@ -158,7 +158,7 @@ test('fetch - malformed json', async (t) => {
       ok: false,
       data: {
         message:
-          'invalid json response body at https://saga-query.com/users reason: Unexpected token o in JSON at position 1',
+          'invalid json response body at https://saga-query.com/users reason: Unexpected token \'o\', "not json" is not valid JSON',
       },
     });
   });
