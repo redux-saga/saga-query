@@ -396,3 +396,27 @@ test('retry with actionFn with payload', async (t) => {
   await sleep(150);
   t.deepEqual(acc, 'aagg');
 });
+
+test('should allow yield* next()', async (t) => {
+  t.plan(1);
+  let acc = '';
+  const api = createPipe();
+  api.use(api.routes());
+  api.use(function* (_, next) {
+    acc += 'b';
+    yield* next();
+    acc += 'c';
+  });
+
+  const action = api.create('/api', function* (_, next) {
+    acc += 'a';
+    yield* next();
+    acc += 'd';
+  });
+
+  const store = setupStore(api.saga());
+  store.dispatch(action());
+
+  await sleep(150);
+  t.assert(acc === 'abcd');
+});
