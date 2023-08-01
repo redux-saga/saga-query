@@ -1,5 +1,5 @@
 import { useSelector, useDispatch } from 'react-redux';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import type { LoadingState } from 'robodux';
 
 import type { QueryState } from './slice';
@@ -112,7 +112,10 @@ export function useApi(action: any) {
       dispatch(action);
     }
   };
-  return { ...loader, trigger, action };
+  const query = useMemo(() => {
+    return { ...loader, trigger, action };
+  }, [loader]);
+  return query;
 }
 
 /**
@@ -168,7 +171,10 @@ export function useCache<D = any, A extends SagaAction = SagaAction>(
   const id = action.payload.key;
   const data = useSelector((s: any) => selectDataById(s, { id }));
   const query = useQuery(action);
-  return { ...query, data: data || null };
+  const cache = useMemo(() => {
+    return { ...query, data: data || null };
+  }, [query, data]);
+  return cache;
 }
 
 /**
