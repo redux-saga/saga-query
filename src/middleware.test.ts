@@ -292,7 +292,6 @@ test('overriding default loader behavior', (t) => {
   const fetchUsers = api.create(
     `/users`,
     function* (ctx: ApiCtx<any, { users: User[] }>, next) {
-      const id = ctx.name;
       yield next();
 
       if (!ctx.json.ok) {
@@ -304,7 +303,7 @@ test('overriding default loader behavior', (t) => {
         return acc;
       }, {});
 
-      ctx.loader = { id, message: 'yes', meta: { wow: true } };
+      ctx.loader = { message: 'yes', meta: { wow: true } };
       ctx.actions.push(users.actions.add(curUsers));
     },
   );
