@@ -103,6 +103,10 @@ export interface CreateActionPayload<P = any> {
   options: P;
 }
 
+export interface InvalidateCachePayload {
+  invalidate?: boolean;
+}
+
 export type CreateActionFn = () => ActionWithPayload<CreateActionPayload<{}>>;
 
 export interface CreateAction<Ctx> extends CreateActionFn {

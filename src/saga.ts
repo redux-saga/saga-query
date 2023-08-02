@@ -74,7 +74,7 @@ export function timer(timer: number = 5 * MINUTES) {
     saga: any,
     ...args: any[]
   ): SagaIterator<void> {
-    const map: { [key: string]: Task } = {};
+    const map: { [key: string]: Task | undefined } = {};
 
     function* activate(action: ActionWithPayload<CreateActionPayload>) {
       yield call(saga, action, ...args);
@@ -87,8 +87,14 @@ export function timer(timer: number = 5 * MINUTES) {
         `${actionType}`,
       );
       const key = action.payload.key;
-      const notRunning = map[key] && !map[key].isRunning();
-      if (!map[key] || notRunning) {
+      const invalidate = action.payload.options?.invalidate || false;
+      const foundTask = map[key];
+
+      const taskNotFound = !foundTask;
+      const isRunning = foundTask && foundTask.isRunning();
+      const shouldInvalidate = !isRunning && invalidate;
+
+      if (taskNotFound || !isRunning || shouldInvalidate) {
         const task = yield fork(activate, action);
         map[key] = task;
       }
