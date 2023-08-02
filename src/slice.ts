@@ -18,8 +18,13 @@ export const {
   success: setLoaderSuccess,
   resetById: resetLoaderById,
 } = loaders.actions;
-export const { selectTable: selectLoaders, selectById: selectLoaderById } =
-  loaders.getSelectors((state: any) => state[LOADERS_NAME] || {});
+export const {
+  selectTable: selectLoaders,
+  selectById: selectLoaderById,
+  selectByIds: selectLoadersByIds,
+  findByIds: findLoadersByIds,
+  findById: findLoaderById,
+} = loaders.getSelectors((state: QueryState) => state[LOADERS_NAME] || {});
 
 export const DATA_NAME = `@@saga-query/data`;
 export const data = createTable<any>({ name: DATA_NAME });

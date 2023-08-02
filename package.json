@@ -12,7 +12,7 @@
     "test": "tsc --noEmit && ava",
     "template": "ts-node ./api-type-template.ts",
     "prepare": "husky install",
-    "format": "prettier --write **/*.ts",
+    "fmt": "prettier --write **/*.ts",
     "build": "tsc"
   },
   "exports": {
