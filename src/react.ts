@@ -207,13 +207,13 @@ export function useCache<D = any, A extends SagaAction = SagaAction>(
  * ```
  */
 export function useLoaderSuccess(
-  cur: Pick<LoadingState, 'isLoading' | 'isSuccess'>,
+  cur: Pick<LoadingState, 'isLoading' | 'isSuccess' | 'isIdle'>,
   success: () => any,
 ) {
   const [prev, setPrev] = useState(cur);
   useEffect(() => {
     const curSuccess = !cur.isLoading && cur.isSuccess;
-    if (prev.isLoading && curSuccess) {
+    if (prev.isLoading || (prev.isIdle && curSuccess)) {
       success();
     }
     setPrev(cur);
