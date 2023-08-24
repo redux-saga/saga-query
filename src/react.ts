@@ -212,8 +212,7 @@ export function useLoaderSuccess(
 ) {
   const [prev, setPrev] = useState(cur);
   useEffect(() => {
-    const curSuccess = !cur.isLoading && cur.isSuccess;
-    if (prev.isLoading || (prev.isIdle && curSuccess)) {
+    if (!prev.isSuccess && cur.isSuccess) {
       success();
     }
     setPrev(cur);
