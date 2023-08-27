@@ -17,6 +17,7 @@ export const {
   error: setLoaderError,
   success: setLoaderSuccess,
   resetById: resetLoaderById,
+  resetAll: resetLoaders,
 } = loaders.actions;
 export const {
   selectTable: selectLoaders,
