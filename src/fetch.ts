@@ -225,11 +225,5 @@ export function fetcher<CurCtx extends FetchJsonCtx = FetchJsonCtx>(
     baseUrl?: string;
   } = { baseUrl: '' },
 ) {
-  return compose<CurCtx>([
-    headersMdw,
-    apiUrlMdw(baseUrl),
-    payloadMdw,
-    fetchMdw,
-    jsonMdw,
-  ]);
+  return compose<CurCtx>([apiUrlMdw(baseUrl), payloadMdw, fetchMdw, jsonMdw]);
 }

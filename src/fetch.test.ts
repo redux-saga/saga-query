@@ -1,6 +1,6 @@
 import test from 'ava';
 import nock from 'nock';
-import { fetcher, fetchRetry } from './fetch';
+import { fetcher, fetchRetry, headersMdw } from './fetch';
 import { createApi } from './api';
 import { setupStore } from './util';
 import { requestMonitor } from './middleware';
@@ -21,6 +21,7 @@ test('fetch - should be able to fetch a resource and save automatically', async 
   const api = createApi();
   api.use(requestMonitor());
   api.use(api.routes());
+  api.use(headersMdw);
   api.use(fetcher({ baseUrl }));
 
   const fetchUsers = api.get('/users', function* (ctx, next) {
@@ -56,6 +57,7 @@ test('fetch - should be able to fetch a resource and parse as text instead of js
   const api = createApi();
   api.use(requestMonitor());
   api.use(api.routes());
+  api.use(headersMdw);
   api.use(fetcher({ baseUrl }));
 
   const fetchUsers = api.get('/users', function* (ctx, next) {
@@ -86,6 +88,7 @@ test('fetch - error handling', async (t) => {
     ctx.request = ctx.req({ url: `${baseUrl}${url}` });
     yield next();
   });
+  api.use(headersMdw);
   api.use(fetcher());
 
   const fetchUsers = api.get('/users', function* (ctx, next) {
@@ -117,6 +120,7 @@ test('fetch - status 204', async (t) => {
     ctx.request = ctx.req({ url: `${baseUrl}${url}` });
     yield next();
   });
+  api.use(headersMdw);
   api.use(fetcher());
 
   const fetchUsers = api.get('/users', function* (ctx, next) {
@@ -148,6 +152,7 @@ test('fetch - malformed json', async (t) => {
     ctx.request = ctx.req({ url: `${baseUrl}${url}` });
     yield next();
   });
+  api.use(headersMdw);
   api.use(fetcher());
 
   const fetchUsers = api.get('/users', function* (ctx, next) {
@@ -177,6 +182,7 @@ test('fetch - POST', async (t) => {
   const api = createApi();
   api.use(requestMonitor());
   api.use(api.routes());
+  api.use(headersMdw);
   api.use(fetcher({ baseUrl }));
 
   const fetchUsers = api.post('/users', function* (ctx, next) {
@@ -210,6 +216,7 @@ test('fetch - POST multiple endpoints with same uri', async (t) => {
   const api = createApi();
   api.use(requestMonitor());
   api.use(api.routes());
+  api.use(headersMdw);
   api.use(fetcher({ baseUrl }));
 
   const fetchUsers = api.post<{ id: string }>(
@@ -265,6 +272,7 @@ test('fetch - slug in url but payload has empty string for slug value', async (t
   const api = createApi();
   api.use(requestMonitor());
   api.use(api.routes());
+  api.use(headersMdw);
   api.use(fetcher({ baseUrl }));
 
   const fetchUsers = api.post<{ id: string }>(
@@ -301,6 +309,7 @@ test('fetch retry - with success - should keep retrying fetch request', async (t
   const api = createApi();
   api.use(requestMonitor());
   api.use(api.routes());
+  api.use(headersMdw);
   api.use(fetcher({ baseUrl }));
 
   const fetchUsers = api.get('/users', [
@@ -337,6 +346,7 @@ test('fetch retry - with failure - should keep retrying and then quit', async (t
   const api = createApi();
   api.use(requestMonitor());
   api.use(api.routes());
+  api.use(headersMdw);
   api.use(fetcher({ baseUrl }));
 
   const fetchUsers = api.get('/users', [
