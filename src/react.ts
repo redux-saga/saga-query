@@ -1,5 +1,5 @@
 import { useSelector, useDispatch } from 'react-redux';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import type { LoadingState } from 'robodux';
 
 import type { QueryState } from './slice';
@@ -207,15 +207,14 @@ export function useCache<D = any, A extends SagaAction = SagaAction>(
  * ```
  */
 export function useLoaderSuccess(
-  cur: Pick<LoadingState, 'isLoading' | 'isSuccess'>,
+  cur: Pick<LoadingState, 'status'>,
   success: () => any,
 ) {
-  const [prev, setPrev] = useState(cur);
+  const prev = useRef(cur);
   useEffect(() => {
-    const curSuccess = !cur.isLoading && cur.isSuccess;
-    if (prev.isLoading && curSuccess) {
+    if (prev.current.status !== 'success' && cur.status === 'success') {
       success();
     }
-    setPrev(cur);
-  }, [cur.isSuccess, cur.isLoading]);
+    prev.current = cur;
+  }, [cur.status]);
 }
