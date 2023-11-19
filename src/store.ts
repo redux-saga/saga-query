@@ -1,6 +1,6 @@
 import type { Reducer, Middleware, Action } from 'redux';
 import { combineReducers } from 'redux';
-import type { Saga, Task } from 'redux-saga';
+import type { Saga, SagaMiddlewareOptions, Task } from 'redux-saga';
 import createSagaMiddleware, { stdChannel } from 'redux-saga';
 import { enableBatching, BATCH } from 'redux-batched-actions';
 
@@ -69,22 +69,27 @@ interface Props<S extends { [key: string]: any } = { [key: string]: any }> {
   reducers: { [key in keyof S]: Reducer<S[key]> };
   sagas: { [key: string]: Saga<any> };
   onError?: (err: Error) => void;
+  middlewareOptions?: Omit<SagaMiddlewareOptions, 'channel'>;
 }
 
 /**
  * This will setup `redux-batched-actions` to work with `redux-saga`.
  * It will also add some reducers to your `redux` store for decoupled loaders
  * and a simple data cache.
+ * You can also pass in middleware options (excluded 'channel') to expand the middleware.
  *
  * @example
  * ```ts
  * import { prepareStore } from 'saga-query';
  * import { configureStore } from '@reduxjs/toolkit';
  *
+ * const monitor = window["__SAGA_MONITOR_EXTENSION__"] // If you use saga-crome-extension.
+ *
  * const { middleware, reducer, run } = prepareStore({
  *  reducers: { users: (state, action) => state },
  *  sagas: { api: api.saga() },
  *  onError: (err) => console.error(err),
+ *  middlewareOptions: { sagaMonitor: monitor }, // To apply the crome extension to the saga monitor.
  * });
  *
  * const store = configureStore({
@@ -102,6 +107,7 @@ export function prepareStore<
   reducers = {} as any,
   sagas,
   onError = console.error,
+  middlewareOptions = {} as Omit<SagaMiddlewareOptions, 'channel'>,
 }: Props<S>): PrepareStore<S> {
   const middleware: Middleware<any, S, any>[] = [];
 
@@ -115,7 +121,10 @@ export function prepareStore<
     rawPut(action);
   };
 
-  const sagaMiddleware = createSagaMiddleware({ channel });
+  const sagaMiddleware = createSagaMiddleware({
+    channel,
+    ...middlewareOptions,
+  });
   middleware.push(sagaMiddleware);
 
   const reducer = combineReducers({ ...sagaQueryReducers, ...reducers });
